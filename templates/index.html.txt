@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Imóveis - Full Stack</title>
+    <!-- O Flask usa o url_for para achar o CSS na pasta static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap">
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">📡 Radar <span>Imóveis</span></a>
+    </header>
+
+    <main class="container">
+        <h1 class="main-title">Encontre seu imóvel</h1>
+        
+        <div class="grid-imoveis">
+            <!-- Este bloco se repete para cada imóvel no seu banco_imoveis.txt -->
+            {% for imovel in imoveis %}
+            <div class="card">
+                <div class="foto-link">
+                    <!-- Buscamos a primeira imagem da pasta do anúncio -->
+                    <img src="/static/anuncios/{{ imovel.id }}/img_0.jpg" alt="Imóvel" onerror="this.src='https://via.placeholder.com/400?text=Sem+Foto'">
+                </div>
+                <div class="info">
+                    <strong class="tipo-imovel">{{ imovel.tipo }}</strong><br>
+                    <small class="local-imovel">{{ imovel.local }}</small>
+                    <span class="preco">R$ {{ imovel.valor }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>

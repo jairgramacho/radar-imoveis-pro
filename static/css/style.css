@@ -1,0 +1,110 @@
+/* static/css/style.css */
+
+:root {
+    --laranja: #FF8C00;
+    --escuro: #31333F;
+    --cinza-fundo: #f8f9fa;
+    --branco: #ffffff;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--cinza-fundo);
+    margin: 0;
+    padding: 0;
+}
+
+/* Logo e Cabeçalho */
+.header {
+    background-color: var(--branco);
+    padding: 20px 5%;
+    display: flex;
+    align-items: center;
+    border-bottom: 3px solid var(--laranja);
+}
+
+.logo {
+    text-decoration: none;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--laranja);
+}
+
+.logo span {
+    color: var(--escuro);
+    font-weight: 400;
+}
+
+/* Container do Conteúdo */
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.main-title {
+    color: var(--escuro);
+    text-align: center;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    font-size: 1.8rem;
+}
+
+/* Grid de Imóveis (3 colunas) */
+.grid-imoveis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+/* Card Quadrado Laranja */
+.card {
+    background-color: var(--branco);
+    border: 2px solid var(--laranja);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(255, 140, 0, 0.2);
+}
+
+/* Foto sempre Quadrada */
+.foto-link {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+
+.foto-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Informações do Card */
+.info {
+    padding: 15px;
+    text-align: center;
+}
+
+.tipo-imovel {
+    font-size: 1.1rem;
+    color: var(--escuro);
+}
+
+.local-imovel {
+    color: #666;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.preco {
+    color: var(--laranja);
+    font-weight: 900;
+    font-size: 1.4rem;
+    display: block;
+}
