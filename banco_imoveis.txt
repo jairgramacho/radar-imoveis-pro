@@ -1,5 +1,0 @@
-
-
-BA; - ;Apartamento;Venda;0;0;;;;;20260305174815;-12.1267431;-44.953347
-BA;Salvador - Graça;Apartamento;Venda;2;1;800000;jairgramacho82160@gmail.com;77988514422;otimo apartamento;20260305175452;-13.0014156;-38.5268721
-BA;Barreiras - Morada Nobre;Apartamento;Venda;2;1;500000;jairgramacho82160@gmail.com;77988514422;bom apartamento;20260305193051;150;Ativo

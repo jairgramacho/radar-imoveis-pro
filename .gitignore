@@ -3,6 +3,22 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Variáveis de Ambiente (CRÍTICO)
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+imoveis.db
+
+# Uploads (não fazer push de arquivos de usuários)
+static/uploads/*
+!static/uploads/.gitkeep
+
+
 # C extensions
 *.so
 

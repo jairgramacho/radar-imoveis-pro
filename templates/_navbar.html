@@ -1,0 +1,65 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+    <div class="container-lg">
+        <a class="navbar-brand fw-bold" href="{{ url_for('index', aba='buscar') }}">
+            <i class="fas fa-broadcast-tower me-2" style="color: #f39233; font-size: 1.5rem;"></i><span style="color: #f39233;">Radar</span> Imóveis
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.args.get('aba') == 'buscar' %}active fw-bold{% endif %}" href="{{ url_for('index', aba='buscar') }}">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-anunciar {% if request.args.get('aba') == 'anunciar' %}active fw-bold{% endif %}" href="{{ url_for('index', aba='anunciar') }}">
+                        <i class="fas fa-plus-circle me-2"></i>Anunciar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.args.get('aba') == 'oportunidades' %}active fw-bold{% endif %}" href="{{ url_for('index', aba='oportunidades') }}">
+                        <i class="fas fa-bullseye me-2"></i>Radar
+                    </a>
+                </li>
+                <li class="nav-item position-relative">
+                    <a class="nav-link {% if request.endpoint in ['chat', 'conversa'] %}active fw-bold{% endif %}" href="{{ url_for('chat') if usuario else url_for('login') }}">
+                        <i class="fas fa-comments me-2"></i>Chat
+                        {% if mensagens_nao_lidas is defined and mensagens_nao_lidas > 0 %}
+                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">{{ mensagens_nao_lidas }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% if usuario %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>Olá, {{ usuario.nome.split(' ')[0] }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('configuracoes_conta') }}">
+                            <i class="fas fa-cog me-2"></i>Configurações
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('meus_anuncios') }}">
+                            <i class="fas fa-layer-group me-2"></i>Meus Anúncios
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Sair
+                        </a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

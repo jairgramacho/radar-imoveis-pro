@@ -1,0 +1,88 @@
+<footer class="bg-dark text-white mt-5 pt-5 pb-3 border-top">
+    <div class="container-lg">
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h6 class="mb-3">
+                    <i class="fas fa-broadcast-tower me-2" style="color: #f39233;"></i>
+                    <span style="color: #f39233;">Radar</span> Imóveis
+                </h6>
+                <p class="small text-muted">
+                    Compre, venda e alugue. Seu novo jeito de encontrar o imóvel perfeito.
+                </p>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h6 class="mb-3">Links Úteis</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <a href="/?aba=buscar" class="text-muted text-decoration-none">
+                            <i class="fas fa-search me-2"></i>Buscar Imóveis
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/?aba=anunciar" class="text-muted text-decoration-none">
+                            <i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('dashboard') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('chat') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-comments me-2"></i>Mensagens
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h6 class="mb-3">Contato</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <a href="mailto:contato@radarimovei.com" class="text-muted text-decoration-none">
+                            <i class="fas fa-envelope me-2"></i>contato@radarimovei.com
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h6 class="mb-3">Informações Legais</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <a href="{{ url_for('termos_uso') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-file-contract me-2"></i>Termos de Uso
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('politica_privacidade') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-shield-alt me-2"></i>Política de Privacidade
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('denunciar_abuso') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Denunciar Abuso
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('faq_ajuda') }}" class="text-muted text-decoration-none">
+                            <i class="fas fa-question-circle me-2"></i>FAQ / Ajuda
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="bg-secondary opacity-50">
+
+        <div class="row align-items-center">
+            <div class="col-12 mb-2">
+                <p class="small text-muted mb-0 text-center">
+                    © 2026 Radar Imóveis. Todos os direitos reservados.
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Imóveis - Marketplace de Compra, Venda e Aluguel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <!-- ABA BUSCAR -->
+        {% if aba == 'buscar' %}
+        <div class="buscar-section">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h2><i class="fas fa-search me-2"></i>Buscar Imóveis</h2>
+                {% if usuario %}
+                    <a href="/?aba=anunciar" class="btn btn-warning btn-sm" style="white-space: nowrap;">
+                        <i class="fas fa-plus-circle me-1"></i>Anuncie
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-warning btn-sm" style="white-space: nowrap;">
+                        <i class="fas fa-plus-circle me-1"></i>Anuncie
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- FILTROS -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <input type="hidden" name="aba" value="buscar">
+                        
+                        <!-- Tipo de Negócio -->
+                        <div class="col-md-6 col-lg-2">
+                            <label class="form-label">Negócio</label>
+                            <select name="negocio" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="Venda" {% if busca.get('negocio') in ['Venda', 'Compra'] %}selected{% endif %}>Comprar</option>
+                                <option value="Aluguel" {% if busca.get('negocio') == 'Aluguel' %}selected{% endif %}>Alugar</option>
+                            </select>
+                        </div>
+
+                        <!-- Tipo de Imóvel -->
+                        <div class="col-md-6 col-lg-2">
+                            <label class="form-label">Tipo</label>
+                            <select name="tipo" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="Apartamento" {% if busca.get('tipo') == 'Apartamento' %}selected{% endif %}>Apartamento</option>
+                                <option value="Casa" {% if busca.get('tipo') == 'Casa' %}selected{% endif %}>Casa</option>
+                                <option value="Chácara" {% if busca.get('tipo') == 'Chácara' %}selected{% endif %}>Chácara</option>
+                                <option value="Comercial" {% if busca.get('tipo') == 'Comercial' %}selected{% endif %}>Comercial</option>
+                                <option value="Fazenda" {% if busca.get('tipo') == 'Fazenda' %}selected{% endif %}>Fazenda</option>
+                                <option value="Galpão" {% if busca.get('tipo') == 'Galpão' %}selected{% endif %}>Galpão</option>
+                                <option value="Lote" {% if busca.get('tipo') == 'Lote' %}selected{% endif %}>Lote</option>
+                                <option value="Sítio" {% if busca.get('tipo') == 'Sítio' %}selected{% endif %}>Sítio</option>
+                            </select>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="col-md-6 col-lg-2">
+                            <label class="form-label">Estado</label>
+                            <select name="estado" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="SP" {% if busca.get('estado') == 'SP' %}selected{% endif %}>SP</option>
+                                <option value="RJ" {% if busca.get('estado') == 'RJ' %}selected{% endif %}>RJ</option>
+                                <option value="MG" {% if busca.get('estado') == 'MG' %}selected{% endif %}>MG</option>
+                                <option value="BA" {% if busca.get('estado') == 'BA' %}selected{% endif %}>BA</option>
+                                <option value="RS" {% if busca.get('estado') == 'RS' %}selected{% endif %}>RS</option>
+                                <option value="SC" {% if busca.get('estado') == 'SC' %}selected{% endif %}>SC</option>
+                                <option value="PR" {% if busca.get('estado') == 'PR' %}selected{% endif %}>PR</option>
+                                <option value="Outro" {% if busca.get('estado') == 'Outro' %}selected{% endif %}>Outro</option>
+                            </select>
+                        </div>
+
+                        <!-- Cidade -->
+                        <div class="col-md-6 col-lg-2">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" name="cidade" class="form-control" placeholder="Ex: São Paulo" value="{{busca.get('cidade', '')}}">
+                        </div>
+
+                        <!-- Preço Máximo -->
+                        <div class="col-md-6 col-lg-2">
+                            <label class="form-label">Preço Máximo</label>
+                            <input type="text" name="preco_max" class="form-control" placeholder="R$ 0,00" value="{{busca.get('preco_max', '')}}">
+                        </div>
+
+                        <!-- Botão -->
+                        <div class="col-md-6 col-lg-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Filtrar
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" value="1" id="somente_oportunidades" name="somente_oportunidades" {% if busca.get('somente_oportunidades') == '1' %}checked{% endif %}>
+                                <label class="form-check-label" for="somente_oportunidades">
+                                    Mostrar apenas oportunidades (10% abaixo da média local)
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RESULTADOS -->
+            <h5 class="mb-3">
+                <i class="fas fa-home me-2"></i>
+                {% if imoveis_total > 0 %}
+                    {{ imoveis_total }} imóvel(is) encontrado(s)
+                {% else %}
+                    Nenhum imóvel encontrado
+                {% endif %}
+            </h5>
+
+            {% if imoveis_total == 0 %}
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-compass me-2"></i>
+                Nenhum imóvel encontrado com esses filtros. Tente remover um filtro ou ampliar cidade/faixa de preço.
+            </div>
+            {% endif %}
+
+            <div class="row g-4">
+                {% for imovel in imoveis %}
+                <div class="col-md-6 col-lg-4 col-xxl-3">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link" style="cursor: pointer;">
+                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <!-- FOTO -->
+                            <div class="position-relative overflow-hidden" style="height: 220px;">
+                                {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
+                                    <img src="{{ url_for('static', filename='uploads/' + imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
+                                {% else %}
+                                    <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                {% endif %}
+                                <!-- BADGE -->
+                                <span class="badge badge-negocio position-absolute top-0 start-0 m-2">{{ imovel.negocio }}</span>
+                                {% if imovel.eh_oportunidade %}
+                                <span class="badge badge-oportunidade position-absolute top-0 end-0 m-2">
+                                    Oportunidade
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="card-body">
+                                <!-- PREÇO -->
+                                <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
+                                {% if imovel.eh_oportunidade and imovel.preco_medio_regiao %}
+                                <p class="small text-success fw-semibold mb-2">
+                                    {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
+                                </p>
+                                <p class="small text-muted mb-2">
+                                    Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
+                                </p>
+                                {% endif %}
+                                <!-- TIPO -->
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
+                                </p>
+                                <!-- LOCALIZAÇÃO -->
+                                <p class="card-text small mb-2">
+                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i>
+                                    {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
+                                </p>
+
+                                <!-- CARACTERÍSTICAS -->
+                                <div class="row g-2 mb-3">
+                                    {% if imovel.quartos %}
+                                    <div class="col-6">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    {% if imovel.vagas %}
+                                    <div class="col-6">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    {% if imovel.area %}
+                                    <div class="col-6">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-ruler me-1"></i>{{ imovel.area }} m²
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- DESCRIÇÃO -->
+                                {% if imovel.descricao %}
+                                <p class="card-text small text-muted mb-3" style="min-height: 40px;">
+                                    {{ imovel.descricao[:80] }}{% if imovel.descricao|length > 80 %}...{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- BOTÃO WHATSAPP (fora do link) -->
+                    <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
+                        <i class="fab fa-whatsapp me-2"></i>Contatar
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if total_paginas > 1 %}
+            <nav class="mt-4" aria-label="Paginação de imóveis">
+                <ul class="pagination justify-content-center">
+                    {% for pagina in range(1, total_paginas + 1) %}
+                    <li class="page-item {% if pagina == pagina_atual %}active{% endif %}">
+                        <a class="page-link" href="{{ links_paginacao[pagina] }}">{{ pagina }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <!-- ABA OPORTUNIDADES -->
+        {% elif aba == 'oportunidades' %}
+        <div class="buscar-section">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h2><i class="fas fa-bullseye me-2"></i>Radar de Oportunidades</h2>
+                <a href="/?aba=buscar&somente_oportunidades=1" class="btn btn-outline-primary btn-sm" style="white-space: nowrap;">
+                    <i class="fas fa-filter me-1"></i>Ver com filtros
+                </a>
+            </div>
+
+            <p class="text-muted mb-4">Imóveis ordenados do maior para o menor desconto em relação à média de imóveis semelhantes da mesma região.</p>
+
+            <h5 class="mb-3">
+                <i class="fas fa-tags me-2"></i>
+                {% if oportunidades_total > 0 %}
+                    {{ oportunidades_total }} oportunidade(s) encontrada(s)
+                {% else %}
+                    Nenhuma oportunidade encontrada no momento
+                {% endif %}
+            </h5>
+
+            {% if oportunidades_total == 0 %}
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-lightbulb me-2"></i>
+                Ainda não encontramos oportunidades com desconto relevante. Volte mais tarde ou use novos filtros.
+            </div>
+            {% endif %}
+
+            <div class="row g-4">
+                {% for imovel in oportunidades %}
+                <div class="col-md-6 col-lg-4 col-xxl-3">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link" style="cursor: pointer;">
+                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <div class="position-relative overflow-hidden" style="height: 220px;">
+                                {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
+                                    <img src="{{ url_for('static', filename='uploads/' + imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
+                                {% else %}
+                                    <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                {% endif %}
+
+                                <span class="badge badge-negocio position-absolute top-0 start-0 m-2">{{ imovel.negocio }}</span>
+                                <span class="badge badge-oportunidade position-absolute top-0 end-0 m-2">Oportunidade</span>
+                            </div>
+
+                            <div class="card-body">
+                                <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
+                                <p class="small text-success fw-semibold mb-2">
+                                    {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
+                                </p>
+                                <p class="small text-muted mb-2">
+                                    Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
+                                </p>
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
+                                </p>
+                                <p class="card-text small mb-2">
+                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i>
+                                    {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
+                        <i class="fab fa-whatsapp me-2"></i>Contatar
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if total_paginas > 1 %}
+            <nav class="mt-4" aria-label="Paginação de oportunidades">
+                <ul class="pagination justify-content-center">
+                    {% for pagina in range(1, total_paginas + 1) %}
+                    <li class="page-item {% if pagina == pagina_atual %}active{% endif %}">
+                        <a class="page-link" href="{{ links_paginacao[pagina] }}">{{ pagina }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <!-- ABA ANUNCIAR -->
+        {% elif aba == 'anunciar' %}
+        <div class="anunciar-section">
+            <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel</h2>
+
+            {% if not usuario %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Faça login para anunciar!</strong><br>
+                Você precisa estar cadastrado e logado para publicar seus anúncios.
+                <hr>
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm me-2">
+                    <i class="fas fa-sign-in-alt me-2"></i>Já tenho conta
+                </a>
+                <a href="{{ url_for('cadastro') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-user-plus me-2"></i>Criar nova conta
+                </a>
+            </div>
+            {% else %}
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <form method="POST" action="/salvar" enctype="multipart/form-data">
+                                <!-- SEÇÃO 1: LOCALIZAÇÃO -->
+                                <h5 class="mb-3">📍 Localização</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Estado *</label>
+                                        <select name="estado" class="form-select" required>
+                                            <option value="">Selecione</option>
+                                            <option value="SP">São Paulo (SP)</option>
+                                            <option value="RJ">Rio de Janeiro (RJ)</option>
+                                            <option value="MG">Minas Gerais (MG)</option>
+                                            <option value="BA">Bahia (BA)</option>
+                                            <option value="RS">Rio Grande do Sul (RS)</option>
+                                            <option value="SC">Santa Catarina (SC)</option>
+                                            <option value="PR">Paraná (PR)</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Cidade *</label>
+                                        <input type="text" name="cidade" class="form-control" placeholder="Ex: São Paulo" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Bairro *</label>
+                                        <input type="text" name="bairro" class="form-control" placeholder="Ex: Pinheiros" required>
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO 2: TIPO DE IMÓVEL -->
+                                <h5 class="mb-3">🏠 Tipo de Imóvel</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tipo *</label>
+                                        <select name="tipo" class="form-select" required>
+                                            <option value="">Selecione</option>
+                                            <option value="Apartamento">Apartamento</option>
+                                            <option value="Casa">Casa</option>
+                                            <option value="Chácara">Chácara</option>
+                                            <option value="Comercial">Comercial</option>
+                                            <option value="Fazenda">Fazenda</option>
+                                            <option value="Galpão">Galpão</option>
+                                            <option value="Lote">Lote</option>
+                                            <option value="Sítio">Sítio</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Negócio *</label>
+                                        <select name="negocio" class="form-select" required>
+                                            <option value="">Selecione</option>
+                                            <option value="Venda">Venda</option>
+                                            <option value="Aluguel">Aluguel</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO 3: DETALHES -->
+                                <h5 class="mb-3">📊 Detalhes</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Quartos</label>
+                                        <input type="number" name="quartos" class="form-control" placeholder="Ex: 3">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Vagas Garagem</label>
+                                        <input type="number" name="vagas" class="form-control" placeholder="Ex: 2">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Área (m²)</label>
+                                        <input type="text" name="area" class="form-control" placeholder="Ex: 150">
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO 4: PREÇO -->
+                                <h5 class="mb-3">💰 Preço</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Valor *</label>
+                                        <input type="text" name="valor" class="form-control" placeholder="R$ 0,00" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="form-text"><strong>WhatsApp:</strong> {{ usuario.whatsapp }}</p>
+                                        <small class="text-muted">Será usado o WhatsApp do seu perfil</small>
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO 5: DESCRIÇÃO -->
+                                <h5 class="mb-3">📝 Descrição</h5>
+                                <div class="mb-4">
+                                    <label class="form-label">Descrição do Imóvel</label>
+                                    <textarea name="descricao" class="form-control" rows="5" placeholder="Descreva as características principais..."></textarea>
+                                </div>
+
+                                <!-- SEÇÃO 6: FOTOS -->
+                                <h5 class="mb-3">📸 Carregar Fotos</h5>
+                                <div class="mb-4">
+                                    <div class="input-group">
+                                        <input type="file" name="foto" class="form-control" accept="image/*" multiple>
+                                        <label class="input-group-text" for="foto">Escolher</label>
+                                    </div>
+                                    <small class="text-muted">Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF, WebP, BMP, SVG, TIFF, HEIC/HEIF (iPhone) (primeira será a principal)</small>
+                                </div>
+
+                                <!-- BOTÃO SUBMIT -->
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-check-circle me-2"></i>Publicar Anúncio
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR INFORMAÇÕES -->
+                <div class="col-lg-4">
+                    <div class="card shadow mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="fas fa-lightbulb me-2 text-warning"></i>Dicas para um Bom Anúncio
+                            </h6>
+                            <ul class="small">
+                                <li>✓ Use uma foto de qualidade</li>
+                                <li>✓ Descreva as principais características</li>
+                                <li>✓ Coloque um preço competitivo</li>
+                                <li>✓ Inclua um WhatsApp válido</li>
+                                <li>✓ Seja honesto nas informações</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card shadow" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="fas fa-chart-line me-2"></i>Vantagens do Marketplace
+                            </h6>
+                            <ul class="small">
+                                <li>✓ Alcance amplo de interessados</li>
+                                <li>✓ Contato direto via WhatsApp</li>
+                                <li>✓ Anúncios destacados</li>
+                                <li>✓ 100% gratuito</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Abra a aba "Buscar" ou "Anunciar"
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

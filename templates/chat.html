@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <h2 class="mb-4">
+            <i class="fas fa-comments me-2"></i>Mensagens
+        </h2>
+
+        {% if conversas %}
+            <div class="list-group">
+                {% for conversa in conversas %}
+                <a href="{{ url_for('conversa', usuario_id=conversa.outro_usuario.id) }}" class="list-group-item list-group-item-action {% if conversa.nao_lidas > 0 %}active{% endif %} py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-user-circle me-2"></i>{{ conversa.outro_usuario.nome }}
+                            </h6>
+                            <p class="text-muted small mb-0">{{ conversa.ultima_msg.mensagem[:50] }}...</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="small mb-2">{{ conversa.ultima_msg.criado_em.strftime('%d/%m %H:%M') }}</p>
+                            {% if conversa.nao_lidas > 0 %}
+                            <span class="badge bg-danger">{{ conversa.nao_lidas }} nova(s)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-inbox me-2"></i>
+                <strong>Nenhuma conversa!</strong><br>
+                Quando começar a dialogar com outros usuários, suas conversas aparecerão aqui.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

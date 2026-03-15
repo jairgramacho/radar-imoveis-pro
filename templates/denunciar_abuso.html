@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denunciar Abuso | Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    {% include '_navbar.html' %}
+
+    <main class="container-lg py-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h3 mb-4"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Denunciar Abuso</h1>
+                <p class="text-muted">Use este formulário para reportar anúncios, mensagens ou perfis suspeitos.</p>
+
+                <form method="POST" action="{{ url_for('denunciar_abuso') }}" class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Seu nome</label>
+                        <input type="text" name="nome" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Seu e-mail</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Motivo</label>
+                        <select name="motivo" class="form-select" required>
+                            <option value="">Selecione</option>
+                            <option value="anuncio-falso">Anúncio possivelmente falso</option>
+                            <option value="fraude">Tentativa de fraude</option>
+                            <option value="conteudo-inadequado">Conteúdo inadequado</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="mensagem" rows="5" class="form-control" required></textarea>
+                    </div>
+                    <div class="col-12 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar denúncia
+                        </button>
+                        <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline-secondary">Voltar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

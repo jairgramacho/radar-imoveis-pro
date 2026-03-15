@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversa com {{ outro_usuario.nome }} - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .mensagem {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .mensagem.enviada {
+            justify-content: flex-end;
+        }
+        .mensagem.recebida {
+            justify-content: flex-start;
+        }
+        .bubble {
+            max-width: 60%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+        .mensagem.enviada .bubble {
+            background-color: #f39233;
+            color: white;
+        }
+        .mensagem.recebida .bubble {
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+        .timestamp {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <a href="{{ url_for('chat') }}" class="btn btn-outline-primary mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Voltar ao Chat
+        </a>
+
+        <div class="card shadow">
+            <!-- HEADER COM NOME DO USUÁRIO -->
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>{{ outro_usuario.nome }}
+                </h5>
+            </div>
+
+            <!-- ÁREA DE CHAT -->
+            <div class="chat-container" id="chatContainer">
+                {% for msg in mensagens %}
+                    {% if msg.remetente_id == usuario.id %}
+                        <div class="mensagem enviada">
+                            <div>
+                                <div class="bubble">{{ msg.mensagem }}</div>
+                                <div class="timestamp text-end">{{ msg.criado_em.strftime('%H:%M') }}</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="mensagem recebida">
+                            <div>
+                                <div class="bubble">{{ msg.mensagem }}</div>
+                                <div class="timestamp text-start">{{ msg.criado_em.strftime('%H:%M') }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- FORMULÁRIO DE MENSAGEM -->
+            <div class="card-footer bg-light border-top">
+                <form method="POST" action="{{ url_for('enviar_mensagem', usuario_id=outro_usuario.id) }}" class="d-flex gap-2">
+                    <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." required autofocus>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- INFORMAÇÕES DO USUÁRIO -->
+        <div class="row g-4 mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle me-2"></i>Informações
+                        </h6>
+                        <p class="mb-2">
+                            <strong>WhatsApp:</strong><br>
+                            <a href="https://wa.me/55{{ outro_usuario.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success btn-sm mt-2">
+                                <i class="fab fa-whatsapp me-1"></i>Contatar via WhatsApp
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-star me-2"></i>Avaliação
+                        </h6>
+                        <div class="text-warning">
+                            {% set rating = outro_usuario.get_rating() %}
+                            {% for i in range(5) %}
+                                {% if i < rating %}
+                                    <i class="fas fa-star"></i>
+                                {% elif i < rating + 0.5 %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="small mt-2 mb-0">{{ rating }} / 5.0 ({{ outro_usuario.get_total_avaliacoes() }} avaliações)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script>
+        // Scroll automático para o final do chat
+        const chatContainer = document.getElementById('chatContainer');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

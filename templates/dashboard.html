@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-line me-2"></i>Painel de Controle
+        </h2>
+
+        <!-- CARDS DE ESTATÍSTICAS -->
+        <div class="row g-4 mb-4">
+            <!-- Card 1: Total de Anúncios -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-home" style="font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
+                        <h6 class="card-title mb-1">Anúncios</h6>
+                        <h3 class="mb-0">{{ total_imoveis }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Visualizações -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-eye" style="font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
+                        <h6 class="card-title mb-1">Visualizações</h6>
+                        <h3 class="mb-0">{{ total_visualizacoes }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Rating -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-star" style="font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
+                        <h6 class="card-title mb-1">Avaliação</h6>
+                        <h3 class="mb-0">{{ rating }}/5.0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Mensagens -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-comments" style="font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
+                        <h6 class="card-title mb-1">Mensagens</h6>
+                        <h3 class="mb-0">{{ mensagens_nao_lidas }}</h3>
+                        <p class="small mb-0">não lidas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- ÚLTIMOS ANÚNCIOS -->
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>Últimos Anúncios
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if ultimos_imoveis %}
+                            <div class="list-group list-group-flush">
+                                {% for imovel in ultimos_imoveis %}
+                                <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ imovel.tipo }}</h6>
+                                            <p class="text-muted small mb-0">{{ imovel.cidade }} - {{ imovel.estado }}</p>
+                                        </div>
+                                        <span class="badge bg-primary">{{ imovel.criado_em.strftime('%d/%m') }}</span>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">Nenhum anúncio publicado ainda</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANÚNCIOS MAIS POPULARES -->
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-fire me-2"></i>Mais Populares
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if imoveis_populares %}
+                            <div class="list-group list-group-flush">
+                                {% for imovel in imoveis_populares %}
+                                <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ imovel.tipo }}</h6>
+                                            <p class="text-muted small mb-0">{{ imovel.cidade }} - {{ imovel.estado }}</p>
+                                        </div>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-eye me-1"></i>{{ imovel.visualizacoes }}
+                                        </span>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">Nenhum anúncio com visualizações</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AÇÕES RÁPIDAS -->
+        <div class="row g-4 mt-4">
+            <div class="col-md-6">
+                <a href="/?aba=anunciar" class="btn btn-primary w-100 py-3 fs-5">
+                    <i class="fas fa-plus-circle me-2"></i>Publicar Novo Anúncio
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{{ url_for('meus_anuncios') }}" class="btn btn-outline-primary w-100 py-3 fs-5">
+                    <i class="fas fa-layer-group me-2"></i>Visualizar Todos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

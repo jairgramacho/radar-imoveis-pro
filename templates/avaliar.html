@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Anunciante - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline-primary mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body p-5">
+                        <h3 class="card-title mb-4 text-center">
+                            <i class="fas fa-star me-2"></i>Avaliar {{ anunciante.nome }}
+                        </h3>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" class="mt-4">
+                            {% if imovel %}
+                            <div class="mb-4">
+                                <label class="form-label"><strong>Sobre o imóvel:</strong></label>
+                                <p class="text-muted">
+                                    {{ imovel.tipo }} em {{ imovel.cidade }}<br>
+                                    <small>{{ imovel.descricao[:100] }}</small>
+                                </p>
+                                <input type="hidden" name="imovel_id" value="{{ imovel.id }}">
+                            </div>
+                            {% endif %}
+
+                            <!-- SELEÇÃO DE ESTRELAS -->
+                            <div class="mb-4">
+                                <label class="form-label"><strong>Sua Avaliação</strong> *</label>
+                                <div class="rating-selector" id="ratingSelector">
+                                    {% for i in range(1, 6) %}
+                                    <label class="star-label" style="cursor: pointer; font-size: 2.5rem; color: #ddd;">
+                                        <input type="radio" name="estrelas" value="{{ i }}" style="display: none;">
+                                        <i class="far fa-star"></i>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                <p class="small text-muted mt-2">Clique nas estrelas para avaliar</p>
+                            </div>
+
+                            <!-- COMENTÁRIO -->
+                            <div class="mb-4">
+                                <label class="form-label"><strong>Comentário</strong></label>
+                                <textarea name="comentario" class="form-control" rows="5" placeholder="Deixe um comentário sobre sua experiência..."></textarea>
+                                <small class="text-muted">Máximo 500 caracteres</small>
+                            </div>
+
+                            <!-- BOTÕES -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check-circle me-2"></i>Enviar Avaliação
+                                </button>
+                                <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-secondary">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- GUIA -->
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Dica:</strong> Suas avaliações honestas ajudam outros usuários a tomar melhores decisões. Seja justo em sua avaliação!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Interação com as estrelas
+        const starLabels = document.querySelectorAll('.star-label');
+        const radios = document.querySelectorAll('input[name="estrelas"]');
+
+        starLabels.forEach((label, index) => {
+            label.addEventListener('click', () => {
+                radios.forEach((radio, i) => {
+                    if (i <= index) {
+                        radio.parentElement.style.color = '#ffc107';
+                        radio.parentElement.innerHTML = '<i class="fas fa-star"></i>';
+                    } else {
+                        radio.parentElement.style.color = '#ddd';
+                        radio.parentElement.innerHTML = '<i class="far fa-star"></i>';
+                    }
+                });
+            });
+
+            label.addEventListener('mouseenter', () => {
+                starLabels.forEach((l, i) => {
+                    if (i <= index) {
+                        l.style.color = '#ffc107';
+                        l.innerHTML = '<i class="fas fa-star"></i>';
+                    } else {
+                        l.style.color = '#ddd';
+                        l.innerHTML = '<i class="far fa-star"></i>';
+                    }
+                });
+            });
+        });
+
+        document.getElementById('ratingSelector').addEventListener('mouseleave', () => {
+            const checked = document.querySelector('input[name="estrelas"]:checked');
+            starLabels.forEach((label, index) => {
+                if (checked) {
+                    const value = parseInt(checked.value) - 1;
+                    if (index <= value) {
+                        label.style.color = '#ffc107';
+                        label.innerHTML = '<i class="fas fa-star"></i>';
+                    } else {
+                        label.style.color = '#ddd';
+                        label.innerHTML = '<i class="far fa-star"></i>';
+                    }
+                } else {
+                    label.style.color = '#ddd';
+                    label.innerHTML = '<i class="far fa-star"></i>';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

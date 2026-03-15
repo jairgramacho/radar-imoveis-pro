@@ -1,110 +1,437 @@
-/* static/css/style.css */
+/* ============================================
+   VARIÁVEIS GLOBAIS
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
 :root {
-    --laranja: #FF8C00;
-    --escuro: #31333F;
-    --cinza-fundo: #f8f9fa;
+    --laranja: #f39233;
+    --azul-escuro: #1f3a7d;
+    --verde-whatsapp: #25d366;
+    --fundo: #edf2fb;
     --branco: #ffffff;
+    --texto: #445066;
+    --texto-forte: #1f2a44;
+    --texto-suave: #6f7c95;
+    --borda: #dbe2ef;
+    --sombra: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --sombra-forte: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   GLOBAL
+   ============================================ */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
 }
 
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--cinza-fundo);
     margin: 0;
     padding: 0;
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    background:
+        radial-gradient(circle at 5% 0%, rgba(243, 146, 51, 0.08), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(31, 58, 125, 0.08), transparent 35%),
+        var(--fundo);
+    color: var(--texto);
+    line-height: 1.6;
 }
 
-/* Logo e Cabeçalho */
-.header {
-    background-color: var(--branco);
-    padding: 20px 5%;
-    display: flex;
-    align-items: center;
-    border-bottom: 3px solid var(--laranja);
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+    font-family: 'Outfit', 'Segoe UI', sans-serif;
+    color: var(--texto-forte);
+    letter-spacing: 0.01em;
 }
 
-.logo {
-    text-decoration: none;
-    font-size: 2.2rem;
-    font-weight: 900;
+p, .card-text, .form-text, li, label, span {
+    color: var(--texto);
+}
+
+a {
+    color: #2e5fb8;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+a:hover {
+    color: #1f4fa4;
+}
+
+/* ============================================
+   NAVBAR & HEADER
+   ============================================ */
+.navbar {
+    box-shadow: var(--sombra);
+    padding: 1rem 0;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(8px);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    color: var(--texto-forte) !important;
+    font-weight: 700;
+}
+
+.navbar-brand span {
     color: var(--laranja);
 }
 
-.logo span {
-    color: var(--escuro);
-    font-weight: 400;
+.nav-link {
+    color: var(--texto) !important;
+    font-weight: 500;
+    margin: 0 0.5rem;
+    transition: all 0.3s ease;
 }
 
-/* Container do Conteúdo */
-.container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 20px;
+.nav-link:hover {
+    color: var(--laranja) !important;
 }
 
-.main-title {
-    color: var(--escuro);
-    text-align: center;
-    margin-bottom: 40px;
-    text-transform: uppercase;
-    font-size: 1.8rem;
+.nav-link.active {
+    color: var(--laranja) !important;
 }
 
-/* Grid de Imóveis (3 colunas) */
-.grid-imoveis {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 30px;
+.nav-link.nav-link-anunciar {
+    color: var(--laranja) !important;
+    font-weight: 700;
 }
 
-/* Card Quadrado Laranja */
-.card {
-    background-color: var(--branco);
-    border: 2px solid var(--laranja);
-    border-radius: 15px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+.nav-link.nav-link-anunciar:hover {
+    color: #ff7a00 !important;
+}
+
+/* ============================================
+   CARDS DE IMÓVEIS
+   ============================================ */
+.card-imovel {
+    transition: all 0.3s ease;
+    border-radius: 12px;
     cursor: pointer;
+    animation: fadeSlideUp 0.35s ease;
+}
+
+.card-imovel:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--sombra-forte) !important;
+}
+
+.card-imovel .card-img-top {
+    border-radius: 12px 12px 0 0;
+}
+
+.badge-negocio {
+    background: linear-gradient(135deg, var(--laranja), #ff7a00);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-oportunidade {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+    color: var(--texto-forte);
+}
+
+.imovel-card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.imovel-card-link:hover {
+    color: inherit;
+}
+
+/* ============================================
+   BADGES & LABELS
+   ============================================ */
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+.badge-light {
+    background-color: #f5f7fc;
+    border: 1px solid var(--borda);
+}
+
+.badge-soft {
+    background-color: #f6f8fd;
+    color: var(--texto) !important;
+    border: 1px solid #d9e1f2;
+}
+
+/* ============================================
+   FORMULÁRIOS
+   ============================================ */
+.form-label {
+    font-weight: 600;
+    color: var(--texto-forte);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--laranja);
+    box-shadow: 0 0 0 3px rgba(243, 146, 51, 0.1);
+    background-color: white;
+}
+
+.form-control::placeholder {
+    color: #999;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* ============================================
+   BOTÕES
+   ============================================ */
+.btn-primary {
+    background: linear-gradient(135deg, var(--laranja), #ff7a00);
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 146, 51, 0.3);
+    background: linear-gradient(135deg, #ff7a00, var(--laranja));
+}
+
+.btn-success {
+    background: var(--verde-whatsapp);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #1eab5a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+/* ============================================
+   CARDS & BOXES
+   ============================================ */
+.card {
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.96);
 }
 
 .card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 10px 20px rgba(255, 140, 0, 0.2);
+    box-shadow: var(--sombra-forte);
 }
 
-/* Foto sempre Quadrada */
-.foto-link {
-    width: 100%;
-    aspect-ratio: 1 / 1;
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--borda);
+    padding: 1.5rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+.buscar-section,
+.anunciar-section {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--borda);
+}
+
+footer h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+footer a {
+    color: #adb5bd !important;
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+}
+
+footer a:hover {
+    color: var(--laranja) !important;
+    text-decoration: underline !important;
+}
+
+footer .text-muted {
+    color: #adb5bd !important;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+.text-muted {
+    color: var(--texto-suave) !important;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.border-0 {
+    border: none;
+}
+
+.overflow-hidden {
     overflow: hidden;
 }
 
-.foto-link img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+/* ============================================
+   RESPONSIVO
+   ============================================ */
+@media (max-width: 768px) {
+    .container-lg {
+        padding: 1rem;
+    }
+
+    .row {
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    .col,
+    [class*="col-"] {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    .card-imovel .card-img-top {
+        height: 180px;
+    }
+
+    .btn-lg {
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .navbar-collapse {
+        padding-top: 1rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h5 {
+        font-size: 1.1rem;
+    }
 }
 
-/* Informações do Card */
-.info {
-    padding: 15px;
-    text-align: center;
-}
+@media (max-width: 576px) {
+    body {
+        padding: 0;
+    }
 
-.tipo-imovel {
-    font-size: 1.1rem;
-    color: var(--escuro);
-}
+    .navbar {
+        padding: 0.75rem 0;
+    }
 
-.local-imovel {
-    color: #666;
-    display: block;
-    margin-bottom: 10px;
-}
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
 
-.preco {
-    color: var(--laranja);
-    font-weight: 900;
-    font-size: 1.4rem;
-    display: block;
+    .container-lg {
+        padding: 0.75rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .form-control,
+    .form-select {
+        padding: 0.55rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .row.g-4 {
+        gap: 1rem !important;
+    }
 }

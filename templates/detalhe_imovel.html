@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis</title>
+    <meta name="description" content="{{ descricao_meta }}">
+    <meta property="og:title" content="{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis">
+    <meta property="og:description" content="{{ descricao_meta }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{% if imovel.foto %}{{ url_for('static', filename='uploads/' + imovel.foto, _external=True) }}{% else %}{{ url_for('static', filename='css/style.css', _external=True) }}{% endif %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <a href="/?aba=buscar" class="btn btn-outline-primary mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Voltar à busca
+        </a>
+
+        <div class="row">
+            <!-- GALERIA DE FOTOS -->
+            <div class="col-lg-8">
+                <!-- FOTO PRINCIPAL -->
+                <div class="card shadow mb-4">
+                    <div id="carouselFotos" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% set todas_fotos = [] %}
+                            {% if imovel.foto %}
+                                {% set _ = todas_fotos.append(imovel.foto) %}
+                            {% endif %}
+                            {% for foto in imovel.fotos %}
+                                {% set _ = todas_fotos.append(foto.arquivo) %}
+                            {% endfor %}
+                            
+                            {% if todas_fotos|length > 0 %}
+                                {% for arquivo_foto in todas_fotos %}
+                                <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
+                                    <div class="position-relative overflow-hidden" style="height: 400px;">
+                                        <img src="{{ url_for('static', filename='uploads/' + arquivo_foto) }}" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto {{ loop.index }}" loading="{% if loop.index0 == 0 %}eager{% else %}lazy{% endif %}" decoding="async">
+                                        <span class="position-absolute bottom-0 end-0 badge bg-dark m-3">{{ loop.index }}/{{ todas_fotos|length }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if todas_fotos|length > 1 %}
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselFotos" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselFotos" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                </button>
+                                {% endif %}
+                            {% else %}
+                                <div class="carousel-item active">
+                                    <div class="w-100 bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                                        <i class="fas fa-image text-muted" style="font-size: 5rem;"></i>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="badge badge-negocio position-absolute top-0 start-0 m-3" style="background: linear-gradient(135deg, #f39233, #ff7a00); color: white; padding: 0.6rem 1rem; font-size: 0.9rem;">
+                        {{ imovel.negocio }}
+                    </span>
+                </div>
+
+                <!-- MINIATURAS DAS FOTOS -->
+                {% if todas_fotos|length > 1 %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="fas fa-images me-2"></i>Galeria de Fotos ({{ todas_fotos|length }})
+                        </h6>
+                        <div class="row g-2">
+                            {% for arquivo_foto in todas_fotos %}
+                            <div class="col-4 col-md-3">
+                                <img src="{{ url_for('static', filename='uploads/' + arquivo_foto) }}" 
+                                     alt="Foto {{ loop.index }}" 
+                                     class="img-thumbnail w-100" 
+                                     loading="lazy"
+                                     decoding="async"
+                                     style="cursor: pointer; height: 100px; object-fit: cover;"
+                                     onclick="document.getElementById('carouselFotos').querySelector('[data-bs-slide-to=&quot;{{ loop.index0 }}&quot;]')?.click(); document.querySelector('.carousel-item:nth-child({{ loop.index }})').classList.add('active');">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- INFORMAÇÕES PRINCIPAIS -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-3 text-primary fw-bold">R$ {{ imovel.preco|moeda_brl }}</h3>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-2"><strong>Tipo:</strong></p>
+                                <p class="h5">{{ imovel.tipo }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="text-muted mb-2"><strong>Localização:</strong></p>
+                                <p class="h5">{{ imovel.cidade }} - {{ imovel.estado }}</p>
+                            </div>
+                        </div>
+
+                        <p class="text-muted mb-1">{{ imovel.bairro }} | Publicado em {{ imovel.criado_em.strftime('%d/%m/%Y às %H:%M') }}</p>
+                    </div>
+                </div>
+
+                <!-- CARACTERÍSTICAS -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-4">
+                            <i class="fas fa-list me-2"></i>Características
+                        </h5>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-bed" style="font-size: 2rem; color: #f39233;"></i>
+                                    <p class="mt-2 text-muted">Quartos</p>
+                                    <p class="h5">{{ imovel.quartos or 'N/A' }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-car" style="font-size: 2rem; color: #f39233;"></i>
+                                    <p class="mt-2 text-muted">Garagens</p>
+                                    <p class="h5">{{ imovel.vagas or 'N/A' }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-ruler" style="font-size: 2rem; color: #f39233;"></i>
+                                    <p class="mt-2 text-muted">Área</p>
+                                    <p class="h5">{{ imovel.area or 'N/A' }} m²</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESCRIÇÃO -->
+                {% if imovel.descricao %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="fas fa-file-alt me-2"></i>Descrição
+                        </h5>
+                        <p class="text-muted">{{ imovel.descricao }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ADICIONAR FOTOS (se for o dono) -->
+                {% if usuario and usuario.id == imovel.usuario_id %}
+                <div class="card shadow mb-4 border-info">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="fas fa-images me-2 text-info"></i>Gerenciar Fotos
+                        </h5>
+                        <a href="{{ url_for('adicionar_fotos', id=imovel.id) }}" class="btn btn-info w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Adicionar Mais Fotos
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- SIDEBAR -->
+            <div class="col-lg-4">
+                <!-- CARD DE CONTATO -->
+                <div class="card shadow mb-4" style="background: linear-gradient(135deg, #2d4d90 0%, #3466bf 100%); color: white;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-user-circle me-2"></i>{{ imovel.anunciante.nome }}
+                        </h5>
+                        <p class="card-text">{{ imovel.anunciante.email }}</p>
+                        
+                        <!-- AVALIAÇÃO -->
+                        {% set rating = imovel.anunciante.get_rating() %}
+                        <div class="mb-3">
+                            <div class="text-warning">
+                                {% for i in range(5) %}
+                                    {% if i < rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif i < rating + 0.5 %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p class="small mt-2">{{ rating }} / 5.0</p>
+                        </div>
+
+                        <hr style="border-color: rgba(255,255,255,0.3);">
+
+                        <!-- BOTÃO WHATSAPP -->
+                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-3">
+                            <i class="fab fa-whatsapp me-2"></i>Contatar via WhatsApp
+                        </a>
+                        
+                        <p class="small mt-3 mb-0">
+                            <i class="fas fa-phone me-1"></i>{{ imovel.anunciante.whatsapp }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- INFO -->
+                <div class="card shadow">
+                    <div class="card-body">
+                        <p class="small text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Dica:</strong> Você pode negociar o valor diretamente com o anunciante via WhatsApp!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

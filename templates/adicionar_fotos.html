@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Fotos - {{ imovel.tipo }} - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <a href="{{ url_for('meus_anuncios') }}" class="btn btn-outline-primary mb-4">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h3 class="mb-0">
+                            <i class="fas fa-images me-2"></i>Adicionar Fotos
+                        </h3>
+                        <p class="text-muted small mb-0 mt-2">
+                            {{ imovel.tipo }} em {{ imovel.cidade }}
+                        </p>
+                    </div>
+
+                    <div class="card-body p-5">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" enctype="multipart/form-data">
+                            <!-- FOTOS ATUAIS -->
+                            {% if imovel.fotos %}
+                            <div class="mb-4">
+                                <h6><i class="fas fa-check-circle me-2" style="color: #28a745;"></i>Fotos Adicionadas</h6>
+                                <div class="row g-3">
+                                    {% for foto in imovel.fotos %}
+                                    <div class="col-md-4">
+                                        <div class="card border-0 overflow-hidden">
+                                            <img src="{{ url_for('static', filename='uploads/' + foto.arquivo) }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                            <div class="card-body p-2 text-center">
+                                                <small class="text-muted">{{ foto.criado_em.strftime('%d/%m') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            {% endif %}
+
+                            <!-- UPLOAD DE NOVAS FOTOS -->
+                            <div class="mb-4">
+                                <h6><i class="fas fa-upload me-2"></i>Adicionar Novas Fotos</h6>
+
+                                <div class="upload-area" id="uploadArea" style="border: 2px dashed #f39233; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #f39233; margin-bottom: 15px; display: block;"></i>
+                                    <h6 style="margin-bottom: 10px;">Clique ou arraste fotos aqui</h6>
+                                    <p class="text-muted small">Formatos suportados: JPG, PNG, GIF, WebP, BMP, SVG, TIFF, HEIC/HEIF (iPhone)<br>Tamanho máximo: 5MB por arquivo</p>
+                                    <input type="file" id="fotosInput" name="fotos" multiple accept="image/*" style="display: none;">
+                                </div>
+
+                                <div id="previewContainer" class="mt-3"></div>
+                            </div>
+
+                            <!-- INFORMAÇÕES -->
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Dica:</strong> Adicione várias fotos do imóvel (interior, exterior, detalhes) para aumentar o interesse dos compradores!
+                            </div>
+
+                            <!-- BOTÕES -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                    <i class="fas fa-check-circle me-2"></i>Enviar Fotos
+                                </button>
+                                <a href="{{ url_for('meus_anuncios') }}" class="btn btn-secondary">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <!-- FOOTER -->
+
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fotosInput = document.getElementById('fotosInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Click no upload area
+        uploadArea.addEventListener('click', () => fotosInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = '#fff3e0';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.backgroundColor = 'white';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'white';
+            fotosInput.files = e.dataTransfer.files;
+            previewFotos();
+        });
+
+        // File input change
+        fotosInput.addEventListener('change', previewFotos);
+
+        function previewFotos() {
+            previewContainer.innerHTML = '';
+            const files = fotosInput.files;
+
+            if (files.length > 0) {
+                submitBtn.disabled = false;
+
+                Array.from(files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4 mb-3';
+                        col.innerHTML = `
+                            <div class="card border-0 overflow-hidden">
+                                <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    <p class="small text-muted mb-1">${file.name}</p>
+                                    <small class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                                </div>
+                            </div>
+                        `;
+                        previewContainer.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>
