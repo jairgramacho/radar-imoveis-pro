@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from sqlalchemy.pool import NullPool
 
 
 def _env_bool(name, default=False):
@@ -77,9 +78,16 @@ class ProductionConfig(Config):
         force_ssl=True,
     )
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
-        'pool_recycle': 180,
-        'pool_timeout': 30,
+        'poolclass': NullPool,
+        'connect_args': {
+            'sslmode': 'require',
+            'connect_timeout': 10,
+            'application_name': 'radar-imoveis-pro',
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+        },
     }
 
     PREFERRED_URL_SCHEME = 'https'
