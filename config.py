@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 
 def _env_bool(name, default=False):
@@ -8,6 +9,22 @@ def _env_bool(name, default=False):
     if value is None:
         return default
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _build_database_uri(default_uri, force_ssl=False):
+    """Normaliza DATABASE_URL para SQLAlchemy e aplica sslmode quando necessário."""
+    database_url = os.getenv('DATABASE_URL', default_uri).strip()
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+    if not force_ssl or not database_url.startswith('postgresql://'):
+        return database_url
+
+    parsed = urlparse(database_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.setdefault('sslmode', 'require')
+    new_query = urlencode(query)
+    return urlunparse(parsed._replace(query=new_query))
 
 
 class Config:
@@ -41,10 +58,11 @@ class Config:
 class DevelopmentConfig(Config):
     """Configurações para desenvolvimento"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        'sqlite:///imoveis.db'
-    )
+    SQLALCHEMY_DATABASE_URI = _build_database_uri('sqlite:///imoveis.db', force_ssl=False)
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
     SESSION_COOKIE_SECURE = False
     TESTING = False
 
@@ -54,10 +72,15 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Database obrigatório em produção
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        'postgresql://user:password@localhost/radar_imoveis'
+    SQLALCHEMY_DATABASE_URI = _build_database_uri(
+        'postgresql://user:password@localhost/radar_imoveis',
+        force_ssl=True,
     )
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 180,
+        'pool_timeout': 30,
+    }
 
     PREFERRED_URL_SCHEME = 'https'
     
