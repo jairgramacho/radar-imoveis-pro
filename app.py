@@ -99,10 +99,19 @@ def _garantir_colunas_usuario():
         db.session.commit()
 
 
-# Criar tabelas
-with app.app_context():
-    db.create_all()
-    _garantir_colunas_usuario()
+def _deve_executar_bootstrap_db():
+    """Controla bootstrap automático do banco para evitar travas no boot em produção."""
+    override = os.getenv('RUN_DB_BOOTSTRAP')
+    if override is not None:
+        return override.strip().lower() in {'1', 'true', 'yes', 'on'}
+    return flask_env != 'production'
+
+
+# Criar tabelas automaticamente em desenvolvimento (ou quando explicitamente habilitado)
+if _deve_executar_bootstrap_db():
+    with app.app_context():
+        db.create_all()
+        _garantir_colunas_usuario()
 
 OPORTUNIDADE_DESCONTO_MINIMO = 0.10
 OPORTUNIDADE_AMOSTRA_MINIMA = 5
