@@ -150,12 +150,13 @@ def _enviar_email_com_status(funcao_envio, *args):
         return False, 'Envio de email não configurado no servidor.'
 
     timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
-    resultado = {'enviado': False}
+    resultado = {'enviado': False, 'erro': None}
 
     def _worker_envio():
         try:
             resultado['enviado'] = bool(funcao_envio(*args))
-        except Exception:
+        except Exception as e:
+            resultado['erro'] = str(e)
             resultado['enviado'] = False
 
     try:
@@ -164,11 +165,15 @@ def _enviar_email_com_status(funcao_envio, *args):
         thread.join(timeout=timeout_segundos)
 
         if thread.is_alive():
+            app.logger.warning('Timeout no envio de email após %ss', timeout_segundos)
             return False, 'Timeout no envio de email. Tente novamente em alguns instantes.'
 
         enviado = resultado['enviado']
     except Exception:
         enviado = False
+
+    if resultado['erro']:
+        app.logger.warning('Falha no envio de email: %s', resultado['erro'])
 
     if not enviado:
         return False, 'Não foi possível enviar email no momento.'
