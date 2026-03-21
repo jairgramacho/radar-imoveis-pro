@@ -1,7 +1,7 @@
 import os
 import re
 import math
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from threading import Thread
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
@@ -145,13 +145,23 @@ def _enviar_email_com_status(funcao_envio, *args):
         return False, 'Envio de email não configurado no servidor.'
 
     timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
+    resultado = {'enviado': False}
+
+    def _worker_envio():
+        try:
+            resultado['enviado'] = bool(funcao_envio(*args))
+        except Exception:
+            resultado['enviado'] = False
 
     try:
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            futuro = executor.submit(funcao_envio, *args)
-            enviado = bool(futuro.result(timeout=timeout_segundos))
-    except FutureTimeoutError:
-        return False, 'Timeout no envio de email. Tente novamente em alguns instantes.'
+        thread = Thread(target=_worker_envio, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout_segundos)
+
+        if thread.is_alive():
+            return False, 'Timeout no envio de email. Tente novamente em alguns instantes.'
+
+        enviado = resultado['enviado']
     except Exception:
         enviado = False
 
@@ -159,6 +169,24 @@ def _enviar_email_com_status(funcao_envio, *args):
         return False, 'Não foi possível enviar email no momento.'
 
     return True, None
+
+
+def _disparar_email_assincrono(funcao_envio, *args):
+    """Dispara envio de email sem bloquear a requisição do usuário."""
+    if not _smtp_configurado():
+        return False
+
+    def _worker_envio():
+        try:
+            funcao_envio(*args)
+        except Exception:
+            app.logger.warning('Falha ao enviar email em background.', exc_info=True)
+
+    try:
+        Thread(target=_worker_envio, daemon=True).start()
+        return True
+    except Exception:
+        return False
 
 
 @app.route('/healthz')
@@ -582,18 +610,16 @@ def esqueci_senha():
         if usuario:
             token_reset = _gerar_token_email(usuario.email, 'reset-senha')
             link_reset = _url_publica('redefinir_senha', token=token_reset)
-            enviado, erro_envio = _enviar_email_com_status(
+            if flask_env != 'production' and _permitir_fallback_reset_local() and not _smtp_configurado():
+                flash('Email não configurado neste ambiente. Você será redirecionado para redefinir a senha agora.', 'success')
+                return redirect(url_for('redefinir_senha', token=token_reset))
+
+            _disparar_email_assincrono(
                 enviar_email_redefinicao_senha,
                 usuario.email,
                 usuario.nome,
                 link_reset,
             )
-            if not enviado:
-                if flask_env != 'production' and _permitir_fallback_reset_local():
-                    flash('Email não configurado neste ambiente. Você será redirecionado para redefinir a senha agora.', 'success')
-                    return redirect(url_for('redefinir_senha', token=token_reset))
-                flash(f'Não foi possível enviar o email de recuperação agora: {erro_envio}', 'error')
-                return redirect(url_for('esqueci_senha'))
 
         flash('Se o email informado existir, você receberá instruções para redefinir a senha.', 'success')
         return redirect(url_for('login'))
