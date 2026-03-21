@@ -151,7 +151,7 @@ def _enviar_email_com_status(funcao_envio, *args):
 
     timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
     resultado = {'enviado': False, 'erro': None}
-    flask_app = app._get_current_object()
+    flask_app = app
 
     def _worker_envio():
         with flask_app.app_context():
@@ -188,7 +188,7 @@ def _disparar_email_assincrono(funcao_envio, *args):
     if not _smtp_configurado():
         return False
 
-    flask_app = app._get_current_object()
+    flask_app = app
 
     def _worker_envio():
         with flask_app.app_context():
