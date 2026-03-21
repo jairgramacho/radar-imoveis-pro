@@ -1,6 +1,7 @@
 import os
 import re
 import math
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
@@ -143,8 +144,14 @@ def _enviar_email_com_status(funcao_envio, *args):
     if not _smtp_configurado():
         return False, 'Envio de email não configurado no servidor.'
 
+    timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
+
     try:
-        enviado = bool(funcao_envio(*args))
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            futuro = executor.submit(funcao_envio, *args)
+            enviado = bool(futuro.result(timeout=timeout_segundos))
+    except FutureTimeoutError:
+        return False, 'Timeout no envio de email. Tente novamente em alguns instantes.'
     except Exception:
         enviado = False
 
