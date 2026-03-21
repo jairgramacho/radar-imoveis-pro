@@ -23,9 +23,10 @@ def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info'):
             html=corpo
         )
         mail.send(msg)
+        current_app.logger.info('Email enviado para %s com assunto %s', usuario_email, titulo)
         return True
     except Exception as e:
-        print(f"Erro ao enviar email: {str(e)}")
+        current_app.logger.warning('Erro ao enviar email para %s: %s', usuario_email, str(e), exc_info=True)
         return False
 
 def enviar_email_nova_mensagem(usuario_email, remetente_nome, imovel_tipo=''):

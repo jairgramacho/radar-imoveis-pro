@@ -139,6 +139,11 @@ def _permitir_fallback_reset_local():
     return os.getenv('ALLOW_DEV_PASSWORD_RESET_FALLBACK', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _reset_email_assincrono_habilitado():
+    """Controla envio assíncrono no esqueci-senha."""
+    return os.getenv('PASSWORD_RESET_ASYNC', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 def _enviar_email_com_status(funcao_envio, *args):
     """Executa envio de email e retorna (sucesso, mensagem_erro)."""
     if not _smtp_configurado():
@@ -614,12 +619,25 @@ def esqueci_senha():
                 flash('Email não configurado neste ambiente. Você será redirecionado para redefinir a senha agora.', 'success')
                 return redirect(url_for('redefinir_senha', token=token_reset))
 
-            _disparar_email_assincrono(
-                enviar_email_redefinicao_senha,
-                usuario.email,
-                usuario.nome,
-                link_reset,
-            )
+            if _reset_email_assincrono_habilitado():
+                disparado = _disparar_email_assincrono(
+                    enviar_email_redefinicao_senha,
+                    usuario.email,
+                    usuario.nome,
+                    link_reset,
+                )
+                if not disparado:
+                    app.logger.warning('Falha ao iniciar envio assíncrono de reset para %s', usuario.email)
+            else:
+                enviado, erro_envio = _enviar_email_com_status(
+                    enviar_email_redefinicao_senha,
+                    usuario.email,
+                    usuario.nome,
+                    link_reset,
+                )
+                if not enviado:
+                    flash(f'Não foi possível enviar o email de recuperação agora: {erro_envio}', 'error')
+                    return redirect(url_for('esqueci_senha'))
 
         flash('Se o email informado existir, você receberá instruções para redefinir a senha.', 'success')
         return redirect(url_for('login'))
