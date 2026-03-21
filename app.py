@@ -151,13 +151,15 @@ def _enviar_email_com_status(funcao_envio, *args):
 
     timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
     resultado = {'enviado': False, 'erro': None}
+    flask_app = app._get_current_object()
 
     def _worker_envio():
-        try:
-            resultado['enviado'] = bool(funcao_envio(*args))
-        except Exception as e:
-            resultado['erro'] = str(e)
-            resultado['enviado'] = False
+        with flask_app.app_context():
+            try:
+                resultado['enviado'] = bool(funcao_envio(*args))
+            except Exception as e:
+                resultado['erro'] = str(e)
+                resultado['enviado'] = False
 
     try:
         thread = Thread(target=_worker_envio, daemon=True)
@@ -186,11 +188,14 @@ def _disparar_email_assincrono(funcao_envio, *args):
     if not _smtp_configurado():
         return False
 
+    flask_app = app._get_current_object()
+
     def _worker_envio():
-        try:
-            funcao_envio(*args)
-        except Exception:
-            app.logger.warning('Falha ao enviar email em background.', exc_info=True)
+        with flask_app.app_context():
+            try:
+                funcao_envio(*args)
+            except Exception:
+                flask_app.logger.warning('Falha ao enviar email em background.', exc_info=True)
 
     try:
         Thread(target=_worker_envio, daemon=True).start()
