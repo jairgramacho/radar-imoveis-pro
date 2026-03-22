@@ -1,6 +1,79 @@
+import json
+import re
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
 from flask_mail import Mail, Message, current_app
 
 mail = Mail()
+
+
+def _resend_configurado():
+    """Retorna True quando a API do Resend está configurada para envio."""
+    api_key = (current_app.config.get('RESEND_API_KEY') or '').strip()
+    remetente = (current_app.config.get('RESEND_FROM') or current_app.config.get('MAIL_DEFAULT_SENDER') or '').strip().lower()
+
+    placeholders = {
+        '',
+        'your-resend-api-key',
+        'sua-chave-resend',
+        'noreply@example.com',
+    }
+    return api_key.lower() not in placeholders and remetente not in placeholders
+
+
+def _enviar_via_resend(usuario_email, titulo, corpo):
+    """Envia email via API HTTP do Resend (evita bloqueio de SMTP no provedor)."""
+    api_key = (current_app.config.get('RESEND_API_KEY') or '').strip()
+    from_email = (current_app.config.get('RESEND_FROM') or current_app.config.get('MAIL_DEFAULT_SENDER') or '').strip()
+    api_url = (current_app.config.get('RESEND_API_URL') or 'https://api.resend.com/emails').strip()
+    timeout = int(current_app.config.get('RESEND_TIMEOUT', current_app.config.get('MAIL_TIMEOUT', 10)))
+
+    # Converte HTML em texto simples para melhorar compatibilidade com alguns clientes.
+    texto = re.sub(r'<[^>]+>', ' ', corpo or '')
+    texto = re.sub(r'\s+', ' ', texto).strip()
+
+    payload = {
+        'from': from_email,
+        'to': [usuario_email],
+        'subject': titulo,
+        'html': corpo,
+        'text': texto,
+    }
+
+    req = Request(
+        api_url,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+
+    try:
+        with urlopen(req, timeout=timeout) as response:
+            status = getattr(response, 'status', 200)
+            if status >= 400:
+                current_app.logger.warning('Resend retornou status HTTP %s para %s', status, usuario_email)
+                return False
+
+        current_app.logger.info('Email enviado via Resend para %s com assunto %s', usuario_email, titulo)
+        return True
+    except HTTPError as e:
+        detalhe = ''
+        try:
+            detalhe = e.read().decode('utf-8', errors='ignore')
+        except Exception:
+            detalhe = str(e)
+        current_app.logger.warning('Erro HTTP no Resend para %s: %s | %s', usuario_email, e, detalhe)
+        return False
+    except URLError as e:
+        current_app.logger.warning('Erro de rede no Resend para %s: %s', usuario_email, e)
+        return False
+    except Exception as e:
+        current_app.logger.warning('Erro inesperado no Resend para %s: %s', usuario_email, e, exc_info=True)
+        return False
 
 
 def _app_url(path=''):
@@ -16,6 +89,9 @@ def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info'):
     Tipos: 'nova_mensagem', 'novo_interessado', 'avaliacao_recebida'
     """
     try:
+        if _resend_configurado():
+            return _enviar_via_resend(usuario_email, titulo, corpo)
+
         msg = Message(
             subject=titulo,
             recipients=[usuario_email],

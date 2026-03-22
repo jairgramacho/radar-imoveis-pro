@@ -66,10 +66,6 @@ def check_env_production_ready():
         'FLASK_ENV',
         'SECRET_KEY',
         'DATABASE_URL',
-        'MAIL_SERVER',
-        'MAIL_PORT',
-        'MAIL_USERNAME',
-        'MAIL_PASSWORD',
         'MAIL_DEFAULT_SENDER',
         'APP_URL',
     ]
@@ -92,6 +88,17 @@ def check_env_production_ready():
         print("❌ APP_URL deve começar com https:// em produção")
         return False
 
+    resend_api_key = os.getenv('RESEND_API_KEY', '').strip()
+    smtp_ready = all([
+        os.getenv('MAIL_SERVER', '').strip(),
+        os.getenv('MAIL_PORT', '').strip(),
+        os.getenv('MAIL_USERNAME', '').strip(),
+        os.getenv('MAIL_PASSWORD', '').strip(),
+    ])
+    if not resend_api_key and not smtp_ready:
+        print("❌ Configure RESEND_API_KEY ou SMTP completo (MAIL_SERVER/PORT/USERNAME/PASSWORD)")
+        return False
+
     print("✅ Variáveis de produção OK")
     return True
 
@@ -112,8 +119,13 @@ def check_database_connection():
         return False
 
 
-def check_smtp_connection():
-    """Valida autenticação SMTP sem enviar email."""
+def check_email_connection():
+    """Valida configuração de provedor de email (Resend API ou SMTP)."""
+    resend_api_key = os.getenv('RESEND_API_KEY', '').strip()
+    if resend_api_key:
+        print("\n📧 Provedor de email: Resend API configurado ✅")
+        return True
+
     print("\n📧 Testando SMTP...")
     server = os.getenv('MAIL_SERVER', '')
     port = int(os.getenv('MAIL_PORT', '587'))
@@ -211,7 +223,7 @@ def main():
     print("\n5️⃣  Validações de prontidão...")
     env_ok = check_env_production_ready()
     db_ok = check_database_connection()
-    smtp_ok = check_smtp_connection()
+    smtp_ok = check_email_connection()
     routes_ok = smoke_test_routes()
     
     print("\n" + "=" * 50)

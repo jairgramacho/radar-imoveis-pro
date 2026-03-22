@@ -59,6 +59,12 @@ class Config:
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@radarimovei.com')
     MAIL_TIMEOUT = int(os.getenv('MAIL_TIMEOUT', 10))
 
+    # Resend (API HTTP)
+    RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
+    RESEND_API_URL = os.getenv('RESEND_API_URL', 'https://api.resend.com/emails')
+    RESEND_FROM = os.getenv('RESEND_FROM', MAIL_DEFAULT_SENDER)
+    RESEND_TIMEOUT = int(os.getenv('RESEND_TIMEOUT', MAIL_TIMEOUT))
+
 class DevelopmentConfig(Config):
     """Configurações para desenvolvimento"""
     DEBUG = True
@@ -98,10 +104,16 @@ class ProductionConfig(Config):
     # Validar variáveis críticas
     @classmethod
     def validate(cls):
-        required_vars = ['SECRET_KEY', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'DATABASE_URL', 'APP_URL', 'MAIL_DEFAULT_SENDER']
+        required_vars = ['SECRET_KEY', 'DATABASE_URL', 'APP_URL', 'MAIL_DEFAULT_SENDER']
         missing = [var for var in required_vars if not os.getenv(var)]
         if missing:
             raise ValueError(f"Variáveis de ambiente obrigatórias não configuradas: {', '.join(missing)}")
+
+        resend_api_key = os.getenv('RESEND_API_KEY', '').strip()
+        smtp_user = os.getenv('MAIL_USERNAME', '').strip()
+        smtp_pass = os.getenv('MAIL_PASSWORD', '').strip()
+        if not resend_api_key and not (smtp_user and smtp_pass):
+            raise ValueError('Configure RESEND_API_KEY ou MAIL_USERNAME/MAIL_PASSWORD para habilitar envio de email.')
 
         secret = os.getenv('SECRET_KEY', '')
         if len(secret) < 32 or 'dev-secret-key-change-in-production' in secret:

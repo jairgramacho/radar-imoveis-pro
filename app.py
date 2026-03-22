@@ -120,7 +120,16 @@ ITENS_POR_PAGINA = 12
 
 
 def _smtp_configurado():
-    """Verifica se o SMTP está minimamente configurado para envio real."""
+    """Verifica se há provedor de email configurado (Resend API ou SMTP)."""
+    resend_api_key = (app.config.get('RESEND_API_KEY') or '').strip().lower()
+    resend_placeholders = {
+        '',
+        'your-resend-api-key',
+        'sua-chave-resend',
+    }
+    if resend_api_key not in resend_placeholders:
+        return True
+
     username = (app.config.get('MAIL_USERNAME') or '').strip().lower()
     password = (app.config.get('MAIL_PASSWORD') or '').strip().lower()
 
@@ -147,7 +156,7 @@ def _reset_email_assincrono_habilitado():
 def _enviar_email_com_status(funcao_envio, *args):
     """Executa envio de email e retorna (sucesso, mensagem_erro)."""
     if not _smtp_configurado():
-        return False, 'Envio de email não configurado no servidor.'
+        return False, 'Envio de email não configurado no servidor (configure RESEND_API_KEY ou SMTP).'
 
     timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
     resultado = {'enviado': False, 'erro': None}
@@ -217,6 +226,7 @@ def healthcheck():
         'status': 'ok' if db_status == 'ok' else 'degraded',
         'service': 'radar-imoveis-pro',
         'database': db_status,
+        'email_configurado': _smtp_configurado(),
         'smtp_configurado': _smtp_configurado(),
     }
     return jsonify(payload), (200 if db_status == 'ok' else 503)
@@ -499,7 +509,7 @@ def cadastro():
                 else:
                     flash(
                         'Cadastro realizado, mas o email de confirmação não foi enviado agora. '
-                        f'{erro_envio} Configure MAIL_USERNAME/MAIL_PASSWORD e tente reenviar na tela de login.',
+                        f'{erro_envio} Configure RESEND_API_KEY ou MAIL_USERNAME/MAIL_PASSWORD e tente reenviar na tela de login.',
                         'error'
                     )
             else:
