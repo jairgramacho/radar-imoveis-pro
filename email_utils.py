@@ -47,6 +47,7 @@ def _enviar_via_resend(usuario_email, titulo, corpo):
         headers={
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
+            'User-Agent': 'radar-imoveis-pro/1.0',
         },
         method='POST',
     )
