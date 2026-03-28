@@ -153,6 +153,16 @@ def _reset_email_assincrono_habilitado():
     return os.getenv('PASSWORD_RESET_ASYNC', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _confirmacao_email_obrigatoria():
+    """Define se confirmação de email é obrigatória para permitir login."""
+    valor = os.getenv('REQUIRE_EMAIL_CONFIRMATION', '').strip().lower()
+    if valor in {'1', 'true', 'yes', 'on'}:
+        return True
+    if valor in {'0', 'false', 'no', 'off'}:
+        return False
+    return _smtp_configurado()
+
+
 def _enviar_email_com_status(funcao_envio, *args):
     """Executa envio de email e retorna (sucesso, mensagem_erro)."""
     if not _smtp_configurado():
@@ -482,7 +492,7 @@ def cadastro():
                 return redirect(url_for('cadastro'))
             
             # Criar novo usuário
-            exigir_confirmacao = _smtp_configurado()
+            exigir_confirmacao = _confirmacao_email_obrigatoria()
             novo_usuario = Usuario(
                 nome=nome,
                 email=email,
@@ -541,6 +551,12 @@ def login():
             usuario = Usuario.query.filter_by(email=email).first()
             
             if usuario and usuario.check_password(senha):
+                if not getattr(usuario, 'email_confirmado', True) and not _confirmacao_email_obrigatoria():
+                    usuario.email_confirmado = True
+                    if not getattr(usuario, 'confirmado_em', None):
+                        usuario.confirmado_em = datetime.utcnow()
+                    db.session.commit()
+
                 if not getattr(usuario, 'email_confirmado', True):
                     token_confirmacao = _gerar_token_email(usuario.email, 'confirmar-email')
                     link_confirmacao = _url_publica('confirmar_email', token=token_confirmacao)
