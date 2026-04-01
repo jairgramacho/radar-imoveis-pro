@@ -1,6 +1,7 @@
 import os
 import re
 import math
+import io
 from threading import Thread
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
@@ -11,6 +12,8 @@ from dotenv import load_dotenv
 from PIL import Image
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import pillow_heif
+import cloudinary
+import cloudinary.uploader
 from models import db, Usuario, Imovel, FotoImovel, Avaliacao, Mensagem, Notificacao
 
 load_dotenv()
@@ -38,6 +41,13 @@ def moeda_brl(valor):
 # Carregar configuração baseada em FLASK_ENV
 flask_env = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config)
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
+    secure=True,
+)
 
 # Validar produção
 if flask_env == 'production':
@@ -106,6 +116,36 @@ def _deve_executar_bootstrap_db():
     if override is not None:
         return override.strip().lower() in {'1', 'true', 'yes', 'on'}
     return flask_env != 'production'
+
+
+def _cloudinary_configurado():
+    """Retorna True quando as credenciais do Cloudinary estão configuradas."""
+    return all([
+        os.getenv('CLOUDINARY_CLOUD_NAME', '').strip(),
+        os.getenv('CLOUDINARY_API_KEY', '').strip(),
+        os.getenv('CLOUDINARY_API_SECRET', '').strip(),
+    ])
+
+
+def _foto_eh_url(valor):
+    """Identifica se o valor já é uma URL externa."""
+    texto = (valor or '').strip().lower()
+    return texto.startswith('http://') or texto.startswith('https://')
+
+
+def _foto_url(valor, external=False):
+    """Resolve URL de foto para arquivos locais e URLs externas."""
+    if not valor:
+        return url_for('static', filename='css/style.css', _external=external)
+    if _foto_eh_url(valor):
+        return valor
+    return url_for('static', filename='uploads/' + valor, _external=external)
+
+
+@app.context_processor
+def inject_template_helpers():
+    """Disponibiliza helpers globais para templates."""
+    return {'foto_url': _foto_url}
 
 
 # Criar tabelas automaticamente em desenvolvimento (ou quando explicitamente habilitado)
@@ -328,24 +368,50 @@ def processar_imagem(arquivo):
                 # Gerar nome em JPG
                 nome_sem_ext = nome_original.rsplit('.', 1)[0]
                 nome_novo = f"{timestamp}_{nome_sem_ext}.jpg"
+
+                if _cloudinary_configurado():
+                    buffer = io.BytesIO()
+                    imagem.save(buffer, 'JPEG', quality=85, optimize=True)
+                    buffer.seek(0)
+                    upload_result = cloudinary.uploader.upload(
+                        buffer,
+                        folder='radar-imoveis-pro',
+                        public_id=nome_novo.rsplit('.', 1)[0],
+                        resource_type='image',
+                        overwrite=False,
+                    )
+                    return upload_result.get('secure_url'), True
+
                 caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_novo)
-                
+
                 # Salvar como JPG
                 imagem.save(caminho, 'JPEG', quality=85, optimize=True)
-                
+
                 return nome_novo, True
             except Exception as e:
-                print(f"Erro ao converter HEIC: {str(e)}")
+                app.logger.warning('Erro ao converter HEIC: %s', str(e))
                 return None, False
         else:
-            # Para outros formatos, salvar normalmente
+            # Para outros formatos, enviar/salvar normalmente
             nome_novo = f"{timestamp}_{nome_original}"
+
+            if _cloudinary_configurado():
+                arquivo.stream.seek(0)
+                upload_result = cloudinary.uploader.upload(
+                    arquivo.stream,
+                    folder='radar-imoveis-pro',
+                    public_id=nome_novo.rsplit('.', 1)[0],
+                    resource_type='image',
+                    overwrite=False,
+                )
+                return upload_result.get('secure_url'), True
+
             caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_novo)
             arquivo.save(caminho)
             return nome_novo, True
     
     except Exception as e:
-        print(f"Erro ao processar imagem: {str(e)}")
+        app.logger.warning('Erro ao processar imagem: %s', str(e), exc_info=True)
         return None, False
 
 def get_usuario_logado():
@@ -897,15 +963,12 @@ def salvar():
         nome_foto_principal = None
         
         if arquivos and arquivos[0].filename:
-            # Usar primeira foto como principal
-            for idx, arq in enumerate(arquivos):
-                if arq and allowed_file(arq.filename):
-                    nome_arquivo, sucesso = processar_imagem(arq)
-                    
-                    if sucesso and nome_arquivo:
-                        # A primeira foto é a principal
-                        if idx == 0:
-                            nome_foto_principal = nome_arquivo
+            # Usar apenas a primeira foto como principal
+            arq_principal = arquivos[0]
+            if arq_principal and allowed_file(arq_principal.filename):
+                nome_arquivo, sucesso = processar_imagem(arq_principal)
+                if sucesso and nome_arquivo:
+                    nome_foto_principal = nome_arquivo
         
         # Converter valores numéricos
         quartos = int(f.get('quartos', 0)) if f.get('quartos') else None
@@ -932,8 +995,8 @@ def salvar():
         db.session.commit()
         
         # Adicionar fotos adicionais (as demais além da principal e converte HEIC)
-        for idx, arq in enumerate(arquivos):
-            if arq and idx > 0 and allowed_file(arq.filename):
+        for idx, arq in enumerate(arquivos[1:], start=1):
+            if arq and allowed_file(arq.filename):
                 nome_arquivo, sucesso = processar_imagem(arq)
                 
                 if sucesso and nome_arquivo:
@@ -999,7 +1062,7 @@ def deletar_imovel(id):
     
     try:
         # Deletar foto se existir
-        if imovel.foto:
+        if imovel.foto and not _foto_eh_url(imovel.foto):
             caminho_foto = os.path.join(app.config['UPLOAD_FOLDER'], imovel.foto)
             if os.path.exists(caminho_foto):
                 os.remove(caminho_foto)
@@ -1052,7 +1115,7 @@ def editar_imovel(id):
             if arq and arq.filename:
                 if allowed_file(arq.filename):
                     # Deletar foto antiga se existir
-                    if imovel.foto:
+                    if imovel.foto and not _foto_eh_url(imovel.foto):
                         caminho_foto = os.path.join(app.config['UPLOAD_FOLDER'], imovel.foto)
                         if os.path.exists(caminho_foto):
                             os.remove(caminho_foto)

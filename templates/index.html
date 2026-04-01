@@ -143,7 +143,7 @@
                             <!-- FOTO -->
                             <div class="position-relative overflow-hidden" style="height: 220px;">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
-                                    <img src="{{ url_for('static', filename='uploads/' + imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
+                                    <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
                                     <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
                                         <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
@@ -270,7 +270,7 @@
                         <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
                             <div class="position-relative overflow-hidden" style="height: 220px;">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
-                                    <img src="{{ url_for('static', filename='uploads/' + imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
+                                    <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
                                     <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
                                         <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>

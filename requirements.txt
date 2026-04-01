@@ -9,3 +9,4 @@ pillow-heif==0.7.1
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
 flask-limiter==3.5.0
+cloudinary==1.41.0

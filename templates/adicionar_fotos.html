@@ -50,7 +50,7 @@
                                     {% for foto in imovel.fotos %}
                                     <div class="col-md-4">
                                         <div class="card border-0 overflow-hidden">
-                                            <img src="{{ url_for('static', filename='uploads/' + foto.arquivo) }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                            <img src="{{ foto_url(foto.arquivo) }}" class="card-img-top" style="height: 150px; object-fit: cover;">
                                             <div class="card-body p-2 text-center">
                                                 <small class="text-muted">{{ foto.criado_em.strftime('%d/%m') }}</small>
                                             </div>

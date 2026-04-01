@@ -9,7 +9,7 @@
     <meta property="og:description" content="{{ descricao_meta }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:image" content="{% if imovel.foto %}{{ url_for('static', filename='uploads/' + imovel.foto, _external=True) }}{% else %}{{ url_for('static', filename='css/style.css', _external=True) }}{% endif %}">
+    <meta property="og:image" content="{% if imovel.foto %}{{ foto_url(imovel.foto, external=True) }}{% else %}{{ url_for('static', filename='css/style.css', _external=True) }}{% endif %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -42,7 +42,7 @@
                                 {% for arquivo_foto in todas_fotos %}
                                 <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
                                     <div class="position-relative overflow-hidden" style="height: 400px;">
-                                        <img src="{{ url_for('static', filename='uploads/' + arquivo_foto) }}" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto {{ loop.index }}" loading="{% if loop.index0 == 0 %}eager{% else %}lazy{% endif %}" decoding="async">
+                                        <img src="{{ foto_url(arquivo_foto) }}" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto {{ loop.index }}" loading="{% if loop.index0 == 0 %}eager{% else %}lazy{% endif %}" decoding="async">
                                         <span class="position-absolute bottom-0 end-0 badge bg-dark m-3">{{ loop.index }}/{{ todas_fotos|length }}</span>
                                     </div>
                                 </div>
@@ -79,7 +79,7 @@
                         <div class="row g-2">
                             {% for arquivo_foto in todas_fotos %}
                             <div class="col-4 col-md-3">
-                                <img src="{{ url_for('static', filename='uploads/' + arquivo_foto) }}" 
+                                  <img src="{{ foto_url(arquivo_foto) }}" 
                                      alt="Foto {{ loop.index }}" 
                                      class="img-thumbnail w-100" 
                                      loading="lazy"

@@ -140,7 +140,7 @@
                                 <div class="alert alert-info mb-3">
                                     <i class="fas fa-image me-2"></i>
                                     <strong>Foto atual:</strong>
-                                    <img src="{{ url_for('static', filename=('uploads/' + imovel.foto)) }}" alt="Foto atual" class="img-thumbnail mt-2" style="max-width: 200px;">
+                                    <img src="{{ foto_url(imovel.foto) }}" alt="Foto atual" class="img-thumbnail mt-2" style="max-width: 200px;">
                                 </div>
                                 {% endif %}
                                 <div class="input-group">
