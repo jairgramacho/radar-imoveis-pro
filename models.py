@@ -33,9 +33,9 @@ class Usuario(db.Model):
         return check_password_hash(self.senha, senha)
     
     def get_rating(self):
-        """Calcula a média de avaliações"""
+        """Calcula a média de avaliações. Novos usuários começam com 4.0 de rating."""
         if not self.avaliacoes_recebidas:
-            return 0
+            return 4.0
         total = sum(a.estrelas for a in self.avaliacoes_recebidas)
         return round(total / len(self.avaliacoes_recebidas), 1)
     
