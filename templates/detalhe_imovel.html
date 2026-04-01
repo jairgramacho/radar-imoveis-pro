@@ -201,8 +201,14 @@
 
                         <hr style="border-color: rgba(255,255,255,0.3);">
 
-                        <!-- BOTÃO WHATSAPP -->
-                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-3">
+                        <!-- BOTÕES DE CONTATO -->
+                        {% if usuario and usuario.id != imovel.usuario_id %}
+                        <a href="{{ url_for('conversa', usuario_id=imovel.usuario_id) }}" class="btn btn-primary w-100 mt-3">
+                            <i class="fas fa-message me-2"></i>Enviar Mensagem
+                        </a>
+                        {% endif %}
+                        
+                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
                             <i class="fab fa-whatsapp me-2"></i>Contatar via WhatsApp
                         </a>
                         
