@@ -13,6 +13,96 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .mini-chat-modal .modal-dialog {
+            max-width: 420px;
+        }
+
+        .mini-chat-modal .modal-content {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #dbe2ef;
+        }
+
+        .mini-chat-header {
+            background: linear-gradient(135deg, #2d4d90 0%, #3f66bd 100%);
+            color: #fff;
+        }
+
+        .mini-chat-body {
+            height: 360px;
+            overflow-y: auto;
+            background: #f5f8ff;
+            padding: 0.85rem;
+        }
+
+        .mini-msg-row {
+            display: flex;
+            margin-bottom: 0.65rem;
+        }
+
+        .mini-msg-row.me {
+            justify-content: flex-end;
+        }
+
+        .mini-msg-bubble {
+            max-width: 78%;
+            border-radius: 14px;
+            padding: 0.55rem 0.75rem;
+            font-size: 0.92rem;
+            line-height: 1.3;
+            word-break: break-word;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .mini-msg-row.me .mini-msg-bubble {
+            background: linear-gradient(135deg, #f39233, #ff7a00);
+            color: #fff;
+            border-bottom-right-radius: 5px;
+        }
+
+        .mini-msg-row.other .mini-msg-bubble {
+            background: #fff;
+            color: #253253;
+            border: 1px solid #dfe6f4;
+            border-bottom-left-radius: 5px;
+        }
+
+        .mini-msg-meta {
+            margin-top: 0.2rem;
+            font-size: 0.72rem;
+            color: #7c89a2;
+            text-align: right;
+        }
+
+        .mini-chat-footer {
+            background: #fff;
+            border-top: 1px solid #e4eaf5;
+            padding: 0.7rem;
+        }
+
+        .mini-chat-input {
+            border-radius: 999px;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+        }
+
+        .mini-chat-send {
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .mini-chat-empty {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #7785a1;
+            height: 100%;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
 </head>
 <body>
     <!-- NAVBAR -->
@@ -202,8 +292,12 @@
 
                         <!-- BOTÕES DE CONTATO -->
                         {% if usuario and usuario.id != imovel.usuario_id %}
-                        <a href="{{ url_for('conversa', usuario_id=imovel.usuario_id) }}" class="btn btn-primary w-100 mt-3">
+                        <button type="button" class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#miniChatModal">
                             <i class="fas fa-message me-2"></i>Enviar Mensagem
+                        </button>
+                        {% elif not usuario %}
+                        <a href="{{ url_for('login') }}" class="btn btn-primary w-100 mt-3">
+                            <i class="fas fa-right-to-bracket me-2"></i>Entrar para mandar mensagem
                         </a>
                         {% endif %}
                         
@@ -226,9 +320,147 @@
         </div>
     </div>
 
+    {% if usuario and usuario.id != imovel.usuario_id %}
+    <div class="modal fade mini-chat-modal" id="miniChatModal" tabindex="-1" aria-labelledby="miniChatLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header mini-chat-header">
+                    <h5 class="modal-title" id="miniChatLabel">
+                        <i class="fas fa-comments me-2"></i>Conversa com {{ imovel.anunciante.nome }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="mini-chat-body" id="miniChatBody"></div>
+                <div class="mini-chat-footer">
+                    <form id="miniChatForm" class="d-flex gap-2" autocomplete="off">
+                        <input id="miniChatInput" type="text" name="mensagem" class="form-control mini-chat-input" placeholder="Digite sua mensagem" maxlength="1000" autocomplete="off" required>
+                        <button type="submit" class="btn btn-primary mini-chat-send">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- FOOTER -->
 
     {% include '_footer.html' %}
+
+    {% if usuario and usuario.id != imovel.usuario_id %}
+    <script>
+        const miniChatBody = document.getElementById('miniChatBody');
+        const miniChatForm = document.getElementById('miniChatForm');
+        const miniChatInput = document.getElementById('miniChatInput');
+        const miniChatModalEl = document.getElementById('miniChatModal');
+        const targetUserId = Number('{{ imovel.usuario_id }}');
+        let chatPolling = null;
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text || '').replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function renderMensagens(mensagens) {
+            if (!mensagens.length) {
+                miniChatBody.innerHTML = '<div class="mini-chat-empty"><i class="fas fa-comment-dots mb-2" style="font-size:1.4rem"></i><p class="mb-0">Envie a primeira mensagem.</p></div>';
+                return;
+            }
+
+            let lastMineIndex = -1;
+            mensagens.forEach((msg, idx) => {
+                if (msg.enviada_por_mim) {
+                    lastMineIndex = idx;
+                }
+            });
+
+            miniChatBody.innerHTML = mensagens.map((msg, idx) => {
+                const classe = msg.enviada_por_mim ? 'me' : 'other';
+                let leitura = '';
+                if (msg.enviada_por_mim && idx === lastMineIndex) {
+                    leitura = msg.lida ? ' • Lida' : ' • Entregue';
+                }
+                return `
+                    <div class="mini-msg-row ${classe}">
+                        <div>
+                            <div class="mini-msg-bubble">${escapeHtml(msg.mensagem)}</div>
+                            <div class="mini-msg-meta">${msg.hora}${leitura}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            miniChatBody.scrollTop = miniChatBody.scrollHeight;
+        }
+
+        async function carregarConversa() {
+            try {
+                const response = await fetch(`/api/conversa/${targetUserId}`);
+                if (!response.ok) {
+                    return;
+                }
+                const data = await response.json();
+                if (data.ok) {
+                    renderMensagens(data.mensagens || []);
+                }
+            } catch (_) {
+                // Falha silenciosa para evitar poluir a UX.
+            }
+        }
+
+        miniChatForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const texto = miniChatInput.value.trim();
+            if (!texto) {
+                return;
+            }
+
+            try {
+                const body = new URLSearchParams();
+                body.set('mensagem', texto);
+                const response = await fetch(`/api/enviar-mensagem/${targetUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: body.toString()
+                });
+                if (response.ok) {
+                    miniChatInput.value = '';
+                    miniChatInput.focus();
+                    await carregarConversa();
+                }
+            } catch (_) {
+                // Mantem experiencia sem alertas intrusivos.
+            }
+        });
+
+        miniChatModalEl.addEventListener('shown.bs.modal', async function() {
+            miniChatInput.value = '';
+            miniChatInput.focus();
+            await carregarConversa();
+            if (chatPolling) {
+                clearInterval(chatPolling);
+            }
+            chatPolling = setInterval(carregarConversa, 4000);
+        });
+
+        miniChatModalEl.addEventListener('hidden.bs.modal', function() {
+            miniChatInput.value = '';
+            if (chatPolling) {
+                clearInterval(chatPolling);
+                chatPolling = null;
+            }
+        });
+    </script>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

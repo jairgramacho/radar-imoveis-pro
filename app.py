@@ -2,6 +2,7 @@ import os
 import re
 import math
 import io
+import importlib
 from threading import Thread
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
@@ -12,8 +13,6 @@ from dotenv import load_dotenv
 from PIL import Image
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import pillow_heif
-import cloudinary
-import cloudinary.uploader
 from models import db, Usuario, Imovel, FotoImovel, Avaliacao, Mensagem, Notificacao
 
 load_dotenv()
@@ -41,13 +40,6 @@ def moeda_brl(valor):
 # Carregar configuração baseada em FLASK_ENV
 flask_env = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config)
-
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
-    api_key=os.getenv('CLOUDINARY_API_KEY', ''),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
-    secure=True,
-)
 
 # Validar produção
 if flask_env == 'production':
@@ -125,6 +117,26 @@ def _cloudinary_configurado():
         os.getenv('CLOUDINARY_API_KEY', '').strip(),
         os.getenv('CLOUDINARY_API_SECRET', '').strip(),
     ])
+
+
+def _cloudinary_uploader():
+    """Carrega uploader do Cloudinary sob demanda para evitar hard dependency em dev."""
+    if not _cloudinary_configurado():
+        return None
+
+    try:
+        cloudinary_module = importlib.import_module('cloudinary')
+        uploader_module = importlib.import_module('cloudinary.uploader')
+        cloudinary_module.config(
+            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
+            api_key=os.getenv('CLOUDINARY_API_KEY', ''),
+            api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
+            secure=True,
+        )
+        return uploader_module
+    except Exception as e:
+        app.logger.warning('Cloudinary indisponível no ambiente: %s', str(e))
+        return None
 
 
 def _foto_eh_url(valor):
@@ -369,11 +381,12 @@ def processar_imagem(arquivo):
                 nome_sem_ext = nome_original.rsplit('.', 1)[0]
                 nome_novo = f"{timestamp}_{nome_sem_ext}.jpg"
 
-                if _cloudinary_configurado():
+                uploader = _cloudinary_uploader()
+                if uploader:
                     buffer = io.BytesIO()
                     imagem.save(buffer, 'JPEG', quality=85, optimize=True)
                     buffer.seek(0)
-                    upload_result = cloudinary.uploader.upload(
+                    upload_result = uploader.upload(
                         buffer,
                         folder='radar-imoveis-pro',
                         public_id=nome_novo.rsplit('.', 1)[0],
@@ -395,9 +408,10 @@ def processar_imagem(arquivo):
             # Para outros formatos, enviar/salvar normalmente
             nome_novo = f"{timestamp}_{nome_original}"
 
-            if _cloudinary_configurado():
+            uploader = _cloudinary_uploader()
+            if uploader:
                 arquivo.stream.seek(0)
-                upload_result = cloudinary.uploader.upload(
+                upload_result = uploader.upload(
                     arquivo.stream,
                     folder='radar-imoveis-pro',
                     public_id=nome_novo.rsplit('.', 1)[0],
@@ -1349,13 +1363,86 @@ def enviar_mensagem(usuario_id):
         
         db.session.add(msg)
         db.session.commit()
-        
-        flash('Mensagem enviada!', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao enviar mensagem: {str(e)}', 'error')
     
     return redirect(url_for('conversa', usuario_id=usuario_id))
+
+
+@app.route('/api/conversa/<int:usuario_id>', methods=['GET'])
+def api_conversa(usuario_id):
+    """Retorna mensagens da conversa em JSON e marca mensagens recebidas como lidas."""
+    usuario = get_usuario_logado()
+    if not usuario:
+        return jsonify({'ok': False, 'erro': 'nao_autenticado'}), 401
+
+    Usuario.query.get_or_404(usuario_id)
+
+    mensagens = Mensagem.query.filter(
+        ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == usuario_id)) |
+        ((Mensagem.remetente_id == usuario_id) & (Mensagem.destinatario_id == usuario.id))
+    ).order_by(Mensagem.criado_em.asc()).all()
+
+    alterou_leitura = False
+    for msg in mensagens:
+        if msg.destinatario_id == usuario.id and not msg.lida:
+            msg.lida = True
+            alterou_leitura = True
+
+    if alterou_leitura:
+        db.session.commit()
+
+    payload = []
+    for msg in mensagens:
+        payload.append({
+            'id': msg.id,
+            'mensagem': msg.mensagem,
+            'enviada_por_mim': msg.remetente_id == usuario.id,
+            'lida': bool(msg.lida),
+            'hora': msg.criado_em.strftime('%H:%M'),
+            'data': msg.criado_em.strftime('%d/%m/%Y %H:%M'),
+        })
+
+    return jsonify({'ok': True, 'mensagens': payload})
+
+
+@app.route('/api/enviar-mensagem/<int:usuario_id>', methods=['POST'])
+def api_enviar_mensagem(usuario_id):
+    """Envia mensagem em JSON para o mini chat."""
+    usuario = get_usuario_logado()
+    if not usuario:
+        return jsonify({'ok': False, 'erro': 'nao_autenticado'}), 401
+
+    if usuario.id == usuario_id:
+        return jsonify({'ok': False, 'erro': 'destinatario_invalido'}), 400
+
+    Usuario.query.get_or_404(usuario_id)
+
+    texto = ''
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+        texto = (payload.get('mensagem') or '').strip()
+    else:
+        texto = request.form.get('mensagem', '').strip()
+
+    if not texto:
+        return jsonify({'ok': False, 'erro': 'mensagem_vazia'}), 400
+
+    try:
+        msg = Mensagem(
+            remetente_id=usuario.id,
+            destinatario_id=usuario_id,
+            titulo=f"Mensagem de {usuario.nome}",
+            mensagem=texto,
+        )
+        db.session.add(msg)
+        db.session.commit()
+        return jsonify({'ok': True, 'id': msg.id})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.warning('Erro ao enviar mensagem via API: %s', str(e), exc_info=True)
+        return jsonify({'ok': False, 'erro': 'falha_envio'}), 500
 
 # ============================================
 # AVALIAÇÕES
