@@ -41,24 +41,19 @@
             margin-bottom: 0.65rem;
         }
 
-        .mini-msg-content {
-            width: clamp(220px, 62%, 360px);
-        }
-
         .mini-msg-row.me {
             justify-content: flex-end;
         }
 
         .mini-msg-bubble {
-            width: 100%;
+            max-width: 88%;
             border-radius: 14px;
             padding: 0.55rem 0.75rem;
             font-size: 0.92rem;
             line-height: 1.3;
-            word-break: normal;
-            overflow-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: anywhere;
             box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
-            text-align: left;
         }
 
         .mini-msg-row.me .mini-msg-bubble {
@@ -395,7 +390,7 @@
                 }
                 return `
                     <div class="mini-msg-row ${classe}">
-                        <div class="mini-msg-content">
+                        <div>
                             <div class="mini-msg-bubble">${escapeHtml(msg.mensagem)}</div>
                             <div class="mini-msg-meta">${msg.hora}${leitura}</div>
                         </div>
