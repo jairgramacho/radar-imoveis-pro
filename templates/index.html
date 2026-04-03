@@ -137,7 +137,7 @@
 
             <div class="row g-4">
                 {% for imovel in imoveis %}
-                <div class="col-md-6 col-lg-3">
+                <div class="col-md-6 col-lg-4">
                     <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
                         <div class="card card-imovel h-100 shadow-sm overflow-hidden">
                             <!-- FOTO -->
@@ -254,7 +254,7 @@
 
             <div class="row g-4">
                 {% for imovel in oportunidades %}
-                <div class="col-md-6 col-lg-3">
+                <div class="col-md-6 col-lg-4">
                     <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
                         <div class="card card-imovel h-100 shadow-sm overflow-hidden">
                             <div class="position-relative overflow-hidden card-imovel-media">

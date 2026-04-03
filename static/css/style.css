@@ -114,12 +114,11 @@ a:hover {
     cursor: pointer;
     animation: fadeSlideUp 0.35s ease;
     min-height: 100%;
-    border: 2px solid var(--laranja);
+    border: 0 !important;
 }
 
 .card-imovel:hover {
     transform: translateY(-8px);
-    border-color: #ff7a00;
     box-shadow: var(--sombra-forte) !important;
 }
 
@@ -189,12 +188,22 @@ a:hover {
 }
 
 .imovel-card-link {
+    display: block;
     text-decoration: none;
     color: inherit;
+    border: 3px solid var(--laranja);
+    border-radius: 14px;
+    padding: 2px;
+    background-color: rgba(243, 146, 51, 0.08);
 }
 
 .imovel-card-link:hover {
     color: inherit;
+    border-color: #ff7a00;
+}
+
+.imovel-card-link .card-imovel {
+    border-radius: 10px;
 }
 
 @media (max-width: 576px) {
