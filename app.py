@@ -1278,7 +1278,7 @@ def dashboard():
 
 @app.route('/chat')
 def chat():
-    """Lista conversas do usuário"""
+    """Inbox de conversas com painel da conversa selecionada."""
     usuario = get_usuario_logado()
     
     if not usuario:
@@ -1306,36 +1306,49 @@ def chat():
     
     # Ordenar pela última mensagem
     conversas_lista = sorted(conversas.values(), key=lambda x: x['ultima_msg'].criado_em, reverse=True)
-    
-    return render_template('chat.html', usuario=usuario, conversas=conversas_lista)
+
+    usuario_id_selecionado = request.args.get('usuario_id', type=int)
+    conversa_ativa = None
+    mensagens_ativas = []
+
+    if usuario_id_selecionado:
+        conversa_ativa = Usuario.query.filter(Usuario.id == usuario_id_selecionado, Usuario.id != usuario.id).first()
+
+    if not conversa_ativa and conversas_lista:
+        conversa_ativa = conversas_lista[0]['outro_usuario']
+
+    if conversa_ativa:
+        mensagens_ativas = Mensagem.query.filter(
+            ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == conversa_ativa.id)) |
+            ((Mensagem.remetente_id == conversa_ativa.id) & (Mensagem.destinatario_id == usuario.id))
+        ).order_by(Mensagem.criado_em.asc()).all()
+
+        alterou_leitura = False
+        for msg in mensagens_ativas:
+            if msg.destinatario_id == usuario.id and not msg.lida:
+                msg.lida = True
+                alterou_leitura = True
+        if alterou_leitura:
+            db.session.commit()
+
+        # Recalcula badge da conversa ativa após marcar como lida
+        for conversa in conversas_lista:
+            if conversa['outro_usuario'].id == conversa_ativa.id:
+                conversa['nao_lidas'] = 0
+                break
+
+    return render_template(
+        'chat.html',
+        usuario=usuario,
+        conversas=conversas_lista,
+        conversa_ativa=conversa_ativa,
+        mensagens_ativas=mensagens_ativas,
+    )
 
 @app.route('/chat/<int:usuario_id>')
 def conversa(usuario_id):
-    """Conversa com um usuário específico"""
-    usuario = get_usuario_logado()
-    
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    outro_usuario = Usuario.query.get_or_404(usuario_id)
-    
-    # Buscar mensagens entre os dois
-    mensagens = Mensagem.query.filter(
-        ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == usuario_id)) |
-        ((Mensagem.remetente_id == usuario_id) & (Mensagem.destinatario_id == usuario.id))
-    ).order_by(Mensagem.criado_em.asc()).all()
-    
-    # Marcar como lidas
-    for msg in mensagens:
-        if msg.destinatario_id == usuario.id and not msg.lida:
-            msg.lida = True
-    db.session.commit()
-    
-    return render_template('conversa.html', 
-                          usuario=usuario, 
-                          outro_usuario=outro_usuario,
-                          mensagens=mensagens)
+    """Compatibilidade: redireciona conversa para o inbox em /chat."""
+    return redirect(url_for('chat', usuario_id=usuario_id))
 
 @app.route('/enviar-mensagem/<int:usuario_id>', methods=['POST'])
 def enviar_mensagem(usuario_id):
@@ -1351,7 +1364,7 @@ def enviar_mensagem(usuario_id):
     
     if not texto:
         flash('Mensagem não pode estar vazia!', 'error')
-        return redirect(url_for('conversa', usuario_id=usuario_id))
+        return redirect(url_for('chat', usuario_id=usuario_id))
     
     try:
         msg = Mensagem(
@@ -1367,7 +1380,7 @@ def enviar_mensagem(usuario_id):
         db.session.rollback()
         flash(f'Erro ao enviar mensagem: {str(e)}', 'error')
     
-    return redirect(url_for('conversa', usuario_id=usuario_id))
+    return redirect(url_for('chat', usuario_id=usuario_id))
 
 
 @app.route('/api/conversa/<int:usuario_id>', methods=['GET'])
