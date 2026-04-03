@@ -156,8 +156,23 @@ def _foto_url(valor, external=False):
 
 @app.context_processor
 def inject_template_helpers():
-    """Disponibiliza helpers globais para templates."""
-    return {'foto_url': _foto_url}
+    """Disponibiliza helpers e contadores globais para templates."""
+    mensagens_nao_lidas = 0
+    usuario_id = session.get('usuario_id')
+
+    if usuario_id:
+        try:
+            mensagens_nao_lidas = Mensagem.query.filter_by(
+                destinatario_id=usuario_id,
+                lida=False,
+            ).count()
+        except Exception:
+            mensagens_nao_lidas = 0
+
+    return {
+        'foto_url': _foto_url,
+        'mensagens_nao_lidas': mensagens_nao_lidas,
+    }
 
 
 # Criar tabelas automaticamente em desenvolvimento (ou quando explicitamente habilitado)
