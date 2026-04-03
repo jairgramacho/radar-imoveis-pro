@@ -137,11 +137,11 @@
 
             <div class="row g-4">
                 {% for imovel in imoveis %}
-                <div class="col-md-6 col-lg-4 col-xxl-3">
-                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link" style="cursor: pointer;">
-                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="col-md-6 col-xl-4">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
+                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden">
                             <!-- FOTO -->
-                            <div class="position-relative overflow-hidden" style="height: 220px;">
+                            <div class="position-relative overflow-hidden card-imovel-media">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
                                     <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
@@ -162,19 +162,19 @@
                                 <!-- PREÇO -->
                                 <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
                                 {% if imovel.eh_oportunidade and imovel.preco_medio_regiao %}
-                                <p class="small text-success fw-semibold mb-2">
+                                <p class="card-imovel-note text-success fw-semibold mb-2">
                                     {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
                                 </p>
-                                <p class="small text-muted mb-2">
+                                <p class="card-imovel-note text-muted mb-2">
                                     Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
                                 </p>
                                 {% endif %}
                                 <!-- TIPO -->
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-imovel-type text-muted mb-2">
                                     <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
                                 </p>
                                 <!-- LOCALIZAÇÃO -->
-                                <p class="card-text small mb-2">
+                                <p class="card-imovel-location mb-2">
                                     <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                     {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
                                 </p>
@@ -206,17 +206,12 @@
 
                                 <!-- DESCRIÇÃO -->
                                 {% if imovel.descricao %}
-                                <p class="card-text small text-muted mb-3" style="min-height: 40px;">
+                                <p class="card-imovel-desc text-muted mb-0">
                                     {{ imovel.descricao[:80] }}{% if imovel.descricao|length > 80 %}...{% endif %}
                                 </p>
                                 {% endif %}
                             </div>
                         </div>
-                    </a>
-                    
-                    <!-- BOTÃO WHATSAPP (fora do link) -->
-                    <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
-                        <i class="fab fa-whatsapp me-2"></i>Contatar
                     </a>
                 </div>
                 {% endfor %}
@@ -265,10 +260,10 @@
 
             <div class="row g-4">
                 {% for imovel in oportunidades %}
-                <div class="col-md-6 col-lg-4 col-xxl-3">
-                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link" style="cursor: pointer;">
-                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                            <div class="position-relative overflow-hidden" style="height: 220px;">
+                <div class="col-md-6 col-xl-4">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
+                        <div class="card card-imovel h-100 shadow-sm border-0 overflow-hidden">
+                            <div class="position-relative overflow-hidden card-imovel-media">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
                                     <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
@@ -283,25 +278,21 @@
 
                             <div class="card-body">
                                 <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
-                                <p class="small text-success fw-semibold mb-2">
+                                <p class="card-imovel-note text-success fw-semibold mb-2">
                                     {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
                                 </p>
-                                <p class="small text-muted mb-2">
+                                <p class="card-imovel-note text-muted mb-2">
                                     Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
                                 </p>
-                                <p class="card-text small text-muted mb-2">
+                                <p class="card-imovel-type text-muted mb-2">
                                     <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
                                 </p>
-                                <p class="card-text small mb-2">
+                                <p class="card-imovel-location mb-0">
                                     <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                     {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
                                 </p>
                             </div>
                         </div>
-                    </a>
-
-                    <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
-                        <i class="fab fa-whatsapp me-2"></i>Contatar
                     </a>
                 </div>
                 {% endfor %}

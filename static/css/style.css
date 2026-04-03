@@ -113,6 +113,7 @@ a:hover {
     border-radius: 12px;
     cursor: pointer;
     animation: fadeSlideUp 0.35s ease;
+    min-height: 100%;
 }
 
 .card-imovel:hover {
@@ -122,6 +123,43 @@ a:hover {
 
 .card-imovel .card-img-top {
     border-radius: 12px 12px 0 0;
+}
+
+.card-imovel-media {
+    height: 210px;
+}
+
+.card-imovel .card-body {
+    padding: 1rem 1rem 0.95rem;
+}
+
+.card-imovel .card-title {
+    font-size: 1.32rem;
+    line-height: 1.2;
+    margin-bottom: 0.6rem;
+}
+
+.card-imovel-note {
+    font-size: 0.95rem;
+    line-height: 1.35;
+}
+
+.card-imovel-type,
+.card-imovel-location {
+    font-size: 1rem;
+    line-height: 1.35;
+    color: var(--texto);
+}
+
+.card-imovel-desc {
+    font-size: 0.96rem;
+    line-height: 1.45;
+    min-height: 44px;
+}
+
+.card-imovel .badge-soft {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.6rem;
 }
 
 .badge-negocio {
@@ -155,6 +193,23 @@ a:hover {
 
 .imovel-card-link:hover {
     color: inherit;
+}
+
+@media (max-width: 576px) {
+    .card-imovel-media {
+        height: 190px;
+    }
+
+    .card-imovel .card-title {
+        font-size: 1.22rem;
+    }
+
+    .card-imovel-type,
+    .card-imovel-location,
+    .card-imovel-desc,
+    .card-imovel-note {
+        font-size: 0.94rem;
+    }
 }
 
 /* ============================================
