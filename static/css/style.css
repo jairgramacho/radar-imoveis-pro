@@ -114,12 +114,12 @@ a:hover {
     cursor: pointer;
     animation: fadeSlideUp 0.35s ease;
     min-height: 100%;
-    border: 2px solid rgba(243, 146, 51, 0.45);
+    border: 2px solid var(--laranja);
 }
 
 .card-imovel:hover {
     transform: translateY(-8px);
-    border-color: var(--laranja);
+    border-color: #ff7a00;
     box-shadow: var(--sombra-forte) !important;
 }
 
