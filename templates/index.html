@@ -180,28 +180,22 @@
                                 </p>
 
                                 <!-- CARACTERÍSTICAS -->
-                                <div class="row g-2 mb-3">
-                                    {% if imovel.quartos %}
-                                    <div class="col-6">
+                                <div class="row g-2 mb-3 card-imovel-features">
+                                    <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos }}
+                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos if imovel.quartos else '-' }}
                                         </span>
                                     </div>
-                                    {% endif %}
-                                    {% if imovel.vagas %}
-                                    <div class="col-6">
+                                    <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas }}
+                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas if imovel.vagas else '-' }}
                                         </span>
                                     </div>
-                                    {% endif %}
-                                    {% if imovel.area %}
-                                    <div class="col-6">
+                                    <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-ruler me-1"></i>{{ imovel.area }} m²
+                                            <i class="fas fa-ruler me-1"></i>{% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
                                         </span>
                                     </div>
-                                    {% endif %}
                                 </div>
 
                             </div>
@@ -285,6 +279,24 @@
                                     <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                     {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
                                 </p>
+
+                                <div class="row g-2 mt-2 card-imovel-features">
+                                    <div class="col-4">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos if imovel.quartos else '-' }}
+                                        </span>
+                                    </div>
+                                    <div class="col-4">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas if imovel.vagas else '-' }}
+                                        </span>
+                                    </div>
+                                    <div class="col-4">
+                                        <span class="badge badge-soft w-100">
+                                            <i class="fas fa-ruler me-1"></i>{% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </a>
