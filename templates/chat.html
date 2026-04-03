@@ -161,14 +161,20 @@
             justify-content: flex-end;
         }
 
+        .ig-msg-content {
+            width: clamp(240px, 62%, 560px);
+        }
+
         .ig-bubble {
-            max-width: min(72%, 560px);
+            width: 100%;
             padding: 0.58rem 0.8rem;
             border-radius: 15px;
             line-height: 1.3;
             font-size: 0.93rem;
-            word-break: break-word;
-            overflow-wrap: anywhere;
+            word-break: normal;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            text-align: left;
             box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
         }
 
@@ -305,7 +311,7 @@
 
                     {% for msg in mensagens_ativas %}
                     <div class="ig-msg-row {% if msg.remetente_id == usuario.id %}mine{% else %}other{% endif %}">
-                        <div>
+                        <div class="ig-msg-content">
                             <div class="ig-bubble">{{ msg.mensagem }}</div>
                             <div class="ig-time-msg">{{ msg.criado_em.strftime('%H:%M') }}</div>
                         </div>
