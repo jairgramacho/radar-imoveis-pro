@@ -66,6 +66,19 @@
             </div>
         </div>
 
+        {% if limite_anuncios %}
+        <div class="alert {% if limite_anuncios.atingiu_limite %}alert-warning{% else %}alert-info{% endif %} mb-4" role="alert">
+            <i class="fas fa-layer-group me-2"></i>
+            <strong>Plano {{ limite_anuncios.plano|capitalize }}:</strong>
+            {{ limite_anuncios.usados }} de {{ limite_anuncios.limite }} anúncios ativos utilizados.
+            {% if limite_anuncios.atingiu_limite %}
+            Você chegou ao limite atual. Desative anúncios ou atualize seu plano.
+            {% else %}
+            Você ainda pode publicar {{ limite_anuncios.disponiveis }} anúncio(s).
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="row g-4">
             <!-- ÚLTIMOS ANÚNCIOS -->
             <div class="col-lg-6">

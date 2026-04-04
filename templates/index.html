@@ -337,6 +337,19 @@
             </div>
             {% else %}
 
+            {% if limite_anuncios %}
+            <div class="alert {% if limite_anuncios.atingiu_limite %}alert-warning{% else %}alert-info{% endif %} mb-4" role="alert">
+                <i class="fas fa-layer-group me-2"></i>
+                <strong>Plano {{ limite_anuncios.plano|capitalize }}:</strong>
+                {{ limite_anuncios.usados }} de {{ limite_anuncios.limite }} anúncios ativos em uso.
+                {% if limite_anuncios.atingiu_limite %}
+                Desative um anúncio para liberar vaga ou faça upgrade para publicar mais.
+                {% else %}
+                Restam {{ limite_anuncios.disponiveis }} vaga(s) para novos anúncios.
+                {% endif %}
+            </div>
+            {% endif %}
+
             <div class="row">
                 <div class="col-lg-8">
                     <div class="card shadow">
@@ -445,7 +458,7 @@
 
                                 <!-- BOTÃO SUBMIT -->
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary btn-lg">
+                                    <button type="submit" class="btn btn-primary btn-lg" {% if limite_anuncios and limite_anuncios.atingiu_limite %}disabled{% endif %}>
                                         <i class="fas fa-check-circle me-2"></i>Publicar Anúncio
                                     </button>
                                 </div>
@@ -480,7 +493,7 @@
                                 <li>✓ Alcance amplo de interessados</li>
                                 <li>✓ Contato direto via WhatsApp</li>
                                 <li>✓ Anúncios destacados</li>
-                                <li>✓ 100% gratuito</li>
+                                <li>✓ Planos com limite escalável</li>
                             </ul>
                         </div>
                     </div>

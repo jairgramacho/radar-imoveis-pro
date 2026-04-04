@@ -95,6 +95,30 @@ def _garantir_colunas_usuario():
         else:
             comandos.append("ALTER TABLE usuarios ADD COLUMN confirmado_em TIMESTAMP")
 
+    if 'plano' not in colunas:
+        if dialect == 'sqlite':
+            comandos.append("ALTER TABLE usuarios ADD COLUMN plano VARCHAR(20) NOT NULL DEFAULT 'free'")
+        else:
+            comandos.append("ALTER TABLE usuarios ADD COLUMN plano VARCHAR(20) NOT NULL DEFAULT 'free'")
+
+    if 'limite_anuncios' not in colunas:
+        if dialect == 'sqlite':
+            comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
+        else:
+            comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
+
+    if 'status_assinatura' not in colunas:
+        if dialect == 'sqlite':
+            comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
+        else:
+            comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
+
+    if 'assinatura_renova_em' not in colunas:
+        if dialect == 'sqlite':
+            comandos.append("ALTER TABLE usuarios ADD COLUMN assinatura_renova_em DATETIME")
+        else:
+            comandos.append("ALTER TABLE usuarios ADD COLUMN assinatura_renova_em TIMESTAMP")
+
     for comando in comandos:
         db.session.execute(text(comando))
 
@@ -184,6 +208,44 @@ if _deve_executar_bootstrap_db():
 OPORTUNIDADE_DESCONTO_MINIMO = 0.10
 OPORTUNIDADE_AMOSTRA_MINIMA = 5
 ITENS_POR_PAGINA = 12
+LIMITES_ANUNCIOS_POR_PLANO = {
+    'free': 3,
+    'pro': 20,
+    'empresa': 100,
+}
+
+
+def _normalizar_plano(plano):
+    plano_normalizado = (plano or 'free').strip().lower()
+    return plano_normalizado if plano_normalizado in LIMITES_ANUNCIOS_POR_PLANO else 'free'
+
+
+def _limite_anuncios_usuario(usuario):
+    if not usuario:
+        return LIMITES_ANUNCIOS_POR_PLANO['free']
+
+    limite_custom = getattr(usuario, 'limite_anuncios', None)
+    if isinstance(limite_custom, int) and limite_custom > 0:
+        return limite_custom
+
+    return LIMITES_ANUNCIOS_POR_PLANO[_normalizar_plano(getattr(usuario, 'plano', 'free'))]
+
+
+def _contar_anuncios_ativos(usuario_id):
+    return Imovel.query.filter_by(usuario_id=usuario_id, ativo=True).count()
+
+
+def _resumo_limite_anuncios(usuario):
+    usados = _contar_anuncios_ativos(usuario.id)
+    limite = _limite_anuncios_usuario(usuario)
+    disponiveis = max(0, limite - usados)
+    return {
+        'plano': _normalizar_plano(getattr(usuario, 'plano', 'free')),
+        'usados': usados,
+        'limite': limite,
+        'disponiveis': disponiveis,
+        'atingiu_limite': usados >= limite,
+    }
 
 
 def _smtp_configurado():
@@ -887,6 +949,7 @@ def configuracoes_conta():
 def index():
     """Página principal com abas de busca e anúncio"""
     usuario = get_usuario_logado()
+    limite_anuncios = _resumo_limite_anuncios(usuario) if usuario else None
     aba = request.args.get('aba', 'buscar')
     filtros = request.args.to_dict()
     pagina = request.args.get('pagina', 1, type=int)
@@ -958,6 +1021,7 @@ def index():
                          pagina_atual=pagina_corrente,
                          total_paginas=total_paginas,
                          links_paginacao=links_paginacao,
+                         limite_anuncios=limite_anuncios,
                          usuario=usuario)
 
 @app.route('/salvar', methods=['POST'])
@@ -969,6 +1033,16 @@ def salvar():
     if not usuario:
         flash('Você precisa estar logado para anunciar!', 'error')
         return redirect(url_for('login'))
+
+    resumo_limite = _resumo_limite_anuncios(usuario)
+    if resumo_limite['atingiu_limite']:
+        plano_nome = resumo_limite['plano'].capitalize()
+        flash(
+            f"Limite atingido: seu plano {plano_nome} permite {resumo_limite['limite']} anúncio(s) ativo(s). "
+            "Desative um anúncio ou faça upgrade para publicar mais.",
+            'error',
+        )
+        return redirect(url_for('index', aba='anunciar'))
     
     try:
         f = request.form
@@ -1270,6 +1344,7 @@ def dashboard():
         destinatario_id=usuario.id, 
         lida=False
     ).count()
+    limite_anuncios = _resumo_limite_anuncios(usuario)
     
     # Últimos 5 anúncios
     ultimos_imoveis = sorted(imoveis, key=lambda x: x.criado_em, reverse=True)[:5]
@@ -1283,6 +1358,7 @@ def dashboard():
                           total_visualizacoes=total_visualizacoes,
                           rating=rating,
                           total_avaliacoes=total_avaliacoes,
+                          limite_anuncios=limite_anuncios,
                           mensagens_nao_lidas=mensagens_nao_lidas,
                           ultimos_imoveis=ultimos_imoveis,
                           imoveis_populares=imoveis_populares)
