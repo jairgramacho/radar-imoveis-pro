@@ -1300,43 +1300,77 @@ def chat():
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
     
-    # Buscar conversas (remetente e destinatário)
-    mensagens_recebidas = Mensagem.query.filter_by(destinatario_id=usuario.id).all()
-    mensagens_enviadas = Mensagem.query.filter_by(remetente_id=usuario.id).all()
-    
-    # Compilar conversas únicas
+    # Buscar todas as mensagens do usuário, da mais recente para a mais antiga.
+    mensagens_usuario = Mensagem.query.filter(
+        (Mensagem.remetente_id == usuario.id) | (Mensagem.destinatario_id == usuario.id)
+    ).order_by(Mensagem.criado_em.desc()).all()
+
+    # Compilar conversas únicas por usuário + imóvel.
     conversas = {}
-    
-    for msg in mensagens_recebidas:
-        chave = (min(msg.remetente_id, usuario.id), max(msg.remetente_id, usuario.id))
+
+    for msg in mensagens_usuario:
+        if msg.destinatario_id == usuario.id:
+            outro_usuario = msg.remetente
+        else:
+            outro_usuario = msg.destinatario
+
+        chave = (outro_usuario.id, msg.imovel_id)
         if chave not in conversas:
-            conversas[chave] = {'outro_usuario': msg.remetente, 'ultima_msg': msg, 'nao_lidas': 0}
-        if not msg.lida:
+            conversas[chave] = {
+                'outro_usuario': outro_usuario,
+                'imovel': msg.imovel,
+                'imovel_id': msg.imovel_id,
+                'ultima_msg': msg,
+                'nao_lidas': 0,
+            }
+
+        if msg.destinatario_id == usuario.id and not msg.lida:
             conversas[chave]['nao_lidas'] += 1
-    
-    for msg in mensagens_enviadas:
-        chave = (min(msg.destinatario_id, usuario.id), max(msg.destinatario_id, usuario.id))
-        if chave not in conversas:
-            conversas[chave] = {'outro_usuario': msg.destinatario, 'ultima_msg': msg, 'nao_lidas': 0}
-    
+
     # Ordenar pela última mensagem
     conversas_lista = sorted(conversas.values(), key=lambda x: x['ultima_msg'].criado_em, reverse=True)
 
     usuario_id_selecionado = request.args.get('usuario_id', type=int)
+    imovel_id_param = request.args.get('imovel_id', '').strip().lower()
+    imovel_id_selecionado = None
+    if imovel_id_param and imovel_id_param not in {'none', 'null'}:
+        try:
+            imovel_id_selecionado = int(imovel_id_param)
+        except ValueError:
+            imovel_id_selecionado = None
+
     conversa_ativa = None
     mensagens_ativas = []
 
     if usuario_id_selecionado:
-        conversa_ativa = Usuario.query.filter(Usuario.id == usuario_id_selecionado, Usuario.id != usuario.id).first()
+        for conversa in conversas_lista:
+            if conversa['outro_usuario'].id != usuario_id_selecionado:
+                continue
+
+            if imovel_id_param:
+                if conversa['imovel_id'] == imovel_id_selecionado:
+                    conversa_ativa = conversa
+                    break
+                continue
+
+            conversa_ativa = conversa
+            break
 
     if not conversa_ativa and conversas_lista:
-        conversa_ativa = conversas_lista[0]['outro_usuario']
+        conversa_ativa = conversas_lista[0]
 
     if conversa_ativa:
-        mensagens_ativas = Mensagem.query.filter(
-            ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == conversa_ativa.id)) |
-            ((Mensagem.remetente_id == conversa_ativa.id) & (Mensagem.destinatario_id == usuario.id))
-        ).order_by(Mensagem.criado_em.asc()).all()
+        mensagens_query = Mensagem.query.filter(
+            ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == conversa_ativa['outro_usuario'].id)) |
+            ((Mensagem.remetente_id == conversa_ativa['outro_usuario'].id) & (Mensagem.destinatario_id == usuario.id))
+        )
+
+        if conversa_ativa['imovel_id'] is None:
+            mensagens_query = mensagens_query.filter(Mensagem.imovel_id.is_(None))
+        else:
+            mensagens_query = mensagens_query.filter(Mensagem.imovel_id == conversa_ativa['imovel_id'])
+
+        mensagens_ativas = mensagens_query.order_by(Mensagem.criado_em.asc()).all()
 
         alterou_leitura = False
         for msg in mensagens_ativas:
@@ -1346,11 +1380,8 @@ def chat():
         if alterou_leitura:
             db.session.commit()
 
-        # Recalcula badge da conversa ativa após marcar como lida
-        for conversa in conversas_lista:
-            if conversa['outro_usuario'].id == conversa_ativa.id:
-                conversa['nao_lidas'] = 0
-                break
+        # Recalcula badge da conversa ativa após marcar como lida.
+        conversa_ativa['nao_lidas'] = 0
 
     return render_template(
         'chat.html',
@@ -1374,7 +1405,11 @@ def enviar_mensagem(usuario_id):
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
     
-    outro_usuario = Usuario.query.get_or_404(usuario_id)
+    Usuario.query.get_or_404(usuario_id)
+
+    imovel_id = request.form.get('imovel_id', type=int)
+    if imovel_id and not Imovel.query.get(imovel_id):
+        imovel_id = None
     texto = request.form.get('mensagem', '').strip()
     
     if not texto:
@@ -1385,6 +1420,7 @@ def enviar_mensagem(usuario_id):
         msg = Mensagem(
             remetente_id=usuario.id,
             destinatario_id=usuario_id,
+            imovel_id=imovel_id,
             titulo=f"Mensagem de {usuario.nome}",
             mensagem=texto
         )
@@ -1395,7 +1431,7 @@ def enviar_mensagem(usuario_id):
         db.session.rollback()
         flash(f'Erro ao enviar mensagem: {str(e)}', 'error')
     
-    return redirect(url_for('chat', usuario_id=usuario_id))
+    return redirect(url_for('chat', usuario_id=usuario_id, imovel_id=imovel_id))
 
 
 @app.route('/api/conversa/<int:usuario_id>', methods=['GET'])
@@ -1407,10 +1443,25 @@ def api_conversa(usuario_id):
 
     Usuario.query.get_or_404(usuario_id)
 
-    mensagens = Mensagem.query.filter(
+    imovel_id_param = request.args.get('imovel_id', '').strip().lower()
+    imovel_id = None
+    if imovel_id_param and imovel_id_param not in {'none', 'null'}:
+        try:
+            imovel_id = int(imovel_id_param)
+        except ValueError:
+            return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
+
+    mensagens_query = Mensagem.query.filter(
         ((Mensagem.remetente_id == usuario.id) & (Mensagem.destinatario_id == usuario_id)) |
         ((Mensagem.remetente_id == usuario_id) & (Mensagem.destinatario_id == usuario.id))
-    ).order_by(Mensagem.criado_em.asc()).all()
+    )
+
+    if imovel_id is None:
+        mensagens_query = mensagens_query.filter(Mensagem.imovel_id.is_(None))
+    else:
+        mensagens_query = mensagens_query.filter(Mensagem.imovel_id == imovel_id)
+
+    mensagens = mensagens_query.order_by(Mensagem.criado_em.asc()).all()
 
     alterou_leitura = False
     for msg in mensagens:
@@ -1448,11 +1499,25 @@ def api_enviar_mensagem(usuario_id):
     Usuario.query.get_or_404(usuario_id)
 
     texto = ''
+    imovel_id = None
     if request.is_json:
         payload = request.get_json(silent=True) or {}
         texto = (payload.get('mensagem') or '').strip()
+        imovel_id = payload.get('imovel_id')
     else:
         texto = request.form.get('mensagem', '').strip()
+        imovel_id = request.form.get('imovel_id')
+
+    if imovel_id in {'', None, 'none', 'null'}:
+        imovel_id = None
+    elif isinstance(imovel_id, str):
+        try:
+            imovel_id = int(imovel_id)
+        except ValueError:
+            return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
+
+    if imovel_id and not Imovel.query.get(imovel_id):
+        return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
 
     if not texto:
         return jsonify({'ok': False, 'erro': 'mensagem_vazia'}), 400
@@ -1461,6 +1526,7 @@ def api_enviar_mensagem(usuario_id):
         msg = Mensagem(
             remetente_id=usuario.id,
             destinatario_id=usuario_id,
+            imovel_id=imovel_id,
             titulo=f"Mensagem de {usuario.nome}",
             mensagem=texto,
         )

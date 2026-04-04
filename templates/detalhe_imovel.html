@@ -356,6 +356,7 @@
         const miniChatInput = document.getElementById('miniChatInput');
         const miniChatModalEl = document.getElementById('miniChatModal');
         const targetUserId = Number('{{ imovel.usuario_id }}');
+        const targetImovelId = Number('{{ imovel.id }}');
         let chatPolling = null;
 
         function escapeHtml(text) {
@@ -403,7 +404,7 @@
 
         async function carregarConversa() {
             try {
-                const response = await fetch(`/api/conversa/${targetUserId}`);
+                const response = await fetch(`/api/conversa/${targetUserId}?imovel_id=${targetImovelId}`);
                 if (!response.ok) {
                     return;
                 }
@@ -426,6 +427,7 @@
             try {
                 const body = new URLSearchParams();
                 body.set('mensagem', texto);
+                body.set('imovel_id', String(targetImovelId));
                 const response = await fetch(`/api/enviar-mensagem/${targetUserId}`, {
                     method: 'POST',
                     headers: {

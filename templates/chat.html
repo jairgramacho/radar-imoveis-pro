@@ -267,13 +267,19 @@
                 {% if conversas %}
                 <div class="ig-list">
                     {% for conversa in conversas %}
-                    <a href="{{ url_for('chat', usuario_id=conversa.outro_usuario.id) }}" class="ig-item {% if conversa_ativa and conversa.outro_usuario.id == conversa_ativa.id %}active{% endif %}">
+                    <a href="{{ url_for('chat', usuario_id=conversa.outro_usuario.id, imovel_id=conversa.imovel_id) }}" class="ig-item {% if conversa_ativa and conversa.outro_usuario.id == conversa_ativa.outro_usuario.id and conversa.imovel_id == conversa_ativa.imovel_id %}active{% endif %}">
                         <div class="ig-avatar">
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="ig-main">
                             <p class="ig-name">{{ conversa.outro_usuario.nome }}</p>
-                            <p class="ig-preview">{{ conversa.ultima_msg.mensagem }}</p>
+                            <p class="ig-preview">
+                                {% if conversa.imovel %}
+                                    {{ conversa.imovel.tipo }} em {{ conversa.imovel.cidade }} • {{ conversa.ultima_msg.mensagem }}
+                                {% else %}
+                                    {{ conversa.ultima_msg.mensagem }}
+                                {% endif %}
+                            </p>
                         </div>
                         <div class="ig-meta">
                             <p class="ig-time">{{ conversa.ultima_msg.criado_em.strftime('%H:%M') }}</p>
@@ -298,7 +304,12 @@
                 {% if conversa_ativa %}
                 <div class="ig-conv-header">
                     <div class="ig-avatar"><i class="fas fa-user"></i></div>
-                    <p class="ig-conv-header-title mb-0">{{ conversa_ativa.nome }}</p>
+                    <div>
+                        <p class="ig-conv-header-title mb-0">{{ conversa_ativa.outro_usuario.nome }}</p>
+                        {% if conversa_ativa.imovel %}
+                        <p class="ig-preview mb-0">Assunto: {{ conversa_ativa.imovel.tipo }} em {{ conversa_ativa.imovel.cidade }}</p>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="ig-messages" id="igMessages">
@@ -320,7 +331,8 @@
                 </div>
 
                 <div class="ig-compose">
-                    <form method="POST" action="{{ url_for('enviar_mensagem', usuario_id=conversa_ativa.id) }}" autocomplete="off">
+                    <form method="POST" action="{{ url_for('enviar_mensagem', usuario_id=conversa_ativa.outro_usuario.id) }}" autocomplete="off">
+                        <input type="hidden" name="imovel_id" value="{{ conversa_ativa.imovel_id if conversa_ativa.imovel_id else '' }}">
                         <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." maxlength="1000" required autofocus>
                         <button type="submit" class="btn btn-primary ig-send">
                             <i class="fas fa-paper-plane me-1"></i>Enviar
