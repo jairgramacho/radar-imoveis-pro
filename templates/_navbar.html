@@ -46,6 +46,11 @@
                         <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-chart-line me-2"></i>Dashboard
                         </a></li>
+                        {% if usuario_admin %}
+                        <li><a class="dropdown-item" href="{{ url_for('admin_planos') }}">
+                            <i class="fas fa-crown me-2"></i>Admin Planos
+                        </a></li>
+                        {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i>Sair

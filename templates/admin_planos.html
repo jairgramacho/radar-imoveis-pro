@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Planos - Radar Imóveis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="mb-0"><i class="fas fa-crown me-2"></i>Administração de Planos</h2>
+            <a class="btn btn-outline-primary" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+
+        <div class="alert alert-info mb-4" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            Ajuste plano, status e limite de anúncios por usuário. O limite personalizado sobrescreve o padrão do plano.
+        </div>
+
+        <form method="GET" class="card shadow-sm mb-4">
+            <div class="card-body d-flex gap-2 flex-wrap">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por nome ou e-mail" value="{{ busca }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Buscar
+                </button>
+                <a href="{{ url_for('admin_planos') }}" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+
+        <div class="table-responsive card shadow-sm">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Plano</th>
+                        <th>Status</th>
+                        <th>Ativos</th>
+                        <th>Limite</th>
+                        <th style="min-width: 340px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alvo in usuarios %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ alvo.nome }}</div>
+                            <div class="text-muted small">{{ alvo.email }}</div>
+                        </td>
+                        <td><span class="badge text-bg-primary">{{ (alvo.plano or 'free')|upper }}</span></td>
+                        <td><span class="badge text-bg-secondary">{{ (alvo.status_assinatura or 'ativa')|upper }}</span></td>
+                        <td>{{ contagem_ativos.get(alvo.id, 0) }}</td>
+                        <td>{{ alvo.limite_anuncios }}</td>
+                        <td>
+                            <form method="POST" class="row g-2">
+                                <input type="hidden" name="usuario_id" value="{{ alvo.id }}">
+                                <div class="col-12 col-lg-4">
+                                    <select class="form-select form-select-sm" name="plano">
+                                        {% for nome_plano, limite in limites_por_plano.items() %}
+                                        <option value="{{ nome_plano }}" {% if (alvo.plano or 'free') == nome_plano %}selected{% endif %}>
+                                            {{ nome_plano|capitalize }} ({{ limite }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12 col-lg-3">
+                                    <select class="form-select form-select-sm" name="status_assinatura">
+                                        <option value="ativa" {% if (alvo.status_assinatura or 'ativa') == 'ativa' %}selected{% endif %}>Ativa</option>
+                                        <option value="vencida" {% if (alvo.status_assinatura or 'ativa') == 'vencida' %}selected{% endif %}>Vencida</option>
+                                        <option value="cancelada" {% if (alvo.status_assinatura or 'ativa') == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-lg-3">
+                                    <input type="number" class="form-control form-control-sm" name="limite_anuncios" min="1" placeholder="Limite custom" value="{{ alvo.limite_anuncios }}">
+                                </div>
+                                <div class="col-12 col-lg-2 d-grid">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check me-1"></i>Salvar
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if not usuarios %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum usuário encontrado.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include '_footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

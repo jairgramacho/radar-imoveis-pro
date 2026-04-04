@@ -182,6 +182,7 @@ def _foto_url(valor, external=False):
 def inject_template_helpers():
     """Disponibiliza helpers e contadores globais para templates."""
     mensagens_nao_lidas = 0
+    usuario_admin = False
     usuario_id = session.get('usuario_id')
 
     if usuario_id:
@@ -190,12 +191,16 @@ def inject_template_helpers():
                 destinatario_id=usuario_id,
                 lida=False,
             ).count()
+            usuario_atual = Usuario.query.get(usuario_id)
+            usuario_admin = _usuario_eh_admin(usuario_atual)
         except Exception:
             mensagens_nao_lidas = 0
+            usuario_admin = False
 
     return {
         'foto_url': _foto_url,
         'mensagens_nao_lidas': mensagens_nao_lidas,
+        'usuario_admin': usuario_admin,
     }
 
 
@@ -213,6 +218,24 @@ LIMITES_ANUNCIOS_POR_PLANO = {
     'pro': 20,
     'empresa': 100,
 }
+
+def _emails_admin_configurados():
+    """Retorna conjunto de emails administradores definidos em ADMIN_EMAILS."""
+    bruto = os.getenv('ADMIN_EMAILS', '')
+    emails = {
+        item.strip().lower()
+        for item in bruto.split(',')
+        if item.strip()
+    }
+    return emails
+
+
+def _usuario_eh_admin(usuario):
+    """Verifica se o usuário atual está autorizado como administrador."""
+    if not usuario:
+        return False
+
+    return (usuario.email or '').strip().lower() in _emails_admin_configurados()
 
 
 def _normalizar_plano(plano):
@@ -940,6 +963,72 @@ def configuracoes_conta():
             return redirect(url_for('configuracoes_conta'))
 
     return render_template('configuracoes_conta.html', usuario=usuario)
+
+
+@app.route('/admin/planos', methods=['GET', 'POST'])
+def admin_planos():
+    """Painel simples de administração de planos e limites de anúncios."""
+    usuario = get_usuario_logado()
+
+    if not usuario:
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('login'))
+
+    if not _usuario_eh_admin(usuario):
+        flash('Acesso restrito a administradores.', 'error')
+        return redirect(url_for('index', aba='buscar'))
+
+    if request.method == 'POST':
+        alvo_id = request.form.get('usuario_id', type=int)
+        alvo = Usuario.query.get_or_404(alvo_id)
+
+        plano = _normalizar_plano(request.form.get('plano'))
+        status_assinatura = (request.form.get('status_assinatura') or 'ativa').strip().lower()
+        if status_assinatura not in {'ativa', 'vencida', 'cancelada'}:
+            status_assinatura = 'ativa'
+
+        limite_custom_raw = (request.form.get('limite_anuncios') or '').strip()
+        limite_final = LIMITES_ANUNCIOS_POR_PLANO[plano]
+        if limite_custom_raw:
+            try:
+                limite_custom = int(limite_custom_raw)
+                if limite_custom > 0:
+                    limite_final = limite_custom
+            except ValueError:
+                pass
+
+        alvo.plano = plano
+        alvo.status_assinatura = status_assinatura
+        alvo.limite_anuncios = limite_final
+
+        db.session.commit()
+        flash(f'Plano atualizado para {alvo.nome}.', 'success')
+        return redirect(url_for('admin_planos'))
+
+    busca = (request.args.get('q') or '').strip()
+    query = Usuario.query
+    if busca:
+        query = query.filter(
+            Usuario.nome.ilike(f'%{busca}%') |
+            Usuario.email.ilike(f'%{busca}%')
+        )
+
+    usuarios = query.order_by(Usuario.criado_em.desc()).limit(200).all()
+    contagem_ativos = dict(
+        db.session.query(Imovel.usuario_id, func.count(Imovel.id))
+        .filter(Imovel.ativo.is_(True))
+        .group_by(Imovel.usuario_id)
+        .all()
+    )
+
+    return render_template(
+        'admin_planos.html',
+        usuario=usuario,
+        usuarios=usuarios,
+        busca=busca,
+        contagem_ativos=contagem_ativos,
+        limites_por_plano=LIMITES_ANUNCIOS_POR_PLANO,
+    )
 
 # ============================================
 # ROTAS PRINCIPAIS
