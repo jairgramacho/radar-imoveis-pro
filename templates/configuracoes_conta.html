@@ -76,6 +76,33 @@
                                 <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline-secondary">Cancelar</a>
                             </div>
                         </form>
+
+                        <hr class="my-4">
+
+                        <div class="border border-danger-subtle rounded p-3 bg-danger-subtle">
+                            <h5 class="text-danger mb-2"><i class="fas fa-user-slash me-2"></i>Excluir conta</h5>
+                            <p class="mb-3 small text-danger-emphasis">
+                                Esta ação é permanente e excluirá sua conta e dados associados.
+                                Após a confirmação, não será possível recuperar o acesso.
+                                Registros mínimos poderão ser mantidos apenas quando exigidos por lei.
+                            </p>
+
+                            <form method="POST" action="{{ url_for('excluir_conta') }}" class="row g-2" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.');">
+                                <div class="col-md-6">
+                                    <label class="form-label">Digite sua senha</label>
+                                    <input type="password" name="senha_confirmacao" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Digite EXCLUIR para confirmar</label>
+                                    <input type="text" name="confirmacao_texto" class="form-control" placeholder="EXCLUIR" required>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash-alt me-2"></i>Excluir minha conta
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

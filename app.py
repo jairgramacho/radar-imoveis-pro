@@ -965,6 +965,56 @@ def configuracoes_conta():
     return render_template('configuracoes_conta.html', usuario=usuario)
 
 
+@app.route('/excluir-conta', methods=['POST'])
+def excluir_conta():
+    """Exclui a conta do usuário logado e seus dados associados."""
+    usuario = get_usuario_logado()
+
+    if not usuario:
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('login'))
+
+    senha_confirmacao = request.form.get('senha_confirmacao', '')
+    confirmacao_texto = (request.form.get('confirmacao_texto') or '').strip().upper()
+
+    if not usuario.check_password(senha_confirmacao):
+        flash('Senha incorreta. Não foi possível excluir sua conta.', 'error')
+        return redirect(url_for('configuracoes_conta'))
+
+    if confirmacao_texto != 'EXCLUIR':
+        flash('Confirmação inválida. Digite EXCLUIR para confirmar.', 'error')
+        return redirect(url_for('configuracoes_conta'))
+
+    try:
+        usuario_id = usuario.id
+
+        Mensagem.query.filter(
+            (Mensagem.remetente_id == usuario_id) | (Mensagem.destinatario_id == usuario_id)
+        ).delete(synchronize_session=False)
+
+        Avaliacao.query.filter(
+            (Avaliacao.usuario_id == usuario_id) | (Avaliacao.avaliador_id == usuario_id)
+        ).delete(synchronize_session=False)
+
+        Notificacao.query.filter_by(usuario_id=usuario_id).delete(synchronize_session=False)
+
+        imoveis_usuario = Imovel.query.filter_by(usuario_id=usuario_id).all()
+        for imovel in imoveis_usuario:
+            db.session.delete(imovel)
+
+        db.session.delete(usuario)
+        db.session.commit()
+
+        session.clear()
+        flash('Sua conta foi excluída com sucesso.', 'success')
+        return redirect(url_for('index', aba='buscar'))
+    except Exception as e:
+        db.session.rollback()
+        app.logger.warning('Erro ao excluir conta do usuário %s: %s', usuario.id, str(e), exc_info=True)
+        flash('Não foi possível excluir sua conta agora. Tente novamente em instantes.', 'error')
+        return redirect(url_for('configuracoes_conta'))
+
+
 @app.route('/admin/planos', methods=['GET', 'POST'])
 def admin_planos():
     """Painel simples de administração de planos e limites de anúncios."""
