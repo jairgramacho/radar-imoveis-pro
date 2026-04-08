@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Radar Imóveis</title>
+    <title>Dashboard - Radar Imóveis Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -78,6 +78,41 @@
             {% endif %}
         </div>
         {% endif %}
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div>
+                        <h5 class="mb-1"><i class="fas fa-credit-card me-2"></i>Assinatura</h5>
+                        <p class="text-muted mb-0">
+                            Status atual:
+                            <strong>{{ (usuario.status_assinatura or 'ativa')|capitalize }}</strong>
+                            {% if usuario.assinatura_renova_em %}
+                            • renova em {{ usuario.assinatura_renova_em.strftime('%d/%m/%Y') }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if stripe_checkout_habilitado %}
+                        <form method="POST" action="{{ url_for('assinatura_checkout') }}">
+                            <input type="hidden" name="plano" value="pro">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-up me-1"></i>Migrar para Pro
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('assinatura_checkout') }}">
+                            <input type="hidden" name="plano" value="empresa">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-building me-1"></i>Plano Empresa
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-secondary p-2">Pagamento indisponível no momento</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="row g-4">
             <!-- ÚLTIMOS ANÚNCIOS -->
