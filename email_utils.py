@@ -128,7 +128,7 @@ def enviar_email_nova_mensagem(usuario_email, remetente_nome, imovel_tipo=''):
                     </a>
                 </p>
                 
-                <p>Att,<br>Radar Imóveis</p>
+                <p>Att,<br>Radar Imóveis Pro</p>
             </div>
         </body>
     </html>
@@ -162,7 +162,7 @@ def enviar_email_avaliacao(usuario_email, avaliador_nome, estrelas):
                     </a>
                 </p>
                 
-                <p>Att,<br>Radar Imóveis</p>
+                <p>Att,<br>Radar Imóveis Pro</p>
             </div>
         </body>
     </html>
@@ -172,7 +172,7 @@ def enviar_email_avaliacao(usuario_email, avaliador_nome, estrelas):
 
 def enviar_email_confirmacao_cadastro(usuario_email, usuario_nome, link_confirmacao=None):
     """Envia email de boas-vindas com confirmação de endereço de email."""
-    titulo = "Confirme seu email no Radar Imóveis"
+    titulo = "Confirme seu email no Radar Imóveis Pro"
 
     bloco_confirmacao = ""
     if link_confirmacao:
@@ -190,7 +190,7 @@ def enviar_email_confirmacao_cadastro(usuario_email, usuario_nome, link_confirma
     <html>
         <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
             <div style="background-color: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #f39233;">Bem-vindo ao Radar Imóveis! 🎉</h2>
+                <h2 style="color: #f39233;">Bem-vindo ao Radar Imóveis Pro! 🎉</h2>
                 
                 <p>Olá <strong>{usuario_nome}</strong>,</p>
                 
@@ -211,7 +211,7 @@ def enviar_email_confirmacao_cadastro(usuario_email, usuario_nome, link_confirma
                     </a>
                 </p>
                 
-                <p>Att,<br>Radar Imóveis</p>
+                <p>Att,<br>Radar Imóveis Pro</p>
             </div>
         </body>
     </html>
@@ -222,7 +222,7 @@ def enviar_email_confirmacao_cadastro(usuario_email, usuario_nome, link_confirma
 
 def enviar_email_redefinicao_senha(usuario_email, usuario_nome, link_redefinicao):
     """Envia link seguro para redefinição de senha."""
-    titulo = "Redefinição de senha - Radar Imóveis"
+    titulo = "Redefinição de senha - Radar Imóveis Pro"
 
     corpo = f"""
     <html>
@@ -243,7 +243,7 @@ def enviar_email_redefinicao_senha(usuario_email, usuario_nome, link_redefinicao
                 <p style="color: #6c757d;">Este link expira em 1 hora.</p>
                 <p style="color: #6c757d;">Se você não solicitou, ignore este email.</p>
 
-                <p>Att,<br>Radar Imóveis</p>
+                <p>Att,<br>Radar Imóveis Pro</p>
             </div>
         </body>
     </html>
