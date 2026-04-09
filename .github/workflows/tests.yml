@@ -30,4 +30,5 @@ jobs:
         env:
           FLASK_ENV: testing
           SECRET_KEY: ci-test-secret-key-1234567890
-        run: pytest -q
+          PYTHONPATH: .
+        run: python -m pytest -q
