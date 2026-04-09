@@ -987,8 +987,11 @@ def esqueci_senha():
                     link_reset,
                 )
                 if not enviado:
-                    flash(f'Não foi possível enviar o email de recuperação agora: {erro_envio}', 'error')
-                    return redirect(url_for('esqueci_senha'))
+                    app.logger.warning(
+                        'Falha ao enviar email de redefinicao para %s: %s',
+                        usuario.email,
+                        erro_envio,
+                    )
 
         flash('Se o email informado existir, você receberá instruções para redefinir a senha.', 'success')
         return redirect(url_for('login'))
