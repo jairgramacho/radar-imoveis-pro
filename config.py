@@ -56,7 +56,7 @@ class Config:
     MAIL_PORT = int(os.getenv('MAIL_PORT', 465 if _MAIL_USE_SSL else 587))
     MAIL_USERNAME = os.getenv('MAIL_USERNAME', '')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
-    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@radarimovei.com')
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@radarimoveispro.com.br')
     MAIL_TIMEOUT = int(os.getenv('MAIL_TIMEOUT', 10))
 
     # Resend (API HTTP)

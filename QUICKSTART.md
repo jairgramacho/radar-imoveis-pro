@@ -1,133 +1,69 @@
-# ⚡ DEPLOYMENT RÁPIDO - RADAR IMÓVEIS
+# QUICKSTART - Radar Imoveis Pro
 
-## Para Lançar em 5 minutos
+Guia de inicio rapido para subir o projeto localmente e preparar deploy no Render.
 
-### 1. Preparar código
+## 1) Rodar local
 
 ```bash
-# Dentro do projeto
+git clone https://github.com/jairgramacho/radar-imoveis-pro.git
+cd radar-imoveis-pro
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
 cp .env.example .env
-
-# Editar .env com suas credenciais
-nano .env
+python app.py
 ```
 
-### 2. Gerar SECRET_KEY
+Acesse:
 
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
+```text
+http://localhost:5000
 ```
 
-Copia o resultado e cola em `SECRET_KEY=` do `.env`
+## 2) Variaveis minimas de producao
 
-### 3. Criar conta Railway (2 min)
+No Render, configure pelo menos:
 
-1. Vai em [Railway.app](https://railway.app)
-2. Login com GitHub
-3. Create New Project → Deploy from GitHub Repo
-4. Seleciona "radar-imoveis-pro"
+- FLASK_ENV=production
+- SECRET_KEY=(chave aleatoria forte)
+- DATABASE_URL=(PostgreSQL do Render)
+- APP_URL=https://seu-dominio
+- RESEND_API_KEY
+- RESEND_FROM=Radar Imoveis Pro <noreply@seu-dominio>
+- MAIL_DEFAULT_SENDER=Radar Imoveis Pro <noreply@seu-dominio>
+- REQUIRE_EMAIL_CONFIRMATION=1
 
-### 4. Configurar variáveis no Railway
+Se Stripe estiver ativo:
 
-Dashboard → Project Settings → Variables
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- STRIPE_PRICE_PRO
+- STRIPE_PRICE_EMPRESA
 
-```
-FLASK_ENV = production
-SECRET_KEY = (cola a chave que gerou)
-DATABASE_URL = (Railway cria automaticamente)
-MAIL_USERNAME = seu-email@gmail.com  
-MAIL_PASSWORD = sua-app-password (do Gmail)
-MAIL_SERVER = smtp.gmail.com
-MAIL_PORT = 587
-MAIL_DEFAULT_SENDER = seu-email@gmail.com
-```
+## 3) Deploy no Render
 
-### 5. Checklist rápido antes do push
+1. Conecte o repositorio no Render (Web Service).
+2. Build command: `pip install -r requirements.txt`
+3. Start command: `gunicorn app:app`
+4. Salve variaveis de ambiente.
+5. Deploy.
 
-```bash
-# Smoke test local
-source .venv/bin/activate
-python - <<'PY'
-from app import app
-client = app.test_client()
-for p in ['/', '/login', '/politica-de-privacidade', '/faq-ajuda']:
-    r = client.get(p, follow_redirects=False)
-    print(p, r.status_code)
-PY
-```
+## 4) Smoke test (producao)
 
-Se os endpoints públicos retornarem 200, pode seguir.
+Valide estes fluxos:
 
-### 5.1 Checklist automatizado de prontidão
+1. Home abre sem erro
+2. Cadastro + confirmacao de email
+3. Login
+4. Esqueci senha
+5. Publicar anuncio
+6. Abrir checkout Stripe (se habilitado)
 
-```bash
-source .venv/bin/activate
-python init_production.py
-```
+## 5) Se algo falhar
 
-Só publique quando os blocos de validação estiverem todos OK.
-
-### 6. Deploy automático
-
-```bash
-# Volta ao terminal, no seu projeto
-git add .
-git commit -m "Preparar lançamento MVP"
-git push origin main
-```
-
-Railway faz deploy automaticamente.
-
-### 7. Pegar URL da aplicação
-
-Railway Dashboard → Deployments → URL
-
-Seu site tá online! 🚀
-
----
-
-## Testar Email (Gmmail)
-
-1. Gmail: Ativa 2FA
-2. Gera "App Password": https://myaccount.google.com/apppasswords
-3. Cola a senha em MAIL_PASSWORD
-
-Pronto! Email funciona.
-
----
-
-## Domínio Próprio (Barreiras)
-
-1. Compra em Namecheap/Hostinger: `radarbarreirasimoveis.com.br`
-2. Railway → Project Settings → Domains
-3. Copia DNS records
-4. Cola na Registradora (Namecheap/Hostinger)
-5. Aguarda 24h
-
----
-
-## Verificar Logs
-
-```bash
-npm install -g @railway/cli
-railway login
-railway logs
-```
-
----
-
-## Pronto! 🎉
-
-Site rodando em produção, com HTTPS automático, banco PostgreSQL, email funcionando.
-
-Próximo: Compartilha link em Whatsapp com corretores de Barreiras!
-
----
-
-## Dúvidas?
-
-- Erro no deploy? Vê em Railway Dashboard → Deployments → View logs
-- Email não funciona? Verifica App Password do Gmail
-- Site offline? Reset do Railway (Settings → Reset)
-
-**Avisa se travar!**
+1. Abra logs no Render e verifique traceback.
+2. Confirme variaveis obrigatorias.
+3. Verifique DNS e APP_URL.
+4. Verifique dominio no Resend (status verified).
