@@ -1579,13 +1579,13 @@ def faq_ajuda():
 @app.errorhandler(404)
 def pagina_nao_encontrada(e):
     """Página não encontrada"""
-    return redirect(url_for('index', aba='buscar')), 404
+    return redirect(url_for('index', aba='buscar'))
 
 @app.errorhandler(500)
 def erro_interno(e):
     """Erro interno do servidor"""
     flash('Erro interno do servidor. Tente novamente.', 'error')
-    return redirect(url_for('index', aba='buscar')), 500
+    return redirect(url_for('index', aba='buscar'))
 
 # ============================================
 # DASHBOARD
