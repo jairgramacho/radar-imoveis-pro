@@ -1,129 +1,140 @@
-# 🏠 Radar Imóveis - Marketplace de Compra, Venda e Aluguel
+# Radar Imoveis Pro
 
-Um marketplace moderno e intuitivo para anunciar e buscar imóveis para compra, venda e aluguel. Os usuários podem entrar em contato direto com os anunciantes via WhatsApp.
+Plataforma web para anuncios imobiliarios com foco em publicacao, descoberta de oportunidades e relacionamento entre anunciante e interessado.
 
-## ✨ Funcionalidades
+O projeto foi construido para operacao real em producao, com dominio proprio, envio de emails transacionais e assinaturas recorrentes.
 
-### 🔍 Busca com filtros inteligentes
-- Filtros por tipo de negócio, tipo de imóvel, localização e preço
-- Lista de imóveis com foto, preço, localização e principais atributos
-- Visualização de detalhes completos do anúncio
+## Visao Geral
 
-### 📢 Publicação e gestão de anúncios
-- Cadastro/login de usuários
-- Publicação, edição e gerenciamento de anúncios próprios
-- Upload e processamento de imagens (incluindo HEIC/HEIF)
+Principais capacidades da plataforma:
 
-### 🎯 Radar de Oportunidades
-- Detecção de imóveis abaixo da média de comparáveis
-- Critério de oportunidade por desconto percentual mínimo
-- Exibição em aba dedicada para facilitar descoberta
+- Busca e filtros de imoveis (compra, venda e aluguel)
+- Publicacao e gestao de anuncios com multiplas fotos
+- Processamento de imagens (incluindo HEIC/HEIF)
+- Chat entre usuarios com contexto por imovel
+- Indicador de mensagens nao lidas na navegacao
+- Sistema de avaliacoes
+- Confirmacao de email e redefinicao de senha por token
+- Configuracoes de conta e exclusao de conta
+- Planos com limite de anuncios (Free, Pro e Empresa)
+- Fluxo de assinatura Stripe com webhook e automacoes de status
 
-### 💬 Comunicação e confiança
-- Chat entre usuários autenticados
-- Avaliação de experiência
-- Páginas institucionais: termos, privacidade, denúncia de abuso e FAQ
+## Stack
 
-### ⚙️ Conta do usuário
-- Área de configurações de conta
-- Atualização de nome, email, WhatsApp e senha
+- Backend: Flask
+- ORM: SQLAlchemy
+- Banco de dados: PostgreSQL (producao) e SQLite (desenvolvimento)
+- Frontend: Jinja2 + Bootstrap 5 + CSS
+- Email transacional: Resend (com fallback SMTP)
+- Upload persistente: Cloudinary
+- Pagamentos: Stripe
 
-## 🛠️ Stack Tecnológico
+## Ambiente Local
 
-- **Backend**: Flask (Python)
-- **Frontend**: HTML5, Bootstrap 5, CSS3
-- **Banco de Dados**: Arquivo de texto (porta para SQL em futuras versões)
-- **Icons**: Font Awesome
+### Requisitos
 
-## 📦 Instalação
-
-### Pré-requisitos
-- Python 3.8+
+- Python 3.10+
 - pip
 
-### Passos
+### Instalar e executar
 
-1. **Clone o repositório**
 ```bash
 git clone https://github.com/jairgramacho/radar-imoveis-pro.git
 cd radar-imoveis-pro
-```
 
-2. **Crie um ambiente virtual**
-```bash
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# ou
-.venv\Scripts\activate  # Windows
-```
+source .venv/bin/activate
 
-3. **Instale as dependências**
-```bash
 pip install -r requirements.txt
-```
-
-4. **Execute a aplicação**
-```bash
 python app.py
 ```
 
-5. **Acesse no navegador**
-```
+Aplicacao local:
+
+```text
 http://localhost:5000
 ```
 
-## 📁 Estrutura do Projeto
+## Variaveis de Ambiente
 
+Use o arquivo .env.example como base.
+
+Blocos mais importantes:
+
+- Aplicacao e seguranca: SECRET_KEY, APP_URL, FLASK_ENV
+- Banco: DATABASE_URL
+- Email (Resend): RESEND_API_KEY, RESEND_FROM
+- Email (fallback): MAIL_DEFAULT_SENDER, MAIL_USERNAME, MAIL_PASSWORD
+- Cloudinary: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+- Confirmacao de email: REQUIRE_EMAIL_CONFIRMATION
+- Stripe:
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - STRIPE_PRICE_PRO
+    - STRIPE_PRICE_EMPRESA
+
+## Stripe (Assinaturas)
+
+Fluxo implementado no backend:
+
+1. Usuario inicia checkout para Pro ou Empresa
+2. Stripe confirma pagamento e envia eventos para webhook
+3. Sistema atualiza status de assinatura e limites de anuncios
+4. Em inadimplencia/cancelamento, anuncios podem ser pausados conforme regra de negocio
+
+Eventos utilizados:
+
+- checkout.session.completed
+- customer.subscription.created
+- customer.subscription.updated
+- customer.subscription.deleted
+- invoice.payment_failed
+- invoice.payment_succeeded
+
+Endpoint webhook:
+
+```text
+/webhooks/stripe
 ```
+
+## Deploy
+
+Projeto preparado para deploy no Render.
+
+Checklist rapido:
+
+1. Configurar variaveis de ambiente
+2. Garantir dominio e DNS ativos
+3. Validar dominio no Resend
+4. Configurar webhook Stripe
+5. Executar smoke test (login, cadastro, email, checkout)
+
+Arquivos de apoio:
+
+- DEPLOYMENT.md
+- QUICKSTART.md
+
+## Estrutura Principal
+
+```text
 radar-imoveis-pro/
-├── app.py                 # Aplicação Flask principal
-├── requirements.txt       # Dependências do projeto
-├── banco_imoveis.txt     # Banco de dados (arquivo de texto)
+├── app.py
+├── config.py
+├── models.py
+├── email_utils.py
+├── requirements.txt
+├── templates/
 ├── static/
-│   ├── css/
-│   │   └── style.css     # Estilos CSS customizados
-│   └── uploads/          # Fotos dos imóveis
-└── templates/
-    └── index.html        # Template HTML principal
+└── .env.example
 ```
 
-## 🎨 Customização
+## Roadmap
 
-### Cores Principais
-Editar em `static/css/style.css`:
-- `--laranja: #f39233` - Cor primária
-- `--verde-whatsapp: #25d366` - Cor do botão WhatsApp
+- Melhorias de onboarding e ativacao de usuario
+- Observabilidade (logs e monitoramento mais detalhados)
+- SEO tecnico (sitemap, Search Console e metadata expandida)
+- Evolucao de planos e relatorios para anunciantes
 
-### Limite de Upload
-Editar em `app.py`:
-```python
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-```
+## Licenca
 
-### Extensões de Arquivo Permitidas
-Editar em `app.py`:
-```python
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-```
-
-## 🚀 Próximas Melhorias
-
-- [ ] Foto de perfil do usuário
-- [ ] Favoritos e alertas de imóveis
-- [ ] Busca com geolocalização no mapa
-- [ ] Moderação administrativa avançada
-- [ ] Notificações por email e in-app
-- [ ] Promoção de anúncios (destacado/premium)
-- [ ] Aplicativo mobile (iOS/Android)
-
-## 📧 Contato
-
-Para dúvidas e sugestões, abra uma issue no GitHub.
-
-## 📄 Licença
-
-Este projeto é licenciado sob a MIT License - veja o arquivo LICENSE para detalhes.
-
----
-
-**Feito com ❤️ por Jair Gramacho**
+Definir licenca oficial do projeto (ex.: MIT) e adicionar arquivo LICENSE.
