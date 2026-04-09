@@ -17,6 +17,8 @@ class Usuario(db.Model):
     limite_anuncios = db.Column(db.Integer, nullable=False, default=3)
     status_assinatura = db.Column(db.String(20), nullable=False, default='ativa')
     assinatura_renova_em = db.Column(db.DateTime, nullable=True)
+    stripe_customer_id = db.Column(db.String(120), nullable=True, index=True)
+    stripe_subscription_id = db.Column(db.String(120), nullable=True, index=True)
     senha = db.Column(db.String(255), nullable=False)
     whatsapp = db.Column(db.String(20), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
@@ -176,4 +178,17 @@ class Notificacao(db.Model):
     
     def __repr__(self):
         return f'<Notificacao {self.tipo}>'
+
+
+class StripeEventoWebhook(db.Model):
+    """Idempotência de eventos Stripe para evitar processamento duplicado."""
+    __tablename__ = 'stripe_eventos_webhook'
+
+    id = db.Column(db.Integer, primary_key=True)
+    stripe_event_id = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    tipo = db.Column(db.String(80), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def __repr__(self):
+        return f'<StripeEventoWebhook {self.stripe_event_id}>'
 

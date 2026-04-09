@@ -65,6 +65,12 @@ class Config:
     RESEND_FROM = os.getenv('RESEND_FROM', MAIL_DEFAULT_SENDER)
     RESEND_TIMEOUT = int(os.getenv('RESEND_TIMEOUT', MAIL_TIMEOUT))
 
+    # Stripe (assinaturas)
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+    STRIPE_PRICE_PRO = os.getenv('STRIPE_PRICE_PRO', '')
+    STRIPE_PRICE_EMPRESA = os.getenv('STRIPE_PRICE_EMPRESA', '')
+
 class DevelopmentConfig(Config):
     """Configurações para desenvolvimento"""
     DEBUG = True
