@@ -1,0 +1,64 @@
+from models import Imovel
+
+
+def test_healthcheck_ok(client):
+    response = client.get('/healthz')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['status'] == 'ok'
+    assert payload['database'] == 'ok'
+
+
+def test_dashboard_exige_login(client):
+    response = client.get('/dashboard')
+
+    assert response.status_code == 302
+    assert '/login' in response.headers['Location']
+
+
+def test_login_com_credenciais_validas_cria_sessao(client, user_factory):
+    usuario = user_factory(email='login@example.com', senha='abc12345')
+
+    response = client.post(
+        '/login',
+        data={'email': 'login@example.com', 'senha': 'abc12345'},
+    )
+
+    assert response.status_code == 302
+    assert '/?aba=buscar' in response.headers['Location']
+
+    with client.session_transaction() as sess:
+        assert sess['usuario_id'] == usuario.id
+
+
+def test_salvar_bloqueia_quando_atingiu_limite(client, app, user_factory, login_as, imovel_factory):
+    usuario = user_factory(
+        email='limite@example.com',
+        limite_anuncios=1,
+        plano='free',
+        status_assinatura='ativa',
+    )
+    imovel_factory(usuario.id, ativo=True)
+    login_as(usuario.id, usuario.nome)
+
+    before_count = Imovel.query.filter_by(usuario_id=usuario.id).count()
+
+    response = client.post(
+        '/salvar',
+        data={
+            'estado': 'SP',
+            'cidade': 'Sao Paulo',
+            'bairro': 'Centro',
+            'tipo': 'Apartamento',
+            'negocio': 'Venda',
+            'valor': '450000',
+            'descricao': 'Teste de limite',
+        },
+    )
+
+    after_count = Imovel.query.filter_by(usuario_id=usuario.id).count()
+
+    assert response.status_code == 302
+    assert '/?aba=anunciar' in response.headers['Location']
+    assert before_count == after_count
