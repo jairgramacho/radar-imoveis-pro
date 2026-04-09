@@ -224,6 +224,15 @@ if _deve_executar_bootstrap_db():
         db.create_all()
         _garantir_colunas_usuario()
 
+# Em produção, executa apenas migração leve de colunas já existentes (sem create_all)
+# para evitar quebra após deploy quando novas colunas são adicionadas ao modelo.
+if flask_env == 'production':
+    with app.app_context():
+        try:
+            _garantir_colunas_usuario()
+        except Exception as e:
+            app.logger.warning('Falha ao garantir colunas em produção: %s', str(e), exc_info=True)
+
 OPORTUNIDADE_DESCONTO_MINIMO = 0.10
 OPORTUNIDADE_AMOSTRA_MINIMA = 5
 ITENS_POR_PAGINA = 12
