@@ -12,6 +12,8 @@
     <meta property="og:image" content="{% if imovel.foto %}{{ foto_url(imovel.foto, external=True) }}{% else %}{{ url_for('static', filename='css/style.css', _external=True) }}{% endif %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="628">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:site_name" content="Radar Imóveis Pro">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis Pro">
     <meta name="twitter:description" content="{{ descricao_meta }}">
@@ -325,7 +327,7 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item cursor-pointer" onclick="compartilharInstagram()">
-                                        <i class="fab fa-instagram me-2 text-danger"></i>Instagram Stories
+                                        <i class="fab fa-instagram me-2 text-danger"></i>Instagram
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
@@ -519,7 +521,7 @@
                 // Feedback visual com dica de uso
                 const btn = document.querySelector('[onclick="compartilharInstagram()"]');
                 const origText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>Link copiado! Cole nos Stories 📸';
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Link copiado! Cole no Story 📸';
                 setTimeout(() => {
                     btn.innerHTML = origText;
                 }, 3000);
