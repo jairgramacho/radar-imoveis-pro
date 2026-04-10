@@ -266,16 +266,16 @@
             <!-- SIDEBAR -->
             <div class="col-lg-4">
                 <!-- CARD DE CONTATO -->
-                <div class="card shadow mb-4" style="background: linear-gradient(135deg, #2d4d90 0%, #3466bf 100%); color: white;">
+                <div class="card mb-4" style="background: white; border: 1px solid #f0f0f0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);">
                     <div class="card-body text-center">
-                        <h5 class="card-title mb-3">
+                        <h5 class="card-title mb-3 text-dark">
                             <i class="fas fa-user-circle me-2"></i>{{ imovel.anunciante.nome }}
                         </h5>
                         
                         <!-- AVALIAÇÃO -->
                         {% set rating = imovel.anunciante.get_rating() %}
                         <div class="mb-3">
-                            <div class="text-warning">
+                            <div style="color: #ffc107;">
                                 {% for i in range(5) %}
                                     {% if i < rating %}
                                         <i class="fas fa-star"></i>
@@ -289,7 +289,7 @@
                             <p class="small mt-2">{{ rating }} / 5.0</p>
                         </div>
 
-                        <hr style="border-color: rgba(255,255,255,0.3);">
+                        <hr style="border-color: #e0e0e0; margin: 1rem 0;">
 
                         <!-- BOTÕES DE CONTATO -->
                         {% if usuario and usuario.id != imovel.usuario_id %}
@@ -308,7 +308,7 @@
                         
                         <!-- BOTÃO DE COMPARTILHAMENTO COM DROPDOWN -->
                         <div class="btn-group w-100 mt-2" role="group">
-                            <button id="compartilharBtn" type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button id="compartilharBtn" type="button" class="btn w-100" style="background: #f39233; color: white; border: 1px solid #f39233;" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-share-alt me-2"></i>Compartilhar
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="compartilharBtn">
