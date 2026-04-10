@@ -107,6 +107,12 @@ def _garantir_colunas_usuario():
         else:
             comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
 
+    if 'is_admin' not in colunas:
+        if dialect == 'sqlite':
+            comandos.append("ALTER TABLE usuarios ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0")
+        else:
+            comandos.append("ALTER TABLE usuarios ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE")
+
     if 'status_assinatura' not in colunas:
         if dialect == 'sqlite':
             comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
@@ -146,6 +152,19 @@ def _deve_executar_bootstrap_db():
     if override is not None:
         return override.strip().lower() in {'1', 'true', 'yes', 'on'}
     return flask_env != 'production'
+
+
+def _marcar_admin_proprietario():
+    """Marca o email do proprietário como admin para limite ilimitado."""
+    email_admin = 'jairgramacho82160@gmail.com'
+    try:
+        usuario = Usuario.query.filter_by(email=email_admin).first()
+        if usuario and not usuario.is_admin:
+            usuario.is_admin = True
+            db.session.commit()
+            app.logger.info(f'Conta {email_admin} marcada como admin')
+    except Exception as e:
+        app.logger.warning(f'Erro ao marcar admin: {str(e)}')
 
 
 def _cloudinary_configurado():
@@ -230,6 +249,7 @@ if flask_env == 'production':
     with app.app_context():
         try:
             _garantir_colunas_usuario()
+            _marcar_admin_proprietario()
         except Exception as e:
             app.logger.warning('Falha ao garantir colunas em produção: %s', str(e), exc_info=True)
 
@@ -381,6 +401,10 @@ def _normalizar_plano(plano):
 def _limite_anuncios_usuario(usuario):
     if not usuario:
         return LIMITES_ANUNCIOS_POR_PLANO['free']
+
+    # Admin tem limite ilimitado
+    if getattr(usuario, 'is_admin', False):
+        return 999999
 
     limite_custom = getattr(usuario, 'limite_anuncios', None)
     if isinstance(limite_custom, int) and limite_custom > 0:

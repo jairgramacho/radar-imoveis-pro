@@ -15,6 +15,7 @@ class Usuario(db.Model):
     confirmado_em = db.Column(db.DateTime, nullable=True)
     plano = db.Column(db.String(20), nullable=False, default='free', index=True)
     limite_anuncios = db.Column(db.Integer, nullable=False, default=3)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     status_assinatura = db.Column(db.String(20), nullable=False, default='ativa')
     assinatura_renova_em = db.Column(db.DateTime, nullable=True)
     stripe_customer_id = db.Column(db.String(120), nullable=True, index=True)
