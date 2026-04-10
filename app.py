@@ -1422,6 +1422,10 @@ def detalhe_imovel(id):
     imovel = Imovel.query.get_or_404(id)
     _padronizar_negocio_imovel(imovel)
 
+    # Incrementar contador de visualizações
+    imovel.visualizacoes = (imovel.visualizacoes or 0) + 1
+    db.session.commit()
+
     descricao_base = (imovel.descricao or '').strip()
     if not descricao_base:
         descricao_base = f"{imovel.tipo} em {imovel.cidade}/{imovel.estado}, no bairro {imovel.bairro}."
