@@ -324,8 +324,8 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="https://www.instagram.com/" target="_blank">
-                                        <i class="fab fa-instagram me-2 text-danger"></i>Instagram
+                                    <a class="dropdown-item cursor-pointer" onclick="compartilharInstagram()">
+                                        <i class="fab fa-instagram me-2 text-danger"></i>Instagram Stories
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
@@ -508,6 +508,21 @@
                 setTimeout(() => {
                     btn.innerHTML = origText;
                 }, 2000);
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+            });
+        }
+
+        function compartilharInstagram() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                // Feedback visual com dica de uso
+                const btn = document.querySelector('[onclick="compartilharInstagram()"]');
+                const origText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Link copiado! Cole nos Stories 📸';
+                setTimeout(() => {
+                    btn.innerHTML = origText;
+                }, 3000);
             }).catch(err => {
                 console.error('Erro ao copiar:', err);
             });
