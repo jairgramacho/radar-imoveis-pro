@@ -302,9 +302,24 @@
                         </a>
                         {% endif %}
                         
-                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" target="_blank" class="btn btn-success w-100 mt-2">
+                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}?text=Olá, vi seu anúncio de {{ imovel.tipo }} no Radar Imóveis Pro. Gostaria de saber mais sobre a propriedade em {{ imovel.cidade }}." target="_blank" class="btn btn-success w-100 mt-2">
                             <i class="fab fa-whatsapp me-2"></i>Contatar via WhatsApp
                         </a>
+                        
+                        <!-- BOTÕES DE COMPARTILHAMENTO -->
+                        <hr style="border-color: rgba(255,255,255,0.3); margin-top: 1.5rem;">
+                        <p class="small text-muted mb-2">Compartilhar:</p>
+                        <div class="d-flex gap-2">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.base_url }}" target="_blank" class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="fab fa-facebook me-1"></i>Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url={{ request.base_url }}&text=Confira este imóvel no Radar Imóveis Pro: {{ imovel.tipo }} - {{ imovel.cidade }}" target="_blank" class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="fab fa-twitter me-1"></i>Twitter
+                            </a>
+                            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.base_url }}" target="_blank" class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="fab fa-linkedin me-1"></i>LinkedIn
+                            </a>
+                        </div>
                     </div>
                 </div>
 
