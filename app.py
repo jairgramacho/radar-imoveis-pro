@@ -113,6 +113,15 @@ def _garantir_colunas_usuario():
         else:
             comandos.append("ALTER TABLE usuarios ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE")
 
+    # Criar índice único no campo whatsapp (se não existir)
+    try:
+        if dialect == 'sqlite':
+            db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
+        else:
+            db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
+    except Exception as e:
+        pass  # Índice pode já existir
+
     if 'status_assinatura' not in colunas:
         if dialect == 'sqlite':
             comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
@@ -828,6 +837,11 @@ def cadastro():
             # Verificar se email já existe
             if Usuario.query.filter_by(email=email).first():
                 flash('Este e-mail já está cadastrado!', 'error')
+                return redirect(url_for('cadastro'))
+            
+            # Verificar se WhatsApp já existe
+            if Usuario.query.filter_by(whatsapp=whatsapp_validado).first():
+                flash('Este WhatsApp já está cadastrado! Use outro número.', 'error')
                 return redirect(url_for('cadastro'))
             
             # Criar novo usuário

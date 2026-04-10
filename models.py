@@ -21,7 +21,7 @@ class Usuario(db.Model):
     stripe_customer_id = db.Column(db.String(120), nullable=True, index=True)
     stripe_subscription_id = db.Column(db.String(120), nullable=True, index=True)
     senha = db.Column(db.String(255), nullable=False)
-    whatsapp = db.Column(db.String(20), nullable=False)
+    whatsapp = db.Column(db.String(20), unique=True, nullable=False, index=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
