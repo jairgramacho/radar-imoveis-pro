@@ -64,6 +64,9 @@ class Config:
     RESEND_API_URL = os.getenv('RESEND_API_URL', 'https://api.resend.com/emails')
     RESEND_FROM = os.getenv('RESEND_FROM', MAIL_DEFAULT_SENDER)
     RESEND_TIMEOUT = int(os.getenv('RESEND_TIMEOUT', MAIL_TIMEOUT))
+    
+    # Email de contato para formulários e mensagens de usuários
+    CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'contato@radarimoveispro.com.br')
 
     # Stripe (assinaturas)
     STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')

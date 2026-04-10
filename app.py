@@ -2095,6 +2095,25 @@ def api_enviar_mensagem(usuario_id):
         )
         db.session.add(msg)
         db.session.commit()
+        
+        # Enviar notificação por email usando CONTACT_EMAIL
+        destinatario = Usuario.query.get(usuario_id)
+        if destinatario and destinatario.email:
+            imovel_tipo = ''
+            if imovel_id:
+                imovel = Imovel.query.get(imovel_id)
+                if imovel:
+                    imovel_tipo = imovel.tipo
+            
+            # Usando CONTACT_EMAIL para notificações de mensagens
+            contact_email = app.config.get('CONTACT_EMAIL', 'contato@radarimoveispro.com.br')
+            enviar_email_nova_mensagem(
+                destinatario.email, 
+                usuario.nome, 
+                imovel_tipo, 
+                from_email_override=contact_email
+            )
+        
         return jsonify({'ok': True, 'id': msg.id})
     except Exception as e:
         db.session.rollback()

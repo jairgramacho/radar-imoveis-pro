@@ -22,10 +22,10 @@ def _resend_configurado():
     return api_key.lower() not in placeholders and remetente not in placeholders
 
 
-def _enviar_via_resend(usuario_email, titulo, corpo):
+def _enviar_via_resend(usuario_email, titulo, corpo, from_email_override=None):
     """Envia email via API HTTP do Resend (evita bloqueio de SMTP no provedor)."""
     api_key = (current_app.config.get('RESEND_API_KEY') or '').strip()
-    from_email = (current_app.config.get('RESEND_FROM') or current_app.config.get('MAIL_DEFAULT_SENDER') or '').strip()
+    from_email = from_email_override or (current_app.config.get('RESEND_FROM') or current_app.config.get('MAIL_DEFAULT_SENDER') or '').strip()
     api_url = (current_app.config.get('RESEND_API_URL') or 'https://api.resend.com/emails').strip()
     timeout = int(current_app.config.get('RESEND_TIMEOUT', current_app.config.get('MAIL_TIMEOUT', 10)))
 
@@ -83,7 +83,7 @@ def _app_url(path=''):
         path = f'/{path}'
     return f"{base}{path}"
 
-def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info'):
+def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info', from_email_override=None):
     """
     Envia email de notificação para o usuário
     
@@ -91,7 +91,7 @@ def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info'):
     """
     try:
         if _resend_configurado():
-            return _enviar_via_resend(usuario_email, titulo, corpo)
+            return _enviar_via_resend(usuario_email, titulo, corpo, from_email_override=from_email_override)
 
         msg = Message(
             subject=titulo,
@@ -106,7 +106,7 @@ def enviar_email_notificacao(usuario_email, titulo, corpo, tipo='info'):
         current_app.logger.warning('Erro ao enviar email para %s: %s', usuario_email, str(e), exc_info=True)
         return False
 
-def enviar_email_nova_mensagem(usuario_email, remetente_nome, imovel_tipo=''):
+def enviar_email_nova_mensagem(usuario_email, remetente_nome, imovel_tipo='', from_email_override=None):
     """Notifica sobre nova mensagem recebida"""
     titulo = f"Nova mensagem de {remetente_nome}"
     
@@ -134,9 +134,9 @@ def enviar_email_nova_mensagem(usuario_email, remetente_nome, imovel_tipo=''):
     </html>
     """
     
-    return enviar_email_notificacao(usuario_email, titulo, corpo)
+    return enviar_email_notificacao(usuario_email, titulo, corpo, from_email_override=from_email_override)
 
-def enviar_email_avaliacao(usuario_email, avaliador_nome, estrelas):
+def enviar_email_avaliacao(usuario_email, avaliador_nome, estrelas, from_email_override=None):
     """Notifica sobre nova avaliação"""
     titulo = f"{avaliador_nome} deixou uma avaliação ⭐"
     
@@ -168,7 +168,7 @@ def enviar_email_avaliacao(usuario_email, avaliador_nome, estrelas):
     </html>
     """
     
-    return enviar_email_notificacao(usuario_email, titulo, corpo)
+    return enviar_email_notificacao(usuario_email, titulo, corpo, from_email_override=from_email_override)
 
 def enviar_email_confirmacao_cadastro(usuario_email, usuario_nome, link_confirmacao=None):
     """Envia email de boas-vindas com confirmação de endereço de email."""
