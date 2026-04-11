@@ -32,15 +32,24 @@ def client(app):
 
 @pytest.fixture
 def user_factory(app):
+    _user_counter = {'count': 0}
+    
     def _create_user(
         nome='Usuario Teste',
-        email='teste@example.com',
+        email=None,
         senha='123456',
-        whatsapp='11999999999',
+        whatsapp=None,
         plano='free',
         limite_anuncios=3,
         status_assinatura='ativa',
     ):
+        # Gerar email e whatsapp únicos se não fornecidos
+        _user_counter['count'] += 1
+        if email is None:
+            email = f'teste{_user_counter["count"]}@example.com'
+        if whatsapp is None:
+            whatsapp = f'1199999{_user_counter["count"]:04d}'
+        
         usuario = Usuario(
             nome=nome,
             email=email,
