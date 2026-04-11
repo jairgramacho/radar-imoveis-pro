@@ -17,7 +17,7 @@ from models import db, Usuario, Imovel, FotoImovel, Avaliacao, Mensagem, Notific
 
 load_dotenv()
 
-from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
+from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha, enviar_email_nova_mensagem
 from config import config
 
 # Registrar conversor HEIC para PIL
