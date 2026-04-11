@@ -1260,6 +1260,68 @@ def admin_planos():
 # ROTAS PRINCIPAIS
 # ============================================
 
+@app.route('/planos')
+def planos():
+    """Página pública com os planos disponíveis e seus preços"""
+    planos_info = [
+        {
+            'nome': 'Free',
+            'descricao': 'Para quem está começando',
+            'preco': 'Grátis',
+            'limite_anuncios': 3,
+            'features': [
+                '3 anúncios ativos',
+                'Contato via WhatsApp',
+                'Chat integrado',
+                'Visualizações básicas',
+            ],
+            'botao': False,
+            'classe': 'card-gratuito'
+        },
+        {
+            'nome': 'Pro',
+            'descricao': 'Para profissionais',
+            'preco': f'R$ {app.config["PRECO_PRO_BRL"]:.2f}',
+            'preco_raw': app.config['PRECO_PRO_BRL'],
+            'limite_anuncios': 15,
+            'features': [
+                '15 anúncios ativos',
+                'Contato via WhatsApp',
+                'Chat integrado',
+                'Visualizações e estatísticas',
+                'Destaque em buscas',
+                'Suporte prioritário',
+            ],
+            'botao': True,
+            'classe': 'card-pro'
+        },
+        {
+            'nome': 'Empresa',
+            'descricao': 'Para grandes operações',
+            'preco': f'R$ {app.config["PRECO_EMPRESA_BRL"]:.2f}',
+            'preco_raw': app.config['PRECO_EMPRESA_BRL'],
+            'limite_anuncios': 50,
+            'features': [
+                '50 anúncios ativos',
+                'Contato via WhatsApp',
+                'Chat integrado',
+                'Visualizações e estatísticas avançadas',
+                'Destaque premium em buscas',
+                'Suporte 24/7',
+                'Análises personalizadas',
+            ],
+            'botao': True,
+            'classe': 'card-empresa'
+        },
+    ]
+    
+    usuario = get_usuario_logado()
+    
+    return render_template('planos.html',
+                          planos=planos_info,
+                          usuario=usuario,
+                          stripe_checkout_habilitado=_stripe_checkout_habilitado())
+
 @app.route('/')
 def index():
     """Página principal com abas de busca e anúncio"""
@@ -1686,7 +1748,9 @@ def dashboard():
                           stripe_checkout_habilitado=stripe_checkout_habilitado,
                           mensagens_nao_lidas=mensagens_nao_lidas,
                           ultimos_imoveis=ultimos_imoveis,
-                          imoveis_populares=imoveis_populares)
+                          imoveis_populares=imoveis_populares,
+                          preco_pro_brl=app.config['PRECO_PRO_BRL'],
+                          preco_empresa_brl=app.config['PRECO_EMPRESA_BRL'])
 
 
 @app.route('/assinatura/checkout', methods=['POST'])

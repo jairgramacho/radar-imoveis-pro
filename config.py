@@ -73,6 +73,10 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
     STRIPE_PRICE_PRO = os.getenv('STRIPE_PRICE_PRO', '')
     STRIPE_PRICE_EMPRESA = os.getenv('STRIPE_PRICE_EMPRESA', '')
+    
+    # Valores dos planos (para exibição na UI)
+    PRECO_PRO_BRL = 19.90
+    PRECO_EMPRESA_BRL = 39.90
 
 class DevelopmentConfig(Config):
     """Configurações para desenvolvimento"""

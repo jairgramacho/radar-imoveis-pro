@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos e Preços - Radar Imóveis Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-5">
+        <!-- HEADER -->
+        <div class="text-center mb-5">
+            <h1 class="mb-3">
+                <i class="fas fa-layer-group me-2" style="color: #f39233;"></i>Planos e Preços
+            </h1>
+            <p class="lead text-muted">Escolha o plano ideal para suas necessidades</p>
+        </div>
+
+        <!-- CARDS DE PLANOS -->
+        <div class="row g-4 mb-5">
+            {% for plano in planos %}
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 shadow-sm {% if plano.botao %}border-3{% endif %}" 
+                     style="{% if plano.botao %}border-color: #f39233 !important; transform: translateY(-10px);{% endif %}">
+                    {% if plano.botao %}
+                    <div class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle ms-3">
+                        <i class="fas fa-star me-1"></i>Mais Popular
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <!-- Nome do Plano -->
+                        <h3 class="card-title mb-1">{{ plano.nome }}</h3>
+                        <p class="text-muted small mb-4">{{ plano.descricao }}</p>
+
+                        <!-- Preço -->
+                        <div class="mb-4">
+                            <div class="fs-2 fw-bold text-primary">
+                                {{ plano.preco }}
+                                {% if plano.botao %}
+                                <span class="fs-6 text-muted">/mês</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Limite de Anúncios -->
+                        <div class="alert alert-light border-0 mb-4 py-2 text-center">
+                            <strong>{{ plano.limite_anuncios }}</strong> anúncios ativos
+                        </div>
+
+                        <!-- Features -->
+                        <ul class="list-unstyled mb-4 flex-grow-1">
+                            {% for feature in plano.features %}
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle me-2" style="color: #f39233;"></i>
+                                <span>{{ feature }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <!-- Botão de Ação -->
+                        {% if plano.botao %}
+                            {% if usuario %}
+                                <form method="POST" action="{{ url_for('assinatura_checkout') }}" class="w-100">
+                                    {% if plano.nome == 'Pro' %}
+                                    <input type="hidden" name="plano" value="pro">
+                                    <button type="submit" class="btn btn-warning w-100 fw-bold" {% if not stripe_checkout_habilitado %}disabled{% endif %}>
+                                        <i class="fas fa-arrow-up me-1"></i>Fazer Upgrade
+                                    </button>
+                                    {% elif plano.nome == 'Empresa' %}
+                                    <input type="hidden" name="plano" value="empresa">
+                                    <button type="submit" class="btn btn-warning w-100 fw-bold" {% if not stripe_checkout_habilitado %}disabled{% endif %}>
+                                        <i class="fas fa-arrow-up me-1"></i>Fazer Upgrade
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            {% else %}
+                                <a href="{{ url_for('cadastro') }}" class="btn btn-warning w-100 fw-bold">
+                                    <i class="fas fa-user-plus me-1"></i>Começar Agora
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            {% if not usuario %}
+                            <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus me-1"></i>Criar Conta
+                            </a>
+                            {% else %}
+                            <button class="btn btn-outline-secondary w-100" disabled>
+                                Seu Plano Atual
+                            </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- FAQ SECTION -->
+        <div class="row mt-5">
+            <div class="col-lg-8 mx-auto">
+                <h3 class="mb-4">
+                    <i class="fas fa-question-circle me-2" style="color: #f39233;"></i>Perguntas Frequentes
+                </h3>
+
+                <div class="accordion" id="accordionFAQ">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true" aria-controls="faq1">
+                                Posso mudar de plano a qualquer momento?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                Sim! Você pode fazer upgrade ou downgrade de plano a qualquer momento. A mudança será refletida na sua próxima fatura.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
+                                O que acontece se eu atingir o limite de anúncios?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                Quando você atinge o limite, não poderá publicar novos anúncios até desativar alguns existentes ou fazer upgrade para um plano com maior limite.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
+                                Há taxa de cancelamento?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                Não hay taxa de cancelamento. Você pode cancelar sua assinatura a qualquer momento. O acesso ao plano será mantido até o final do período já pago.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+                                Vocês oferecem desconto anual?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                No momento, as assinaturas são cobradas mensalmente. Fique atento, pois ofereceremos planos anuais em breve!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA SECTION -->
+                <div class="alert alert-light border-2 border-warning mt-5 p-4 text-center">
+                    <h5 class="mb-2">Começe a anunciar agora mesmo!</h5>
+                    <p class="text-muted mb-3">Todos os planos incluem suporte por chat e acesso às principais funcionalidades.</p>
+                    {% if not usuario %}
+                    <a href="{{ url_for('cadastro') }}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Criar Conta Grátis
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-arrow-right me-2"></i>Ir para o Dashboard
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    {% include '_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
