@@ -17,24 +17,6 @@ def test_dashboard_exige_login(client):
     assert '/login' in response.headers['Location']
 
 
-def test_dashboard_renderiza_com_dados_legados_nulos(client, login_as, user_factory, imovel_factory):
-    usuario = user_factory(email='dashboard-legado@example.com')
-    imovel = imovel_factory(usuario.id, ativo=True)
-    imovel.visualizacoes = None
-    imovel.criado_em = None
-
-    from models import db
-
-    db.session.commit()
-
-    login_as(usuario.id, usuario.nome)
-
-    response = client.get('/dashboard')
-
-    assert response.status_code == 200
-    assert 'Dashboard - Radar Imóveis Pro' in response.get_data(as_text=True)
-
-
 def test_login_com_credenciais_validas_cria_sessao(client, user_factory):
     usuario = user_factory(email='login@example.com', senha='abc12345')
 

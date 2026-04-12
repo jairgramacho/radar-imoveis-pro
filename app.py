@@ -1593,7 +1593,7 @@ def dashboard():
     _padronizar_negocio_imoveis(imoveis)
     
     total_imoveis = len(imoveis)
-    total_visualizacoes = sum((i.visualizacoes or 0) for i in imoveis)
+    total_visualizacoes = sum(i.visualizacoes for i in imoveis)
     rating = usuario.get_rating()
     total_avaliacoes = usuario.get_total_avaliacoes()
     
@@ -1605,18 +1605,10 @@ def dashboard():
     stripe_checkout_habilitado = _stripe_checkout_habilitado()
     
     # Últimos 5 anúncios
-    ultimos_imoveis = sorted(
-        imoveis,
-        key=lambda x: x.criado_em or datetime.min,
-        reverse=True,
-    )[:5]
+    ultimos_imoveis = sorted(imoveis, key=lambda x: x.criado_em, reverse=True)[:5]
     
     # Imóveis mais visualizados
-    imoveis_populares = sorted(
-        imoveis,
-        key=lambda x: x.visualizacoes or 0,
-        reverse=True,
-    )[:5]
+    imoveis_populares = sorted(imoveis, key=lambda x: x.visualizacoes, reverse=True)[:5]
     
     return render_template('dashboard.html',
                           usuario=usuario,
