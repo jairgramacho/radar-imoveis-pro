@@ -10,6 +10,35 @@ def test_healthcheck_ok(client):
     assert payload['database'] == 'ok'
 
 
+def test_readiness_check_ok(client):
+    response = client.get('/healthz/ready')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['status'] == 'ready'
+    assert payload['database'] == 'ok'
+    assert payload['email'] in {'ok', 'unconfigured'}
+    assert payload['stripe'] in {'ok', 'unconfigured'}
+
+
+def test_robots_txt_disponivel(client):
+    response = client.get('/robots.txt')
+    conteudo = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert 'User-agent:' in conteudo
+    assert 'Sitemap:' in conteudo
+
+
+def test_sitemap_xml_disponivel(client):
+    response = client.get('/sitemap.xml')
+    conteudo = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert '<urlset' in conteudo
+    assert '/planos' in conteudo
+
+
 def test_dashboard_exige_login(client):
     response = client.get('/dashboard')
 

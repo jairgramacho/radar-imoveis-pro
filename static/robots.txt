@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /configuracoes-conta
+
+Sitemap: https://www.radarimoveispro.com.br/sitemap.xml

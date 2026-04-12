@@ -3,10 +3,14 @@ import re
 import math
 import io
 import importlib
+import logging
+from logging.handlers import RotatingFileHandler
 from threading import Thread
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from sqlalchemy import case, func, inspect, text
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -50,6 +54,46 @@ if flask_env == 'production':
     CORS(app, resources={r"/api/*": {"origins": os.getenv('ALLOWED_HOSTS', 'localhost').split(',')}})
 else:
     CORS(app, origins="*")
+
+
+def _configurar_logging_estruturado():
+    """Configura logging consistente para facilitar diagnostico em producao."""
+    if flask_env == 'testing':
+        return
+
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s: %(message)s [%(pathname)s:%(lineno)d]'
+    )
+
+    app.logger.setLevel(logging.INFO)
+
+    for handler in app.logger.handlers:
+        handler.setFormatter(formatter)
+
+    if not app.debug:
+        os.makedirs('logs', exist_ok=True)
+        if not any(isinstance(handler, RotatingFileHandler) for handler in app.logger.handlers):
+            file_handler = RotatingFileHandler(
+                'logs/radar.log',
+                maxBytes=10 * 1024 * 1024,
+                backupCount=10,
+            )
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
+            app.logger.addHandler(file_handler)
+
+    app.logger.info('Radar Imoveis Pro startup - env=%s', flask_env)
+
+
+_configurar_logging_estruturado()
+
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=['200 per day', '50 per hour'],
+    enabled=(flask_env != 'testing'),
+)
+limiter.init_app(app)
 
 # Security Headers
 @app.after_request
@@ -562,6 +606,25 @@ def healthcheck():
     return jsonify(payload), (200 if db_status == 'ok' else 503)
 
 
+@app.route('/healthz/ready', methods=['GET'])
+def readiness_check():
+    """Verifica se o app esta pronto para receber requisicoes."""
+    try:
+        db.session.execute(text('SELECT 1'))
+
+        payload = {
+            'status': 'ready',
+            'service': 'radar-imoveis-pro',
+            'database': 'ok',
+            'email': 'ok' if _smtp_configurado() else 'unconfigured',
+            'stripe': 'ok' if _stripe_checkout_habilitado() else 'unconfigured',
+        }
+        return jsonify(payload), 200
+    except Exception as e:
+        app.logger.error('Readiness check falhou: %s', str(e), exc_info=True)
+        return jsonify({'status': 'not_ready', 'erro': str(e)}), 503
+
+
 def _validar_whatsapp(whatsapp):
     """Valida WhatsApp brasileiro com 10 ou 11 dígitos (DDD + número)."""
     digitos = re.sub(r'\D', '', whatsapp or '')
@@ -889,6 +952,7 @@ def cadastro():
     return render_template('cadastro.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit('5 per minute')
 def login():
     """Página de login"""
     if request.method == 'POST':
@@ -1321,6 +1385,41 @@ def planos():
                           planos=planos_info,
                           usuario=usuario,
                           stripe_checkout_habilitado=_stripe_checkout_habilitado())
+
+
+@app.route('/robots.txt')
+def robots_txt():
+    """Serve robots.txt para orientar rastreadores."""
+    return app.send_static_file('robots.txt')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    """Gera sitemap dinamico com paginas principais e imoveis ativos."""
+    urls = [
+        {
+            'loc': url_for('index', _external=True),
+            'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
+            'changefreq': 'hourly',
+        },
+        {
+            'loc': url_for('planos', _external=True),
+            'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
+            'changefreq': 'weekly',
+        },
+    ]
+
+    imoveis_ativos = Imovel.query.filter_by(ativo=True).all()
+    for imovel in imoveis_ativos:
+        referencia_data = imovel.atualizado_em or imovel.criado_em or datetime.utcnow()
+        urls.append({
+            'loc': url_for('detalhe_imovel', id=imovel.id, _external=True),
+            'lastmod': referencia_data.strftime('%Y-%m-%d'),
+            'changefreq': 'daily',
+        })
+
+    xml = render_template('sitemap.xml', urls=urls)
+    return Response(xml, mimetype='application/xml')
 
 @app.route('/')
 def index():
@@ -2066,6 +2165,7 @@ def conversa(usuario_id):
     return redirect(url_for('chat', usuario_id=usuario_id))
 
 @app.route('/enviar-mensagem/<int:usuario_id>', methods=['POST'])
+@limiter.limit('20 per minute')
 def enviar_mensagem(usuario_id):
     """Envia uma mensagem para outro usuário"""
     usuario = get_usuario_logado()
@@ -2156,6 +2256,7 @@ def api_conversa(usuario_id):
 
 
 @app.route('/api/enviar-mensagem/<int:usuario_id>', methods=['POST'])
+@limiter.limit('30 per minute')
 def api_enviar_mensagem(usuario_id):
     """Envia mensagem em JSON para o mini chat."""
     usuario = get_usuario_logado()
