@@ -137,7 +137,7 @@
                                             <h6 class="mb-1">{{ imovel.tipo }}</h6>
                                             <p class="text-muted small mb-0">{{ imovel.cidade }} - {{ imovel.estado }}</p>
                                         </div>
-                                        <span class="badge bg-primary">{{ imovel.criado_em.strftime('%d/%m') }}</span>
+                                        <span class="badge bg-primary">{{ imovel.criado_em.strftime('%d/%m') if imovel.criado_em else '--/--' }}</span>
                                     </div>
                                 </a>
                                 {% endfor %}
@@ -168,7 +168,7 @@
                                             <p class="text-muted small mb-0">{{ imovel.cidade }} - {{ imovel.estado }}</p>
                                         </div>
                                         <span class="badge bg-success">
-                                            <i class="fas fa-eye me-1"></i>{{ imovel.visualizacoes }}
+                                            <i class="fas fa-eye me-1"></i>{{ imovel.visualizacoes or 0 }}
                                         </span>
                                     </div>
                                 </a>
