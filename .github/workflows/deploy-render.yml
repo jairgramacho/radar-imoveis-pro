@@ -23,15 +23,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Validar secret de deploy
+      - name: Aviso quando hook nao estiver configurado
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
         run: |
-          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
-            echo "Secret RENDER_DEPLOY_HOOK_URL nao configurado no GitHub."
-            exit 1
-          fi
+          echo "RENDER_DEPLOY_HOOK_URL nao configurado."
+          echo "Deploy via GitHub Actions ignorado; Render Auto Deploy deve cuidar da publicacao."
 
-      - name: Disparar deploy no Render
+      - name: Disparar deploy no Render via hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
         run: |
           curl --fail --silent --show-error \
+            --retry 3 \
+            --retry-delay 2 \
+            --max-time 20 \
             --request POST \
             "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
