@@ -8,7 +8,7 @@ from logging.handlers import RotatingFileHandler
 from threading import Thread
 from datetime import datetime
 from urllib.parse import urlencode
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response, has_request_context
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -704,9 +704,17 @@ def _paginar_lista(itens, pagina, por_pagina):
 
 
 def _url_publica(endpoint, **values):
-    """Monta URL pública usando APP_URL para links enviados por email."""
+    """Monta URL pública usando APP_URL ou host da requisição atual."""
     caminho = url_for(endpoint, _external=False, **values)
     base = (app.config.get('APP_URL') or '').strip().rstrip('/')
+
+    # Em produção, se APP_URL não estiver configurado (localhost), usa host/protocolo reais.
+    if has_request_context() and (not base or 'localhost' in base or '127.0.0.1' in base):
+        proto = (request.headers.get('X-Forwarded-Proto') or request.scheme or 'https').split(',')[0].strip()
+        host = (request.headers.get('X-Forwarded-Host') or request.host or '').split(',')[0].strip()
+        if host:
+            return f"{proto}://{host}{caminho}"
+
     if base:
         return f"{base}{caminho}"
     return url_for(endpoint, _external=True, **values)
