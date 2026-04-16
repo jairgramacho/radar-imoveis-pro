@@ -273,6 +273,32 @@ def _foto_url(valor, external=False):
     return url_for('static', filename='uploads/' + valor, _external=external)
 
 
+def _arquivo_upload_existe(valor):
+    """Valida se arquivo local de upload existe no disco."""
+    if not valor or _foto_eh_url(valor):
+        return True
+    caminho = os.path.join(app.config['UPLOAD_FOLDER'], valor)
+    return os.path.exists(caminho)
+
+
+def _resolver_foto_preview(imovel):
+    """Escolhe a melhor foto válida para preview social."""
+    candidatas = []
+    if imovel.foto:
+        candidatas.append(imovel.foto)
+    if imovel.fotos:
+        candidatas.extend([foto.arquivo for foto in imovel.fotos if foto.arquivo])
+
+    for foto_base in candidatas:
+        if not _arquivo_upload_existe(foto_base):
+            continue
+        if _foto_eh_url(foto_base):
+            return foto_base
+        return _url_publica('static', filename='uploads/' + foto_base)
+
+    return _url_publica('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade)
+
+
 @app.context_processor
 def inject_template_helpers():
     """Disponibiliza helpers e contadores globais para templates."""
@@ -1707,20 +1733,7 @@ def detalhe_imovel(id):
     descricao_meta = f"{descricao_base[:140]} | Preço: R$ {moeda_brl(imovel.preco)}"
     
     # Determinar melhor foto para preview de compartilhamento.
-    # Para arquivos locais, monta URL pública com APP_URL para evitar URL http atrás de proxy.
-    foto_base = None
-    if imovel.foto:
-        foto_base = imovel.foto
-    elif imovel.fotos:
-        foto_base = imovel.fotos[0].arquivo
-
-    if foto_base:
-        if _foto_eh_url(foto_base):
-            foto_preview = foto_base
-        else:
-            foto_preview = _url_publica('static', filename='uploads/' + foto_base)
-    else:
-        foto_preview = _url_publica('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade)
+    foto_preview = _resolver_foto_preview(imovel)
 
     # Cache buster para forçar atualização de preview em crawlers sociais
     marca_tempo = int((imovel.atualizado_em or imovel.criado_em).timestamp())
