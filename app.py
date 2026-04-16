@@ -274,7 +274,7 @@ def _foto_url(valor, external=False):
 
 
 def _url_cloudinary_og(url):
-    """Retorna URL Cloudinary otimizada para cards sociais (1200x628)."""
+    """Retorna URL Cloudinary otimizada para cards sociais em formato retrato."""
     if not url:
         return url
 
@@ -282,12 +282,12 @@ def _url_cloudinary_og(url):
     if 'res.cloudinary.com' not in texto or '/image/upload/' not in texto:
         return texto
 
-    if '/image/upload/c_fill,w_1200,h_628,q_auto,f_auto/' in texto:
+    if '/image/upload/c_fill,w_1080,h_1350,q_auto,f_auto/' in texto:
         return texto
 
     return texto.replace(
         '/image/upload/',
-        '/image/upload/c_fill,w_1200,h_628,q_auto,f_auto/',
+        '/image/upload/c_fill,w_1080,h_1350,q_auto,f_auto/',
         1,
     )
 
