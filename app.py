@@ -273,6 +273,25 @@ def _foto_url(valor, external=False):
     return url_for('static', filename='uploads/' + valor, _external=external)
 
 
+def _url_cloudinary_og(url):
+    """Retorna URL Cloudinary otimizada para cards sociais (1200x628)."""
+    if not url:
+        return url
+
+    texto = (url or '').strip()
+    if 'res.cloudinary.com' not in texto or '/image/upload/' not in texto:
+        return texto
+
+    if '/image/upload/c_fill,w_1200,h_628,q_auto,f_auto/' in texto:
+        return texto
+
+    return texto.replace(
+        '/image/upload/',
+        '/image/upload/c_fill,w_1200,h_628,q_auto,f_auto/',
+        1,
+    )
+
+
 def _arquivo_upload_existe(valor):
     """Valida se arquivo local de upload existe no disco."""
     if not valor or _foto_eh_url(valor):
@@ -293,7 +312,7 @@ def _resolver_foto_preview(imovel):
         if not _arquivo_upload_existe(foto_base):
             continue
         if _foto_eh_url(foto_base):
-            return foto_base
+            return _url_cloudinary_og(foto_base)
         return _url_publica('static', filename='uploads/' + foto_base)
 
     return _url_publica('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade)
