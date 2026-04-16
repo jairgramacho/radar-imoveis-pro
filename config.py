@@ -43,7 +43,7 @@ class Config:
 
     # Upload
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'static/uploads')
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB (múltiplas fotos por envio)
 
     # URL pública da aplicação (usada em emails)
     APP_URL = os.getenv('APP_URL', 'http://localhost:5000').rstrip('/')
