@@ -7,6 +7,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from threading import Thread
 from datetime import datetime
+from urllib.parse import urlencode
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -1622,6 +1623,73 @@ def meus_anuncios():
     
     return render_template('meus_anuncios.html', imoveis=imoveis, usuario=usuario)
 
+@app.route('/og-placeholder')
+def og_placeholder():
+    """Gera imagem de placeholder otimizada para Open Graph (1200x628)."""
+    try:
+        tipo = request.args.get('tipo', 'Imóvel')
+        cidade = request.args.get('cidade', 'Brasil')
+        
+        # Limitar tamanho do texto
+        tipo = tipo[:30] if tipo else 'Imóvel'
+        cidade = cidade[:30] if cidade else 'Brasil'
+        
+        # Criar imagem com dimensões Open Graph ideais
+        img = Image.new('RGB', (1200, 628), color=(45, 77, 144))  # Azul do brand
+        
+        try:
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(img)
+            
+            # Tentar usar uma fonte disponível
+            try:
+                font_grande = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+                font_pequena = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
+            except:
+                font_grande = ImageFont.load_default()
+                font_pequena = ImageFont.load_default()
+            
+            # Desenhar texto
+            texto1 = tipo
+            texto2 = f"em {cidade}"
+            
+            # Calcular posições centralizadas
+            bbox1 = draw.textbbox((0, 0), texto1, font=font_grande)
+            texto1_width = bbox1[2] - bbox1[0]
+            texto1_height = bbox1[3] - bbox1[1]
+            
+            bbox2 = draw.textbbox((0, 0), texto2, font=font_pequena)
+            texto2_width = bbox2[2] - bbox2[0]
+            texto2_height = bbox2[3] - bbox2[1]
+            
+            x1 = (1200 - texto1_width) // 2
+            y1 = (628 - texto1_height - texto2_height) // 2
+            
+            x2 = (1200 - texto2_width) // 2
+            y2 = y1 + texto1_height + 20
+            
+            draw.text((x1, y1), texto1, fill=(255, 255, 255), font=font_grande)
+            draw.text((x2, y2), texto2, fill=(200, 200, 200), font=font_pequena)
+            
+        except:
+            pass  # Retorna imagem sem texto se falhar
+        
+        # Retornar como PNG
+        img_io = io.BytesIO()
+        img.save(img_io, 'PNG')
+        img_io.seek(0)
+        
+        return Response(img_io.getvalue(), mimetype='image/png', 
+                       headers={'Cache-Control': 'public, max-age=86400'})
+    except Exception as e:
+        app.logger.error('Erro ao gerar placeholder: %s', str(e))
+        # Retorna imagem azul simples em caso de erro
+        img = Image.new('RGB', (1200, 628), color=(45, 77, 144))
+        img_io = io.BytesIO()
+        img.save(img_io, 'PNG')
+        img_io.seek(0)
+        return Response(img_io.getvalue(), mimetype='image/png')
+
 @app.route('/imovel/<int:id>')
 def detalhe_imovel(id):
     """Página de detalhe do imóvel"""
@@ -1645,8 +1713,8 @@ def detalhe_imovel(id):
     elif imovel.fotos:
         foto_preview = _foto_url(imovel.fotos[0].arquivo, external=True)
     else:
-        # Placeholder visual com dimensões 1200x628 (Open Graph ideal)
-        foto_preview = f"https://via.placeholder.com/1200x628/2d4d90/ffffff?text={imovel.tipo}+em+{imovel.cidade}"
+        # Gerar placeholder dinamicamente com a rota /og-placeholder
+        foto_preview = url_for('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade, _external=True)
     
     return render_template('detalhe_imovel.html', imovel=imovel, usuario=usuario, descricao_meta=descricao_meta, foto_preview=foto_preview)
 
