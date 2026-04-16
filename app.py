@@ -88,12 +88,20 @@ def _configurar_logging_estruturado():
 _configurar_logging_estruturado()
 
 
+ratelimit_storage_uri = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
+
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=['200 per day', '50 per hour'],
+    default_limits=[],
+    storage_uri=ratelimit_storage_uri,
     enabled=(flask_env != 'testing'),
 )
 limiter.init_app(app)
+
+if flask_env == 'production' and ratelimit_storage_uri == 'memory://':
+    app.logger.warning(
+        'Flask-Limiter em modo memory://. Configure RATELIMIT_STORAGE_URI para Redis em producao.'
+    )
 
 # Security Headers
 @app.after_request
@@ -1795,6 +1803,23 @@ def faq_ajuda():
 def pagina_nao_encontrada(e):
     """Página não encontrada"""
     return redirect(url_for('index', aba='buscar'))
+
+@app.errorhandler(429)
+def rate_limit_excedido(e):
+    """Resposta amigavel quando o limite de tentativas e excedido."""
+    if request.path.startswith('/api/'):
+        return jsonify({
+            'ok': False,
+            'erro': 'muitas_tentativas',
+            'mensagem': 'Muitas tentativas em pouco tempo. Tente novamente em alguns instantes.',
+        }), 429
+
+    flash('Muitas tentativas em pouco tempo. Aguarde um pouco e tente novamente.', 'error')
+    destino = url_for('index', aba='buscar')
+    if request.referrer and not request.referrer.endswith(request.path):
+        destino = request.referrer
+    return redirect(destino)
+
 
 @app.errorhandler(500)
 def erro_interno(e):

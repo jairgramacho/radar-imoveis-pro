@@ -1,3 +1,4 @@
+import app as app_module
 from models import Imovel
 
 
@@ -8,6 +9,12 @@ def test_healthcheck_ok(client):
     payload = response.get_json()
     assert payload['status'] == 'ok'
     assert payload['database'] == 'ok'
+
+
+def test_nao_existe_rate_limit_global_bloqueando_navegacao():
+    limites_globais = [str(limit.limit) for limit in app_module.limiter.limit_manager.default_limits]
+
+    assert limites_globais == []
 
 
 def test_readiness_check_ok(client):
