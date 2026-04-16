@@ -1638,7 +1638,17 @@ def detalhe_imovel(id):
         descricao_base = f"{imovel.tipo} em {imovel.cidade}/{imovel.estado}, no bairro {imovel.bairro}."
     descricao_meta = f"{descricao_base[:140]} | Preço: R$ {moeda_brl(imovel.preco)}"
     
-    return render_template('detalhe_imovel.html', imovel=imovel, usuario=usuario, descricao_meta=descricao_meta)
+    # Determinar melhor foto para preview de compartilhamento
+    foto_preview = None
+    if imovel.foto:
+        foto_preview = _foto_url(imovel.foto, external=True)
+    elif imovel.fotos:
+        foto_preview = _foto_url(imovel.fotos[0].arquivo, external=True)
+    else:
+        # Placeholder visual com dimensões 1200x628 (Open Graph ideal)
+        foto_preview = f"https://via.placeholder.com/1200x628/2d4d90/ffffff?text={imovel.tipo}+em+{imovel.cidade}"
+    
+    return render_template('detalhe_imovel.html', imovel=imovel, usuario=usuario, descricao_meta=descricao_meta, foto_preview=foto_preview)
 
 @app.route('/deletar-imovel/<int:id>', methods=['POST'])
 def deletar_imovel(id):
