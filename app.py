@@ -15,7 +15,7 @@ from flask_limiter.util import get_remote_address
 from sqlalchemy import case, func, inspect, text
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 # import pillow_heif  # Comentado: trava no Codespace
 from models import db, Usuario, Imovel, FotoImovel, Avaliacao, Mensagem, Notificacao, StripeEventoWebhook
@@ -1638,7 +1638,6 @@ def og_placeholder():
         img = Image.new('RGB', (1200, 628), color=(45, 77, 144))  # Azul do brand
         
         try:
-            from PIL import ImageDraw, ImageFont
             draw = ImageDraw.Draw(img)
             
             # Tentar usar uma fonte disponível
@@ -1671,7 +1670,8 @@ def og_placeholder():
             draw.text((x1, y1), texto1, fill=(255, 255, 255), font=font_grande)
             draw.text((x2, y2), texto2, fill=(200, 200, 200), font=font_pequena)
             
-        except:
+        except Exception as e:
+            app.logger.debug('Erro ao desenhar texto no placeholder: %s', str(e))
             pass  # Retorna imagem sem texto se falhar
         
         # Retornar como PNG
