@@ -1706,15 +1706,26 @@ def detalhe_imovel(id):
         descricao_base = f"{imovel.tipo} em {imovel.cidade}/{imovel.estado}, no bairro {imovel.bairro}."
     descricao_meta = f"{descricao_base[:140]} | Preço: R$ {moeda_brl(imovel.preco)}"
     
-    # Determinar melhor foto para preview de compartilhamento
-    foto_preview = None
+    # Determinar melhor foto para preview de compartilhamento.
+    # Para arquivos locais, monta URL pública com APP_URL para evitar URL http atrás de proxy.
+    foto_base = None
     if imovel.foto:
-        foto_preview = _foto_url(imovel.foto, external=True)
+        foto_base = imovel.foto
     elif imovel.fotos:
-        foto_preview = _foto_url(imovel.fotos[0].arquivo, external=True)
+        foto_base = imovel.fotos[0].arquivo
+
+    if foto_base:
+        if _foto_eh_url(foto_base):
+            foto_preview = foto_base
+        else:
+            foto_preview = _url_publica('static', filename='uploads/' + foto_base)
     else:
-        # Gerar placeholder dinamicamente com a rota /og-placeholder
-        foto_preview = url_for('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade, _external=True)
+        foto_preview = _url_publica('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade)
+
+    # Cache buster para forçar atualização de preview em crawlers sociais
+    marca_tempo = int((imovel.atualizado_em or imovel.criado_em).timestamp())
+    separador = '&' if '?' in foto_preview else '?'
+    foto_preview = f"{foto_preview}{separador}v={marca_tempo}"
     
     return render_template('detalhe_imovel.html', imovel=imovel, usuario=usuario, descricao_meta=descricao_meta, foto_preview=foto_preview)
 
