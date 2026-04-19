@@ -116,6 +116,51 @@ def test_checkout_completed_atualiza_plano_e_respeita_idempotencia(
     assert StripeEventoWebhook.query.filter_by(stripe_event_id='evt_checkout_1').count() == 1
 
 
+def test_checkout_completed_empresa_aplica_limite_correto(
+    client,
+    app,
+    user_factory,
+    monkeypatch,
+):
+    usuario = user_factory(
+        email='stripe-empresa@example.com',
+        plano='free',
+        limite_anuncios=3,
+        status_assinatura='ativa',
+    )
+
+    app.config.update(
+        STRIPE_SECRET_KEY='sk_test_123',
+        STRIPE_WEBHOOK_SECRET='whsec_123',
+    )
+
+    evento_checkout = {
+        'id': 'evt_checkout_empresa_1',
+        'type': 'checkout.session.completed',
+        'data': {
+            'object': {
+                'metadata': {'usuario_id': str(usuario.id), 'plano': 'empresa'},
+                'client_reference_id': str(usuario.id),
+                'customer': 'cus_empresa_001',
+                'subscription': 'sub_empresa_001',
+            }
+        },
+    }
+
+    fake_client = FakeStripeClient(events=[evento_checkout])
+    monkeypatch.setattr(app_module, '_stripe_client', lambda: fake_client)
+
+    response = _post_webhook(client)
+    assert response.status_code == 200
+    assert response.get_json()['ok'] is True
+
+    usuario_atualizado = Usuario.query.get(usuario.id)
+    assert usuario_atualizado.plano == 'empresa'
+    assert usuario_atualizado.limite_anuncios == 50
+    assert usuario_atualizado.stripe_customer_id == 'cus_empresa_001'
+    assert usuario_atualizado.stripe_subscription_id == 'sub_empresa_001'
+
+
 def test_invoice_failed_pausa_e_payment_succeeded_reativa(
     client,
     app,

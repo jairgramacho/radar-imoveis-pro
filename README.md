@@ -119,12 +119,16 @@ Arquivos de apoio:
 Guardrails adotados para reduzir risco de mudancas sem entendimento completo:
 
 - CI com lint critico e testes automatizados em .github/workflows/tests.yml
+- CI com typecheck gradual (mypy) para modulos priorizados
+- CI com auditoria de vulnerabilidades de dependencias (pip-audit)
 - Template obrigatorio de PR em .github/pull_request_template.md
 - Checklist de revisao tecnica em docs/revisao-tecnica.md
 
 Comando local recomendado antes de abrir PR:
 
 ```bash
+pip-audit -r requirements.txt
+mypy --config-file mypy.ini config.py email_utils.py
 PYTHONPATH=. pytest -q
 ```
 
