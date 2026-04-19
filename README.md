@@ -114,6 +114,20 @@ Arquivos de apoio:
 - DEPLOYMENT.md
 - QUICKSTART.md
 
+## Qualidade e Revisao
+
+Guardrails adotados para reduzir risco de mudancas sem entendimento completo:
+
+- CI com lint critico e testes automatizados em .github/workflows/tests.yml
+- Template obrigatorio de PR em .github/pull_request_template.md
+- Checklist de revisao tecnica em docs/revisao-tecnica.md
+
+Comando local recomendado antes de abrir PR:
+
+```bash
+PYTHONPATH=. pytest -q
+```
+
 ## Estrutura Principal
 
 ```text
