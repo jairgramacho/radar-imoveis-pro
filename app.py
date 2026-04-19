@@ -365,8 +365,8 @@ OPORTUNIDADE_AMOSTRA_MINIMA = 5
 ITENS_POR_PAGINA = 12
 LIMITES_ANUNCIOS_POR_PLANO = {
     'free': 3,
-    'pro': 20,
-    'empresa': 100,
+    'pro': 15,
+    'empresa': 50,
 }
 _stripe_module_cache = None
 

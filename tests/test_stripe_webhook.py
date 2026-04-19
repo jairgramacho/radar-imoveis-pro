@@ -102,7 +102,7 @@ def test_checkout_completed_atualiza_plano_e_respeita_idempotencia(
     usuario_atualizado = Usuario.query.get(usuario.id)
     imovel_atualizado = Imovel.query.get(imovel.id)
     assert usuario_atualizado.plano == 'pro'
-    assert usuario_atualizado.limite_anuncios == 20
+    assert usuario_atualizado.limite_anuncios == 15
     assert usuario_atualizado.status_assinatura == 'ativa'
     assert usuario_atualizado.stripe_customer_id == 'cus_001'
     assert usuario_atualizado.stripe_subscription_id == 'sub_001'
@@ -126,7 +126,7 @@ def test_invoice_failed_pausa_e_payment_succeeded_reativa(
     usuario = user_factory(
         email='stripe-invoice@example.com',
         plano='pro',
-        limite_anuncios=20,
+        limite_anuncios=15,
         status_assinatura='ativa',
     )
     usuario.stripe_customer_id = 'cus_002'
