@@ -1,6 +1,7 @@
 import json
 
 import app as app_module
+from radar_app.blueprints import billing as billing_module
 from models import Imovel, StripeEventoWebhook, Usuario
 
 
@@ -51,7 +52,7 @@ def test_webhook_rejeita_assinatura_invalida(client, app, monkeypatch):
         STRIPE_SECRET_KEY='sk_test_123',
         STRIPE_WEBHOOK_SECRET='whsec_123',
     )
-    monkeypatch.setattr(app_module, '_stripe_client', lambda: FakeStripeClient(events=[]))
+    monkeypatch.setattr(billing_module, '_stripe_client', lambda: FakeStripeClient(events=[]))
 
     response = _post_webhook(client, signature='invalid')
 
@@ -93,7 +94,7 @@ def test_checkout_completed_atualiza_plano_e_respeita_idempotencia(
     }
 
     fake_client = FakeStripeClient(events=[evento_checkout, evento_checkout])
-    monkeypatch.setattr(app_module, '_stripe_client', lambda: fake_client)
+    monkeypatch.setattr(billing_module, '_stripe_client', lambda: fake_client)
 
     response = _post_webhook(client)
     assert response.status_code == 200
@@ -148,7 +149,7 @@ def test_checkout_completed_empresa_aplica_limite_correto(
     }
 
     fake_client = FakeStripeClient(events=[evento_checkout])
-    monkeypatch.setattr(app_module, '_stripe_client', lambda: fake_client)
+    monkeypatch.setattr(billing_module, '_stripe_client', lambda: fake_client)
 
     response = _post_webhook(client)
     assert response.status_code == 200
@@ -195,7 +196,7 @@ def test_invoice_failed_pausa_e_payment_succeeded_reativa(
     }
 
     fake_client = FakeStripeClient(events=[evento_failed, evento_succeeded])
-    monkeypatch.setattr(app_module, '_stripe_client', lambda: fake_client)
+    monkeypatch.setattr(billing_module, '_stripe_client', lambda: fake_client)
 
     response_failed = _post_webhook(client)
     assert response_failed.status_code == 200
