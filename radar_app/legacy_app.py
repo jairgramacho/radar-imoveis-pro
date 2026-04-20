@@ -25,6 +25,7 @@ load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha, enviar_email_nova_mensagem
 from config import config
+from radar_app.blueprints import public_bp
 
 # Registrar conversor HEIC para PIL
 # pillow_heif.register_heif_opener()  # Comentado: trava no Codespace
@@ -36,6 +37,7 @@ app = Flask(
     template_folder=str(PROJECT_ROOT / 'templates'),
     static_folder=str(PROJECT_ROOT / 'static'),
 )
+app.register_blueprint(public_bp)
 
 
 @app.template_filter('moeda_brl')
@@ -1885,51 +1887,6 @@ def editar_imovel(id):
     _padronizar_negocio_imovel(imovel)
     return render_template('editar_imovel.html', imovel=imovel, usuario=usuario)
 
-
-# ============================================
-# PÁGINAS INSTITUCIONAIS
-# ============================================
-
-@app.route('/termos-de-uso')
-def termos_uso():
-    """Página de termos de uso"""
-    usuario = get_usuario_logado()
-    return render_template('termos_uso.html', usuario=usuario)
-
-
-@app.route('/politica-de-privacidade')
-def politica_privacidade():
-    """Página de política de privacidade"""
-    usuario = get_usuario_logado()
-    return render_template('politica_privacidade.html', usuario=usuario)
-
-
-@app.route('/denunciar-abuso', methods=['GET', 'POST'])
-def denunciar_abuso():
-    """Página de denúncia de abuso"""
-    usuario = get_usuario_logado()
-
-    if request.method == 'POST':
-        nome = request.form.get('nome', '').strip()
-        email = request.form.get('email', '').strip()
-        motivo = request.form.get('motivo', '').strip()
-        mensagem = request.form.get('mensagem', '').strip()
-
-        if not all([nome, email, motivo, mensagem]):
-            flash('Preencha todos os campos para enviar a denúncia.', 'error')
-            return redirect(url_for('denunciar_abuso'))
-
-        flash('Denúncia recebida com sucesso. Nossa equipe irá analisar o caso.', 'success')
-        return redirect(url_for('denunciar_abuso'))
-
-    return render_template('denunciar_abuso.html', usuario=usuario)
-
-
-@app.route('/faq-ajuda')
-def faq_ajuda():
-    """Página de FAQ e ajuda"""
-    usuario = get_usuario_logado()
-    return render_template('faq_ajuda.html', usuario=usuario)
 
 # ============================================
 # TRATAMENTO DE ERROS
