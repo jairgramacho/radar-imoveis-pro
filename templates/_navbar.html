@@ -29,7 +29,7 @@
                     </a>
                 </li>
                 <li class="nav-item position-relative">
-                    <a class="nav-link {% if request.endpoint in ['chat', 'conversa'] %}active fw-bold{% endif %}" href="{{ url_for('chat') if usuario else url_for('login') }}">
+                    <a class="nav-link {% if request.endpoint in ['chat.chat', 'chat.conversa'] %}active fw-bold{% endif %}" href="{{ url_for('chat.chat') if usuario else url_for('login') }}">
                         <i class="fas fa-comments me-2"></i>Chat
                         {% if mensagens_nao_lidas is defined and mensagens_nao_lidas > 0 %}
                         <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">{{ mensagens_nao_lidas }}</span>

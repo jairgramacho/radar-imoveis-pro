@@ -267,7 +267,7 @@
                 {% if conversas %}
                 <div class="ig-list">
                     {% for conversa in conversas %}
-                    <a href="{{ url_for('chat', usuario_id=conversa.outro_usuario.id, imovel_id=conversa.imovel_id) }}" class="ig-item {% if conversa_ativa and conversa.outro_usuario.id == conversa_ativa.outro_usuario.id and conversa.imovel_id == conversa_ativa.imovel_id %}active{% endif %}">
+                    <a href="{{ url_for('chat.chat', usuario_id=conversa.outro_usuario.id, imovel_id=conversa.imovel_id) }}" class="ig-item {% if conversa_ativa and conversa.outro_usuario.id == conversa_ativa.outro_usuario.id and conversa.imovel_id == conversa_ativa.imovel_id %}active{% endif %}">
                         <div class="ig-avatar">
                             <i class="fas fa-user"></i>
                         </div>
@@ -331,7 +331,7 @@
                 </div>
 
                 <div class="ig-compose">
-                    <form method="POST" action="{{ url_for('enviar_mensagem', usuario_id=conversa_ativa.outro_usuario.id) }}" autocomplete="off">
+                    <form method="POST" action="{{ url_for('chat.enviar_mensagem', usuario_id=conversa_ativa.outro_usuario.id) }}" autocomplete="off">
                         <input type="hidden" name="imovel_id" value="{{ conversa_ativa.imovel_id if conversa_ativa.imovel_id else '' }}">
                         <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." maxlength="1000" required autofocus>
                         <button type="submit" class="btn btn-primary ig-send">

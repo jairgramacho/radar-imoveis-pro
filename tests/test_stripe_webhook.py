@@ -1,6 +1,5 @@
 import json
 
-import app as app_module
 from radar_app.blueprints import billing as billing_module
 from models import Imovel, StripeEventoWebhook, Usuario
 
