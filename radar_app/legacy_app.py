@@ -25,7 +25,7 @@ load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
-from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp
+from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp
 from radar_app.blueprints.billing import _stripe_checkout_habilitado
 
 # Registrar conversor HEIC para PIL
@@ -42,6 +42,34 @@ app.register_blueprint(public_bp)
 app.register_blueprint(billing_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(auth_bp)
+
+
+def _registrar_alias_endpoints_auth():
+    aliases = [
+        ('cadastro', '/cadastro', ['GET', 'POST'], 'auth.cadastro'),
+        ('login', '/login', ['GET', 'POST'], 'auth.login'),
+        ('logout', '/logout', ['GET'], 'auth.logout'),
+        ('confirmar_email', '/confirmar-email/<token>', ['GET'], 'auth.confirmar_email'),
+        ('reenviar_confirmacao', '/reenviar-confirmacao', ['POST'], 'auth.reenviar_confirmacao'),
+        ('esqueci_senha', '/esqueci-senha', ['GET', 'POST'], 'auth.esqueci_senha'),
+        ('redefinir_senha', '/redefinir-senha/<token>', ['GET', 'POST'], 'auth.redefinir_senha'),
+        ('configuracoes_conta', '/configuracoes-conta', ['GET', 'POST'], 'auth.configuracoes_conta'),
+        ('excluir_conta', '/excluir-conta', ['POST'], 'auth.excluir_conta'),
+    ]
+
+    for endpoint_antigo, regra, metodos, endpoint_novo in aliases:
+        if endpoint_antigo in app.view_functions:
+            continue
+        if endpoint_novo not in app.view_functions:
+            continue
+
+        app.add_url_rule(
+            regra,
+            endpoint=endpoint_antigo,
+            view_func=app.view_functions[endpoint_novo],
+            methods=metodos,
+        )
 
 
 @app.template_filter('moeda_brl')
@@ -111,8 +139,10 @@ limiter = Limiter(
     enabled=(flask_env != 'testing'),
 )
 limiter.init_app(app)
+app.view_functions['auth.login'] = limiter.limit('5 per minute')(app.view_functions['auth.login'])
 app.view_functions['chat.enviar_mensagem'] = limiter.limit('20 per minute')(app.view_functions['chat.enviar_mensagem'])
 app.view_functions['chat.api_enviar_mensagem'] = limiter.limit('30 per minute')(app.view_functions['chat.api_enviar_mensagem'])
+_registrar_alias_endpoints_auth()
 
 if flask_env == 'production' and ratelimit_storage_uri == 'memory://':
     app.logger.warning(
@@ -847,392 +877,6 @@ def aplicar_radar_oportunidades(imoveis):
         imovel.desconto_oportunidade = float(desconto)
         imovel.total_comparaveis = int(total_imoveis)
         imovel.eh_oportunidade = desconto >= OPORTUNIDADE_DESCONTO_MINIMO
-
-# ============================================
-# ROTAS DE AUTENTICAÇÃO
-# ============================================
-
-@app.route('/cadastro', methods=['GET', 'POST'])
-def cadastro():
-    """Página de cadastro de novo usuário"""
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            senha = request.form.get('senha', '')
-            whatsapp = request.form.get('whatsapp', '').strip()
-            
-            # Validações
-            if not all([nome, email, senha, whatsapp]):
-                flash('Todos os campos são obrigatórios!', 'error')
-                return redirect(url_for('cadastro'))
-            
-            if len(senha) < 6:
-                flash('Senha deve ter no mínimo 6 caracteres!', 'error')
-                return redirect(url_for('cadastro'))
-
-            whatsapp_validado = _validar_whatsapp(whatsapp)
-            if not whatsapp_validado:
-                flash('WhatsApp inválido. Informe DDD + número (10 ou 11 dígitos).', 'error')
-                return redirect(url_for('cadastro'))
-            
-            # Verificar se email já existe
-            if Usuario.query.filter_by(email=email).first():
-                flash('Este e-mail já está cadastrado!', 'error')
-                return redirect(url_for('cadastro'))
-            
-            # Verificar se WhatsApp já existe
-            if Usuario.query.filter_by(whatsapp=whatsapp_validado).first():
-                flash('Este WhatsApp já está cadastrado! Use outro número.', 'error')
-                return redirect(url_for('cadastro'))
-            
-            # Criar novo usuário
-            exigir_confirmacao = _confirmacao_email_obrigatoria()
-            novo_usuario = Usuario(
-                nome=nome,
-                email=email,
-                whatsapp=whatsapp_validado,
-                email_confirmado=not exigir_confirmacao,
-                confirmado_em=(datetime.utcnow() if not exigir_confirmacao else None),
-            )
-            novo_usuario.set_password(senha)
-            db.session.add(novo_usuario)
-            db.session.commit()
-
-            if exigir_confirmacao:
-                token_confirmacao = _gerar_token_email(novo_usuario.email, 'confirmar-email')
-                link_confirmacao = _url_publica('confirmar_email', token=token_confirmacao)
-                enviado, erro_envio = _enviar_email_com_status(
-                    enviar_email_confirmacao_cadastro,
-                    novo_usuario.email,
-                    novo_usuario.nome,
-                    link_confirmacao,
-                )
-
-                if enviado:
-                    flash('Cadastro realizado! Enviamos um email para confirmação da sua conta.', 'success')
-                else:
-                    flash(
-                        'Cadastro realizado, mas o email de confirmação não foi enviado agora. '
-                        f'{erro_envio} Configure RESEND_API_KEY ou MAIL_USERNAME/MAIL_PASSWORD e tente reenviar na tela de login.',
-                        'error'
-                    )
-            else:
-                flash(
-                    'Cadastro realizado! Como o envio de email não está configurado, sua conta foi liberada automaticamente.',
-                    'success'
-                )
-            return redirect(url_for('login'))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao cadastrar: {str(e)}', 'error')
-    
-    return render_template('cadastro.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-@limiter.limit('5 per minute')
-def login():
-    """Página de login"""
-    if request.method == 'POST':
-        try:
-            email = request.form.get('email', '').strip()
-            senha = request.form.get('senha', '')
-            
-            if not email or not senha:
-                flash('E-mail e senha são obrigatórios!', 'error')
-                return redirect(url_for('login'))
-            
-            # Buscar usuário
-            usuario = Usuario.query.filter_by(email=email).first()
-            
-            if usuario and usuario.check_password(senha):
-                if not getattr(usuario, 'email_confirmado', True) and not _confirmacao_email_obrigatoria():
-                    usuario.email_confirmado = True
-                    if not getattr(usuario, 'confirmado_em', None):
-                        usuario.confirmado_em = datetime.utcnow()
-                    db.session.commit()
-
-                if not getattr(usuario, 'email_confirmado', True):
-                    token_confirmacao = _gerar_token_email(usuario.email, 'confirmar-email')
-                    link_confirmacao = _url_publica('confirmar_email', token=token_confirmacao)
-                    enviado, erro_envio = _enviar_email_com_status(
-                        enviar_email_confirmacao_cadastro,
-                        usuario.email,
-                        usuario.nome,
-                        link_confirmacao,
-                    )
-                    if enviado:
-                        flash('Confirme seu email antes de entrar. Um novo link foi enviado.', 'error')
-                    else:
-                        flash(
-                            'Confirme seu email antes de entrar. '
-                            f'Não foi possível reenviar o link agora: {erro_envio}',
-                            'error'
-                        )
-                    return redirect(url_for('login'))
-
-                session['usuario_id'] = usuario.id
-                session['usuario_nome'] = usuario.nome
-                flash(f'Bem-vindo, {usuario.nome}!', 'success')
-                return redirect(url_for('index', aba='buscar'))
-            else:
-                flash('E-mail ou senha incorretos!', 'error')
-        
-        except Exception as e:
-            flash(f'Erro ao fazer login: {str(e)}', 'error')
-    
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    """Logout do usuário"""
-    session.clear()
-    flash('Você foi desconectado!', 'success')
-    return redirect(url_for('index', aba='buscar'))
-
-
-@app.route('/confirmar-email/<token>')
-def confirmar_email(token):
-    """Confirma o email da conta usando token assinado."""
-    email, erro = _validar_token_email(token, 'confirmar-email', max_age=60 * 60 * 24)
-    if erro:
-        flash('Link de confirmação inválido ou expirado.', 'error')
-        return redirect(url_for('login'))
-
-    usuario = Usuario.query.filter_by(email=email).first()
-    if not usuario:
-        flash('Conta não encontrada para este link.', 'error')
-        return redirect(url_for('login'))
-
-    if not usuario.email_confirmado:
-        usuario.email_confirmado = True
-        usuario.confirmado_em = datetime.utcnow()
-        db.session.commit()
-
-    flash('Email confirmado com sucesso! Agora você já pode entrar.', 'success')
-    return redirect(url_for('login'))
-
-
-@app.route('/reenviar-confirmacao', methods=['POST'])
-def reenviar_confirmacao():
-    """Reenvia email de confirmação da conta."""
-    email = request.form.get('email', '').strip()
-    usuario = Usuario.query.filter_by(email=email).first() if email else None
-
-    if usuario and not getattr(usuario, 'email_confirmado', True):
-        token_confirmacao = _gerar_token_email(usuario.email, 'confirmar-email')
-        link_confirmacao = _url_publica('confirmar_email', token=token_confirmacao)
-        enviado, erro_envio = _enviar_email_com_status(
-            enviar_email_confirmacao_cadastro,
-            usuario.email,
-            usuario.nome,
-            link_confirmacao,
-        )
-        if not enviado:
-            flash(f'Não foi possível reenviar o email agora: {erro_envio}', 'error')
-            return redirect(url_for('login'))
-
-    flash('Se o email informado existir e estiver pendente, um novo link foi enviado.', 'success')
-    return redirect(url_for('login'))
-
-
-@app.route('/esqueci-senha', methods=['GET', 'POST'])
-def esqueci_senha():
-    """Solicita redefinição de senha por email."""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        usuario = Usuario.query.filter_by(email=email).first() if email else None
-
-        if usuario:
-            token_reset = _gerar_token_email(usuario.email, 'reset-senha')
-            link_reset = _url_publica('redefinir_senha', token=token_reset)
-            if flask_env != 'production' and _permitir_fallback_reset_local() and not _smtp_configurado():
-                flash('Email não configurado neste ambiente. Você será redirecionado para redefinir a senha agora.', 'success')
-                return redirect(url_for('redefinir_senha', token=token_reset))
-
-            if _reset_email_assincrono_habilitado():
-                disparado = _disparar_email_assincrono(
-                    enviar_email_redefinicao_senha,
-                    usuario.email,
-                    usuario.nome,
-                    link_reset,
-                )
-                if not disparado:
-                    app.logger.warning('Falha ao iniciar envio assíncrono de reset para %s', usuario.email)
-            else:
-                enviado, erro_envio = _enviar_email_com_status(
-                    enviar_email_redefinicao_senha,
-                    usuario.email,
-                    usuario.nome,
-                    link_reset,
-                )
-                if not enviado:
-                    app.logger.warning(
-                        'Falha ao enviar email de redefinicao para %s: %s',
-                        usuario.email,
-                        erro_envio,
-                    )
-
-        flash('Se o email informado existir, você receberá instruções para redefinir a senha.', 'success')
-        return redirect(url_for('login'))
-
-    return render_template('esqueci_senha.html')
-
-
-@app.route('/redefinir-senha/<token>', methods=['GET', 'POST'])
-def redefinir_senha(token):
-    """Tela de redefinição de senha via token."""
-    email, erro = _validar_token_email(token, 'reset-senha', max_age=60 * 60)
-    if erro:
-        flash('Link de redefinição inválido ou expirado.', 'error')
-        return redirect(url_for('esqueci_senha'))
-
-    usuario = Usuario.query.filter_by(email=email).first()
-    if not usuario:
-        flash('Conta não encontrada.', 'error')
-        return redirect(url_for('esqueci_senha'))
-
-    if request.method == 'POST':
-        senha = request.form.get('senha', '')
-        confirmar_senha = request.form.get('confirmar_senha', '')
-
-        if len(senha) < 6:
-            flash('A nova senha deve ter no mínimo 6 caracteres.', 'error')
-            return redirect(url_for('redefinir_senha', token=token))
-
-        if senha != confirmar_senha:
-            flash('A confirmação da senha não confere.', 'error')
-            return redirect(url_for('redefinir_senha', token=token))
-
-        usuario.set_password(senha)
-        db.session.commit()
-
-        flash('Senha redefinida com sucesso! Faça login com a nova senha.', 'success')
-        return redirect(url_for('login'))
-
-    return render_template('redefinir_senha.html', token=token)
-
-
-@app.route('/configuracoes-conta', methods=['GET', 'POST'])
-def configuracoes_conta():
-    """Permite ao usuário editar dados de conta e senha."""
-    usuario = get_usuario_logado()
-
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            whatsapp = request.form.get('whatsapp', '').strip()
-
-            senha_atual = request.form.get('senha_atual', '')
-            nova_senha = request.form.get('nova_senha', '')
-            confirmar_senha = request.form.get('confirmar_senha', '')
-
-            if not all([nome, email, whatsapp]):
-                flash('Nome, e-mail e WhatsApp são obrigatórios.', 'error')
-                return redirect(url_for('configuracoes_conta'))
-
-            whatsapp_validado = _validar_whatsapp(whatsapp)
-            if not whatsapp_validado:
-                flash('WhatsApp inválido. Informe DDD + número (10 ou 11 dígitos).', 'error')
-                return redirect(url_for('configuracoes_conta'))
-
-            email_em_uso = Usuario.query.filter(
-                Usuario.email == email,
-                Usuario.id != usuario.id
-            ).first()
-
-            if email_em_uso:
-                flash('Este e-mail já está em uso por outra conta.', 'error')
-                return redirect(url_for('configuracoes_conta'))
-
-            if senha_atual or nova_senha or confirmar_senha:
-                if not usuario.check_password(senha_atual):
-                    flash('Senha atual incorreta.', 'error')
-                    return redirect(url_for('configuracoes_conta'))
-
-                if len(nova_senha) < 6:
-                    flash('A nova senha deve ter no mínimo 6 caracteres.', 'error')
-                    return redirect(url_for('configuracoes_conta'))
-
-                if nova_senha != confirmar_senha:
-                    flash('A confirmação da nova senha não confere.', 'error')
-                    return redirect(url_for('configuracoes_conta'))
-
-                usuario.set_password(nova_senha)
-
-            usuario.nome = nome
-            usuario.email = email
-            usuario.whatsapp = whatsapp_validado
-
-            db.session.commit()
-
-            session['usuario_nome'] = usuario.nome
-            flash('Configurações atualizadas com sucesso!', 'success')
-            return redirect(url_for('configuracoes_conta'))
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar configurações: {str(e)}', 'error')
-            return redirect(url_for('configuracoes_conta'))
-
-    return render_template('configuracoes_conta.html', usuario=usuario)
-
-
-@app.route('/excluir-conta', methods=['POST'])
-def excluir_conta():
-    """Exclui a conta do usuário logado e seus dados associados."""
-    usuario = get_usuario_logado()
-
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-
-    senha_confirmacao = request.form.get('senha_confirmacao', '')
-    confirmacao_texto = (request.form.get('confirmacao_texto') or '').strip().upper()
-
-    if not usuario.check_password(senha_confirmacao):
-        flash('Senha incorreta. Não foi possível excluir sua conta.', 'error')
-        return redirect(url_for('configuracoes_conta'))
-
-    if confirmacao_texto != 'EXCLUIR':
-        flash('Confirmação inválida. Digite EXCLUIR para confirmar.', 'error')
-        return redirect(url_for('configuracoes_conta'))
-
-    try:
-        usuario_id = usuario.id
-
-        Mensagem.query.filter(
-            (Mensagem.remetente_id == usuario_id) | (Mensagem.destinatario_id == usuario_id)
-        ).delete(synchronize_session=False)
-
-        Avaliacao.query.filter(
-            (Avaliacao.usuario_id == usuario_id) | (Avaliacao.avaliador_id == usuario_id)
-        ).delete(synchronize_session=False)
-
-        Notificacao.query.filter_by(usuario_id=usuario_id).delete(synchronize_session=False)
-
-        imoveis_usuario = Imovel.query.filter_by(usuario_id=usuario_id).all()
-        for imovel in imoveis_usuario:
-            db.session.delete(imovel)
-
-        db.session.delete(usuario)
-        db.session.commit()
-
-        session.clear()
-        flash('Sua conta foi excluída com sucesso.', 'success')
-        return redirect(url_for('index', aba='buscar'))
-    except Exception as e:
-        db.session.rollback()
-        app.logger.warning('Erro ao excluir conta do usuário %s: %s', usuario.id, str(e), exc_info=True)
-        flash('Não foi possível excluir sua conta agora. Tente novamente em instantes.', 'error')
-        return redirect(url_for('configuracoes_conta'))
-
 
 # ============================================
 # ROTAS PRINCIPAIS
