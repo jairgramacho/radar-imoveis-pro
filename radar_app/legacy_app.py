@@ -25,7 +25,7 @@ load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
-from radar_app.blueprints import public_bp, billing_bp, chat_bp
+from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp
 from radar_app.blueprints.billing import _stripe_checkout_habilitado
 
 # Registrar conversor HEIC para PIL
@@ -41,6 +41,7 @@ app = Flask(
 app.register_blueprint(public_bp)
 app.register_blueprint(billing_bp)
 app.register_blueprint(chat_bp)
+app.register_blueprint(admin_bp)
 
 
 @app.template_filter('moeda_brl')
@@ -1232,71 +1233,6 @@ def excluir_conta():
         flash('Não foi possível excluir sua conta agora. Tente novamente em instantes.', 'error')
         return redirect(url_for('configuracoes_conta'))
 
-
-@app.route('/admin/planos', methods=['GET', 'POST'])
-def admin_planos():
-    """Painel simples de administração de planos e limites de anúncios."""
-    usuario = get_usuario_logado()
-
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-
-    if not _usuario_eh_admin(usuario):
-        flash('Acesso restrito a administradores.', 'error')
-        return redirect(url_for('index', aba='buscar'))
-
-    if request.method == 'POST':
-        alvo_id = request.form.get('usuario_id', type=int)
-        alvo = Usuario.query.get_or_404(alvo_id)
-
-        plano = _normalizar_plano(request.form.get('plano'))
-        status_assinatura = (request.form.get('status_assinatura') or 'ativa').strip().lower()
-        if status_assinatura not in {'ativa', 'vencida', 'cancelada'}:
-            status_assinatura = 'ativa'
-
-        limite_custom_raw = (request.form.get('limite_anuncios') or '').strip()
-        limite_final = LIMITES_ANUNCIOS_POR_PLANO[plano]
-        if limite_custom_raw:
-            try:
-                limite_custom = int(limite_custom_raw)
-                if limite_custom > 0:
-                    limite_final = limite_custom
-            except ValueError:
-                pass
-
-        alvo.plano = plano
-        alvo.status_assinatura = status_assinatura
-        alvo.limite_anuncios = limite_final
-
-        db.session.commit()
-        flash(f'Plano atualizado para {alvo.nome}.', 'success')
-        return redirect(url_for('admin_planos'))
-
-    busca = (request.args.get('q') or '').strip()
-    query = Usuario.query
-    if busca:
-        query = query.filter(
-            Usuario.nome.ilike(f'%{busca}%') |
-            Usuario.email.ilike(f'%{busca}%')
-        )
-
-    usuarios = query.order_by(Usuario.criado_em.desc()).limit(200).all()
-    contagem_ativos = dict(
-        db.session.query(Imovel.usuario_id, func.count(Imovel.id))
-        .filter(Imovel.ativo.is_(True))
-        .group_by(Imovel.usuario_id)
-        .all()
-    )
-
-    return render_template(
-        'admin_planos.html',
-        usuario=usuario,
-        usuarios=usuarios,
-        busca=busca,
-        contagem_ativos=contagem_ativos,
-        limites_por_plano=LIMITES_ANUNCIOS_POR_PLANO,
-    )
 
 # ============================================
 # ROTAS PRINCIPAIS
