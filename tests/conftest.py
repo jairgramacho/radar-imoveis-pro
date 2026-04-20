@@ -5,17 +5,17 @@ import pytest
 os.environ.setdefault('FLASK_ENV', 'testing')
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-1234567890')
 
-from app import app as flask_app  # noqa: E402
+from app import create_app  # noqa: E402
 from models import Imovel, Usuario, db  # noqa: E402
 
 
 @pytest.fixture
 def app():
-    flask_app.config.update(
-        TESTING=True,
-        SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
-        WTF_CSRF_ENABLED=False,
-    )
+    flask_app = create_app({
+        'TESTING': True,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'WTF_CSRF_ENABLED': False,
+    })
 
     with flask_app.app_context():
         db.drop_all()
