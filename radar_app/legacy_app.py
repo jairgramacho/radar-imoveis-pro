@@ -18,7 +18,7 @@ load_dotenv()
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
 from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp, imoveis_bp, core_bp
-from radar_app.services.media import (
+from radar_app.infra.media import (
     allowed_file as media_allowed_file,
     arquivo_upload_existe,
     cloudinary_configurado,
@@ -29,17 +29,17 @@ from radar_app.services.media import (
     resolver_foto_preview,
     url_cloudinary_og,
 )
-from radar_app.services.auth_tokens import (
+from radar_app.auth import (
     gerar_token_email,
     serializer_tokens,
     validar_token_email,
 )
-from radar_app.services.email_delivery import (
+from radar_app.infra.email import (
     disparar_email_assincrono,
     enviar_email_com_status,
     smtp_configurado,
 )
-from radar_app.services.assinatura import (
+from radar_app.assinatura import (
     LIMITES_ANUNCIOS_POR_PLANO as ASSINATURA_LIMITES_ANUNCIOS_POR_PLANO,
     contar_anuncios_ativos,
     emails_admin_configurados,
@@ -51,7 +51,7 @@ from radar_app.services.assinatura import (
     status_assinatura_bloqueada,
     usuario_eh_admin,
 )
-from radar_app.services.imoveis import (
+from radar_app.imoveis import (
     aplicar_radar_oportunidades as aplicar_radar_oportunidades_imoveis,
     negocio_canonico as negocio_canonico_imovel,
     normalizar_negocio as normalizar_negocio_imovel,
@@ -59,7 +59,7 @@ from radar_app.services.imoveis import (
     padronizar_negocio_imovel,
     padronizar_negocio_imoveis,
 )
-from radar_app.services.bootstrap import (
+from radar_app.infra.bootstrap import (
     configurar_logging_estruturado,
     deve_executar_bootstrap_db,
     garantir_colunas_usuario,
