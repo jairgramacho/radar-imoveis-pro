@@ -8,7 +8,7 @@ from flask import Flask, request, redirect, url_for, flash, session, jsonify, ha
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import case, func, inspect, text
+from sqlalchemy import inspect, text
 from dotenv import load_dotenv
 # import pillow_heif  # Comentado: trava no Codespace
 from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook
@@ -50,6 +50,14 @@ from radar_app.services.assinatura import (
     resumo_limite_anuncios,
     status_assinatura_bloqueada,
     usuario_eh_admin,
+)
+from radar_app.services.imoveis import (
+    aplicar_radar_oportunidades as aplicar_radar_oportunidades_imoveis,
+    negocio_canonico as negocio_canonico_imovel,
+    normalizar_negocio as normalizar_negocio_imovel,
+    normalizar_texto as normalizar_texto_imovel,
+    padronizar_negocio_imovel,
+    padronizar_negocio_imoveis,
 )
 
 # Registrar conversor HEIC para PIL
@@ -537,106 +545,31 @@ def get_usuario_logado():
 
 
 def _normalizar_texto(valor):
-    """Normaliza texto para comparação entre imóveis semelhantes."""
-    return (valor or '').strip().lower()
+    return normalizar_texto_imovel(valor)
 
 
 def _normalizar_negocio(valor):
-    """Converte valores legados de negócio para uma chave canônica."""
-    negocio = _normalizar_texto(valor)
-    if negocio == 'compra':
-        return 'venda'
-    return negocio
+    return normalizar_negocio_imovel(valor)
 
 
 def _negocio_canonico(valor):
-    """Retorna o valor canônico de negócio para persistência e exibição."""
-    negocio = _normalizar_negocio(valor)
-    if negocio == 'venda':
-        return 'Venda'
-    if negocio == 'aluguel':
-        return 'Aluguel'
-    return (valor or '').strip()
+    return negocio_canonico_imovel(valor)
 
 
 def _padronizar_negocio_imovel(imovel):
-    """Padroniza o negócio apenas em memória para exibição consistente."""
-    if imovel:
-        imovel.negocio = _negocio_canonico(imovel.negocio)
-    return imovel
+    return padronizar_negocio_imovel(imovel)
 
 
 def _padronizar_negocio_imoveis(imoveis):
-    """Padroniza o negócio em listas de imóveis."""
-    for imovel in imoveis:
-        _padronizar_negocio_imovel(imovel)
-    return imoveis
+    return padronizar_negocio_imoveis(imoveis)
 
 
 def aplicar_radar_oportunidades(imoveis):
-    """Marca imóveis com preço pelo menos 10% abaixo da média do grupo comparável."""
-    if not imoveis:
-        return
-
-    negocio_agrupado = case(
-        (func.lower(func.trim(Imovel.negocio)) == 'compra', 'venda'),
-        else_=func.lower(func.trim(Imovel.negocio))
+    return aplicar_radar_oportunidades_imoveis(
+        imoveis,
+        OPORTUNIDADE_AMOSTRA_MINIMA,
+        OPORTUNIDADE_DESCONTO_MINIMO,
     )
-
-    estatisticas = (
-        db.session.query(
-            negocio_agrupado.label('negocio'),
-            func.lower(func.trim(Imovel.cidade)).label('cidade'),
-            func.lower(func.trim(Imovel.bairro)).label('bairro'),
-            func.lower(func.trim(Imovel.tipo)).label('tipo'),
-            Imovel.quartos.label('quartos'),
-            func.avg(Imovel.preco).label('preco_medio'),
-            func.count(Imovel.id).label('total_imoveis')
-        )
-        .filter(Imovel.ativo.is_(True))
-        .group_by(
-            negocio_agrupado,
-            func.lower(func.trim(Imovel.cidade)),
-            func.lower(func.trim(Imovel.bairro)),
-            func.lower(func.trim(Imovel.tipo)),
-            Imovel.quartos,
-        )
-        .all()
-    )
-
-    mapa_medias = {
-        (item.negocio, item.cidade, item.bairro, item.tipo, item.quartos): (item.preco_medio, item.total_imoveis)
-        for item in estatisticas
-    }
-
-    for imovel in imoveis:
-        _padronizar_negocio_imovel(imovel)
-        imovel.eh_oportunidade = False
-        imovel.preco_medio_regiao = None
-        imovel.desconto_oportunidade = None
-        imovel.total_comparaveis = 0
-
-        chave = (
-            _normalizar_negocio(imovel.negocio),
-            _normalizar_texto(imovel.cidade),
-            _normalizar_texto(imovel.bairro),
-            _normalizar_texto(imovel.tipo),
-            imovel.quartos,
-        )
-
-        comparativo = mapa_medias.get(chave)
-        if not comparativo:
-            continue
-
-        preco_medio, total_imoveis = comparativo
-        if not preco_medio or total_imoveis < OPORTUNIDADE_AMOSTRA_MINIMA:
-            continue
-
-        desconto = (preco_medio - imovel.preco) / preco_medio
-        imovel.preco_medio_regiao = float(preco_medio)
-        imovel.desconto_oportunidade = float(desconto)
-        imovel.total_comparaveis = int(total_imoveis)
-        imovel.eh_oportunidade = desconto >= OPORTUNIDADE_DESCONTO_MINIMO
 
 # ============================================
 # TRATAMENTO DE ERROS
