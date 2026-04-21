@@ -1,3 +1,4 @@
+from radar_app.imoveis.repository import ImovelRepository
 from radar_app.imoveis.service import (
     normalizar_texto,
     normalizar_negocio,
@@ -8,6 +9,7 @@ from radar_app.imoveis.service import (
 )
 
 __all__ = [
+    "ImovelRepository",
     "normalizar_texto",
     "normalizar_negocio",
     "negocio_canonico",

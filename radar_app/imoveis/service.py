@@ -1,5 +1,3 @@
-from sqlalchemy import case, func
-
 from models import Imovel, db
 
 
@@ -40,36 +38,19 @@ def padronizar_negocio_imoveis(imoveis):
     return imoveis
 
 
-def aplicar_radar_oportunidades(imoveis, oportunidade_amostra_minima, oportunidade_desconto_minimo):
-    """Marca imóveis com preço pelo menos X% abaixo da média do grupo comparável."""
+def aplicar_radar_oportunidades(imoveis, oportunidade_amostra_minima, oportunidade_desconto_minimo, estatisticas=None):
+    """Marca imóveis com preço pelo menos X% abaixo da média do grupo comparável.
+
+    estatisticas: lista de rows com (negocio, cidade, bairro, tipo, quartos, preco_medio, total_imoveis).
+    Se não fornecida, busca diretamente via SQLAlchemy (comportamento legado).
+    """
     if not imoveis:
         return
 
-    negocio_agrupado = case(
-        (func.lower(func.trim(Imovel.negocio)) == 'compra', 'venda'),
-        else_=func.lower(func.trim(Imovel.negocio)),
-    )
-
-    estatisticas = (
-        db.session.query(
-            negocio_agrupado.label('negocio'),
-            func.lower(func.trim(Imovel.cidade)).label('cidade'),
-            func.lower(func.trim(Imovel.bairro)).label('bairro'),
-            func.lower(func.trim(Imovel.tipo)).label('tipo'),
-            Imovel.quartos.label('quartos'),
-            func.avg(Imovel.preco).label('preco_medio'),
-            func.count(Imovel.id).label('total_imoveis'),
-        )
-        .filter(Imovel.ativo.is_(True))
-        .group_by(
-            negocio_agrupado,
-            func.lower(func.trim(Imovel.cidade)),
-            func.lower(func.trim(Imovel.bairro)),
-            func.lower(func.trim(Imovel.tipo)),
-            Imovel.quartos,
-        )
-        .all()
-    )
+    if estatisticas is None:
+        from radar_app.imoveis.repository import ImovelRepository
+        repo = ImovelRepository(db, Imovel)
+        estatisticas = repo.estatisticas_preco_por_grupo()
 
     mapa_medias = {
         (item.negocio, item.cidade, item.bairro, item.tipo, item.quartos): (item.preco_medio, item.total_imoveis)
