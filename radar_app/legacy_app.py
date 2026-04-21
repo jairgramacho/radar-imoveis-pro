@@ -11,7 +11,6 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy import case, func, inspect, text
 from dotenv import load_dotenv
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 # import pillow_heif  # Comentado: trava no Codespace
 from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook
 
@@ -30,6 +29,11 @@ from radar_app.services.media import (
     processar_imagem as media_processar_imagem,
     resolver_foto_preview,
     url_cloudinary_og,
+)
+from radar_app.services.auth_tokens import (
+    gerar_token_email,
+    serializer_tokens,
+    validar_token_email,
 )
 
 # Registrar conversor HEIC para PIL
@@ -570,27 +574,15 @@ def _validar_whatsapp(whatsapp):
 
 
 def _serializer_tokens():
-    return URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer_tokens(app.config['SECRET_KEY'])
 
 
 def _gerar_token_email(email, objetivo):
-    """Gera token assinado para confirmação de email e reset de senha."""
-    return _serializer_tokens().dumps({'email': email, 'objetivo': objetivo}, salt='radar-imoveis-auth')
+    return gerar_token_email(app.config['SECRET_KEY'], email, objetivo)
 
 
 def _validar_token_email(token, objetivo, max_age=3600):
-    """Valida token assinado e objetivo esperado."""
-    try:
-        payload = _serializer_tokens().loads(token, salt='radar-imoveis-auth', max_age=max_age)
-    except SignatureExpired:
-        return None, 'expirado'
-    except BadSignature:
-        return None, 'invalido'
-
-    if payload.get('objetivo') != objetivo:
-        return None, 'invalido'
-
-    return payload.get('email'), None
+    return validar_token_email(app.config['SECRET_KEY'], token, objetivo, max_age=max_age)
 
 
 def _paginar_lista(itens, pagina, por_pagina):
