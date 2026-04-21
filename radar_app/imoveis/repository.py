@@ -107,3 +107,34 @@ class ImovelRepository:
             )
             .all()
         )
+
+    # --- Operações de escrita ---
+
+    def salvar(self, imovel, fotos_extras=None):
+        """Persiste um novo imóvel e suas fotos extras. Faz commit no final."""
+        self.db.session.add(imovel)
+        self.db.session.commit()
+        if fotos_extras:
+            for foto in fotos_extras:
+                self.db.session.add(foto)
+            self.db.session.commit()
+        return imovel
+
+    def commit(self):
+        """Persiste alterações já feitas na sessão."""
+        self.db.session.commit()
+
+    def rollback(self):
+        """Desfaz alterações pendentes na sessão."""
+        self.db.session.rollback()
+
+    def deletar(self, imovel):
+        """Remove um imóvel da base e faz commit."""
+        self.db.session.delete(imovel)
+        self.db.session.commit()
+
+    def adicionar_fotos(self, fotos):
+        """Adiciona uma lista de FotoImovel e faz commit."""
+        for foto in fotos:
+            self.db.session.add(foto)
+        self.db.session.commit()

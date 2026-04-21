@@ -143,28 +143,29 @@ def salvar():
             foto=nome_foto_principal,
         )
 
-        legacy.db.session.add(imovel)
-        legacy.db.session.commit()
-
+        fotos_extras = []
         for idx, arq in enumerate(arquivos[1:], start=1):
             if arq and legacy.allowed_file(arq.filename):
                 nome_arquivo, sucesso = legacy.processar_imagem(arq)
-
                 if sucesso and nome_arquivo:
-                    foto = FotoImovel(
-                        imovel_id=imovel.id,
+                    fotos_extras.append(FotoImovel(
+                        imovel_id=None,  # preenchido após salvar
                         arquivo=nome_arquivo,
                         ordem=idx,
-                    )
-                    legacy.db.session.add(foto)
+                    ))
 
-        legacy.db.session.commit()
+        repo = _repo()
+        repo.salvar(imovel)
+        for foto in fotos_extras:
+            foto.imovel_id = imovel.id
+        if fotos_extras:
+            repo.adicionar_fotos(fotos_extras)
 
         flash('Anúncio publicado com sucesso! Você pode adicionar mais fotos se desejar.', 'success')
         return redirect(url_for('detalhe_imovel', id=imovel.id))
 
     except Exception as e:
-        legacy.db.session.rollback()
+        _repo().rollback()
         flash(f'Erro ao publicar anúncio: {str(e)}', 'error')
         return redirect(url_for('index', aba='anunciar'))
 
@@ -194,7 +195,7 @@ def detalhe_imovel(id):
     legacy._padronizar_negocio_imovel(imovel)
 
     imovel.visualizacoes = (imovel.visualizacoes or 0) + 1
-    legacy.db.session.commit()
+    _repo().commit()
 
     descricao_base = (imovel.descricao or '').strip()
     if not descricao_base:
@@ -237,12 +238,11 @@ def deletar_imovel(id):
             if legacy.os.path.exists(caminho_foto):
                 legacy.os.remove(caminho_foto)
 
-        legacy.db.session.delete(imovel)
-        legacy.db.session.commit()
+        _repo().deletar(imovel)
 
         flash('Anúncio deletado com sucesso!', 'success')
     except Exception as e:
-        legacy.db.session.rollback()
+        _repo().rollback()
         flash(f'Erro ao deletar: {str(e)}', 'error')
 
     return redirect(url_for('meus_anuncios'))
@@ -307,13 +307,13 @@ def editar_imovel(id):
             imovel.preco = preco
             imovel.descricao = f.get('descricao', '')
 
-            legacy.db.session.commit()
+            _repo().commit()
 
             flash('Anúncio atualizado com sucesso!', 'success')
             return redirect(url_for('meus_anuncios'))
 
         except Exception as e:
-            legacy.db.session.rollback()
+            _repo().rollback()
             flash(f'Erro ao atualizar anúncio: {str(e)}', 'error')
             return redirect(url_for('editar_imovel', id=id))
 
@@ -400,23 +400,22 @@ def adicionar_fotos(id):
             return redirect(url_for('adicionar_fotos', id=id))
 
         try:
+            novas_fotos = []
             for arq in files:
                 if arq and legacy.allowed_file(arq.filename):
                     nome_arquivo, sucesso = legacy.processar_imagem(arq)
-
                     if sucesso and nome_arquivo:
-                        foto = FotoImovel(
+                        novas_fotos.append(FotoImovel(
                             imovel_id=id,
                             arquivo=nome_arquivo,
-                            ordem=len(imovel.fotos),
-                        )
-                        legacy.db.session.add(foto)
+                            ordem=len(imovel.fotos) + len(novas_fotos),
+                        ))
 
-            legacy.db.session.commit()
-            flash(f'{len(files)} foto(s) adicionada(s) com sucesso!', 'success')
+            _repo().adicionar_fotos(novas_fotos)
+            flash(f'{len(novas_fotos)} foto(s) adicionada(s) com sucesso!', 'success')
 
         except Exception as e:
-            legacy.db.session.rollback()
+            _repo().rollback()
             flash(f'Erro ao adicionar fotos: {str(e)}', 'error')
 
         return redirect(url_for('detalhe_imovel', id=id))
