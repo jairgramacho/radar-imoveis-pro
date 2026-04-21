@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, flash, url_for
 
 from models import Avaliacao, FotoImovel, Imovel, Usuario
 from radar_app.imoveis import ImovelRepository
+from radar_app.imoveis.avaliacao_repository import AvaliacaoRepository
 
 
 imoveis_bp = Blueprint('imoveis', __name__)
@@ -12,6 +13,11 @@ imoveis_bp = Blueprint('imoveis', __name__)
 def _repo():
     from models import db
     return ImovelRepository(db, Imovel)
+
+
+def _avaliacao_repo():
+    from models import db
+    return AvaliacaoRepository(db, Avaliacao, Usuario)
 
 
 def _legacy():
@@ -331,7 +337,7 @@ def avaliar_anunciante(usuario_id):
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    anunciante = Usuario.query.get_or_404(usuario_id)
+    anunciante = _avaliacao_repo().buscar_usuario_por_id_ou_404(usuario_id)
 
     if request.method == 'POST':
         try:
@@ -351,14 +357,13 @@ def avaliar_anunciante(usuario_id):
                 comentario=comentario,
             )
 
-            legacy.db.session.add(avaliacao)
-            legacy.db.session.commit()
+            _avaliacao_repo().salvar(avaliacao)
 
             flash('Avaliação enviada com sucesso!', 'success')
             return redirect(url_for('detalhe_imovel', id=imovel_id) if imovel_id else url_for('index', aba='buscar'))
 
         except Exception as e:
-            legacy.db.session.rollback()
+            _avaliacao_repo().rollback()
             flash(f'Erro ao enviar avaliação: {str(e)}', 'error')
 
     imovel_id = request.args.get('imovel_id')
