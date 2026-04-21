@@ -1,32 +1,36 @@
 import os
 import re
 import math
-import io
-import importlib
 import logging
 from logging.handlers import RotatingFileHandler
 from threading import Thread
-from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlencode
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response, has_request_context
+from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy import case, func, inspect, text
-from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-from PIL import Image, ImageDraw, ImageFont
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 # import pillow_heif  # Comentado: trava no Codespace
-from models import db, Usuario, Imovel, FotoImovel, Avaliacao, Mensagem, Notificacao, StripeEventoWebhook
+from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook
 
 load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
 from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp, imoveis_bp, core_bp
-from radar_app.blueprints.billing import _stripe_checkout_habilitado
+from radar_app.services.media import (
+    allowed_file as media_allowed_file,
+    arquivo_upload_existe,
+    cloudinary_configurado,
+    cloudinary_uploader,
+    foto_eh_url,
+    foto_url,
+    processar_imagem as media_processar_imagem,
+    resolver_foto_preview,
+    url_cloudinary_og,
+)
 
 # Registrar conversor HEIC para PIL
 # pillow_heif.register_heif_opener()  # Comentado: trava no Codespace
@@ -247,7 +251,7 @@ def _garantir_colunas_usuario():
             db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
         else:
             db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
-    except Exception as e:
+    except Exception:
         pass  # Índice pode já existir
 
     if 'status_assinatura' not in colunas:
@@ -305,92 +309,31 @@ def _marcar_admin_proprietario():
 
 
 def _cloudinary_configurado():
-    """Retorna True quando as credenciais do Cloudinary estão configuradas."""
-    return all([
-        os.getenv('CLOUDINARY_CLOUD_NAME', '').strip(),
-        os.getenv('CLOUDINARY_API_KEY', '').strip(),
-        os.getenv('CLOUDINARY_API_SECRET', '').strip(),
-    ])
+    return cloudinary_configurado()
 
 
 def _cloudinary_uploader():
-    """Carrega uploader do Cloudinary sob demanda para evitar hard dependency em dev."""
-    if not _cloudinary_configurado():
-        return None
-
-    try:
-        cloudinary_module = importlib.import_module('cloudinary')
-        uploader_module = importlib.import_module('cloudinary.uploader')
-        cloudinary_module.config(
-            cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
-            api_key=os.getenv('CLOUDINARY_API_KEY', ''),
-            api_secret=os.getenv('CLOUDINARY_API_SECRET', ''),
-            secure=True,
-        )
-        return uploader_module
-    except Exception as e:
-        app.logger.warning('Cloudinary indisponível no ambiente: %s', str(e))
-        return None
+    return cloudinary_uploader()
 
 
 def _foto_eh_url(valor):
-    """Identifica se o valor já é uma URL externa."""
-    texto = (valor or '').strip().lower()
-    return texto.startswith('http://') or texto.startswith('https://')
+    return foto_eh_url(valor)
 
 
 def _foto_url(valor, external=False):
-    """Resolve URL de foto para arquivos locais e URLs externas."""
-    if not valor:
-        return url_for('static', filename='css/style.css', _external=external)
-    if _foto_eh_url(valor):
-        return valor
-    return url_for('static', filename='uploads/' + valor, _external=external)
+    return foto_url(valor, external=external)
 
 
 def _url_cloudinary_og(url):
-    """Retorna URL Cloudinary otimizada para cards sociais em formato retrato."""
-    if not url:
-        return url
-
-    texto = (url or '').strip()
-    if 'res.cloudinary.com' not in texto or '/image/upload/' not in texto:
-        return texto
-
-    if '/image/upload/c_fill,w_1080,h_1350,q_auto,f_auto/' in texto:
-        return texto
-
-    return texto.replace(
-        '/image/upload/',
-        '/image/upload/c_fill,w_1080,h_1350,q_auto,f_auto/',
-        1,
-    )
+    return url_cloudinary_og(url)
 
 
 def _arquivo_upload_existe(valor):
-    """Valida se arquivo local de upload existe no disco."""
-    if not valor or _foto_eh_url(valor):
-        return True
-    caminho = os.path.join(app.config['UPLOAD_FOLDER'], valor)
-    return os.path.exists(caminho)
+    return arquivo_upload_existe(valor)
 
 
 def _resolver_foto_preview(imovel):
-    """Escolhe a melhor foto válida para preview social."""
-    candidatas = []
-    if imovel.foto:
-        candidatas.append(imovel.foto)
-    if imovel.fotos:
-        candidatas.extend([foto.arquivo for foto in imovel.fotos if foto.arquivo])
-
-    for foto_base in candidatas:
-        if not _arquivo_upload_existe(foto_base):
-            continue
-        if _foto_eh_url(foto_base):
-            return _url_cloudinary_og(foto_base)
-        return _url_publica('static', filename='uploads/' + foto_base)
-
-    return _url_publica('og_placeholder', tipo=imovel.tipo, cidade=imovel.cidade)
+    return resolver_foto_preview(imovel, _url_publica)
 
 
 @app.context_processor
@@ -678,87 +621,13 @@ def _url_publica(endpoint, **values):
     return url_for(endpoint, _external=True, **values)
 
 def allowed_file(filename):
-    """Verifica se o arquivo é permitido"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    """Verifica se o arquivo é permitido."""
+    return media_allowed_file(filename, ALLOWED_EXTENSIONS)
+
 
 def processar_imagem(arquivo):
-    """
-    Processa a imagem: converte HEIC/HEIF para JPG se necessário
-    Retorna: (nome_arquivo_processado, success)
-    """
-    try:
-        if not arquivo or not arquivo.filename:
-            return None, False
-        
-        # Obter extensão
-        ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
-        
-        if ext not in ALLOWED_EXTENSIONS:
-            return None, False
-        
-        nome_original = secure_filename(arquivo.filename)
-        timestamp = int(datetime.utcnow().timestamp())
-        
-        # Se for HEIC/HEIF, converter para JPG
-        if ext in ['heic', 'heif']:
-            try:
-                # Abrir imagem HEIC
-                imagem = Image.open(arquivo.stream)
-                
-                # Converter para RGB (se necessário)
-                if imagem.mode in ('RGBA', 'LA', 'P'):
-                    imagem = imagem.convert('RGB')
-                
-                # Gerar nome em JPG
-                nome_sem_ext = nome_original.rsplit('.', 1)[0]
-                nome_novo = f"{timestamp}_{nome_sem_ext}.jpg"
-
-                uploader = _cloudinary_uploader()
-                if uploader:
-                    buffer = io.BytesIO()
-                    imagem.save(buffer, 'JPEG', quality=85, optimize=True)
-                    buffer.seek(0)
-                    upload_result = uploader.upload(
-                        buffer,
-                        folder='radar-imoveis-pro',
-                        public_id=nome_novo.rsplit('.', 1)[0],
-                        resource_type='image',
-                        overwrite=False,
-                    )
-                    return upload_result.get('secure_url'), True
-
-                caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_novo)
-
-                # Salvar como JPG
-                imagem.save(caminho, 'JPEG', quality=85, optimize=True)
-
-                return nome_novo, True
-            except Exception as e:
-                app.logger.warning('Erro ao converter HEIC: %s', str(e))
-                return None, False
-        else:
-            # Para outros formatos, enviar/salvar normalmente
-            nome_novo = f"{timestamp}_{nome_original}"
-
-            uploader = _cloudinary_uploader()
-            if uploader:
-                arquivo.stream.seek(0)
-                upload_result = uploader.upload(
-                    arquivo.stream,
-                    folder='radar-imoveis-pro',
-                    public_id=nome_novo.rsplit('.', 1)[0],
-                    resource_type='image',
-                    overwrite=False,
-                )
-                return upload_result.get('secure_url'), True
-
-            caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_novo)
-            arquivo.save(caminho)
-            return nome_novo, True
-    
-    except Exception as e:
-        app.logger.warning('Erro ao processar imagem: %s', str(e), exc_info=True)
-        return None, False
+    """Processa upload de imagem preservando a configuração atual do app."""
+    return media_processar_imagem(arquivo, ALLOWED_EXTENSIONS)
 
 def get_usuario_logado():
     """Retorna o usuário logado ou None"""
