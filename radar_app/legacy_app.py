@@ -39,6 +39,18 @@ from radar_app.services.email_delivery import (
     enviar_email_com_status,
     smtp_configurado,
 )
+from radar_app.services.assinatura import (
+    LIMITES_ANUNCIOS_POR_PLANO as ASSINATURA_LIMITES_ANUNCIOS_POR_PLANO,
+    contar_anuncios_ativos,
+    emails_admin_configurados,
+    limite_anuncios_usuario,
+    normalizar_plano,
+    pausar_todos_anuncios_usuario,
+    reativar_todos_anuncios_usuario,
+    resumo_limite_anuncios,
+    status_assinatura_bloqueada,
+    usuario_eh_admin,
+)
 
 # Registrar conversor HEIC para PIL
 # pillow_heif.register_heif_opener()  # Comentado: trava no Codespace
@@ -389,80 +401,43 @@ if flask_env == 'production':
 OPORTUNIDADE_DESCONTO_MINIMO = 0.10
 OPORTUNIDADE_AMOSTRA_MINIMA = 5
 ITENS_POR_PAGINA = 12
-LIMITES_ANUNCIOS_POR_PLANO = {
-    'free': 3,
-    'pro': 15,
-    'empresa': 50,
-}
+LIMITES_ANUNCIOS_POR_PLANO = ASSINATURA_LIMITES_ANUNCIOS_POR_PLANO
 
 
 def _status_assinatura_bloqueada(status_assinatura):
-    status = (status_assinatura or '').strip().lower()
-    return status in {'vencida', 'cancelada', 'inadimplente', 'incompleta'}
+    return status_assinatura_bloqueada(status_assinatura)
 
 
 def _pausar_todos_anuncios_usuario(usuario_id):
-    Imovel.query.filter_by(usuario_id=usuario_id, ativo=True).update({Imovel.ativo: False}, synchronize_session=False)
+    return pausar_todos_anuncios_usuario(usuario_id, Imovel)
 
 
 def _reativar_todos_anuncios_usuario(usuario_id):
-    Imovel.query.filter_by(usuario_id=usuario_id, ativo=False).update({Imovel.ativo: True}, synchronize_session=False)
+    return reativar_todos_anuncios_usuario(usuario_id, Imovel)
 
 
 def _emails_admin_configurados():
-    """Retorna conjunto de emails administradores definidos em ADMIN_EMAILS."""
-    bruto = os.getenv('ADMIN_EMAILS', '')
-    emails = {
-        item.strip().lower()
-        for item in bruto.split(',')
-        if item.strip()
-    }
-    return emails
+    return emails_admin_configurados()
 
 
 def _usuario_eh_admin(usuario):
-    """Verifica se o usuário atual está autorizado como administrador."""
-    if not usuario:
-        return False
-
-    return (usuario.email or '').strip().lower() in _emails_admin_configurados()
+    return usuario_eh_admin(usuario)
 
 
 def _normalizar_plano(plano):
-    plano_normalizado = (plano or 'free').strip().lower()
-    return plano_normalizado if plano_normalizado in LIMITES_ANUNCIOS_POR_PLANO else 'free'
+    return normalizar_plano(plano, LIMITES_ANUNCIOS_POR_PLANO)
 
 
 def _limite_anuncios_usuario(usuario):
-    if not usuario:
-        return LIMITES_ANUNCIOS_POR_PLANO['free']
-
-    # Admin tem limite ilimitado
-    if getattr(usuario, 'is_admin', False):
-        return 999999
-
-    limite_custom = getattr(usuario, 'limite_anuncios', None)
-    if isinstance(limite_custom, int) and limite_custom > 0:
-        return limite_custom
-
-    return LIMITES_ANUNCIOS_POR_PLANO[_normalizar_plano(getattr(usuario, 'plano', 'free'))]
+    return limite_anuncios_usuario(usuario, LIMITES_ANUNCIOS_POR_PLANO)
 
 
 def _contar_anuncios_ativos(usuario_id):
-    return Imovel.query.filter_by(usuario_id=usuario_id, ativo=True).count()
+    return contar_anuncios_ativos(usuario_id, Imovel)
 
 
 def _resumo_limite_anuncios(usuario):
-    usados = _contar_anuncios_ativos(usuario.id)
-    limite = _limite_anuncios_usuario(usuario)
-    disponiveis = max(0, limite - usados)
-    return {
-        'plano': _normalizar_plano(getattr(usuario, 'plano', 'free')),
-        'usados': usados,
-        'limite': limite,
-        'disponiveis': disponiveis,
-        'atingiu_limite': usados >= limite,
-    }
+    return resumo_limite_anuncios(usuario, Imovel, LIMITES_ANUNCIOS_POR_PLANO)
 
 
 def _smtp_configurado():
