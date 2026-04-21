@@ -1,8 +1,8 @@
-"""Blueprint para leitura e listagem de imoveis."""
+"""Blueprint para operacoes de imoveis."""
 
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 
-from models import Imovel
+from models import FotoImovel, Imovel
 
 
 imoveis_bp = Blueprint('imoveis', __name__)
@@ -92,6 +92,100 @@ def index():
         limite_anuncios=limite_anuncios,
         usuario=usuario,
     )
+
+
+@imoveis_bp.route('/salvar', methods=['POST'])
+def salvar():
+    """Salva um novo anuncio de imovel."""
+    legacy = _legacy()
+    usuario = legacy.get_usuario_logado()
+
+    if not usuario:
+        flash('Você precisa estar logado para anunciar!', 'error')
+        return redirect(url_for('login'))
+
+    if legacy._status_assinatura_bloqueada(getattr(usuario, 'status_assinatura', '')):
+        flash('Sua assinatura está pendente. Regularize seu pagamento para voltar a publicar anúncios.', 'error')
+        return redirect(url_for('dashboard'))
+
+    resumo_limite = legacy._resumo_limite_anuncios(usuario)
+    if resumo_limite['atingiu_limite']:
+        plano_nome = resumo_limite['plano'].capitalize()
+        flash(
+            f"Limite atingido: seu plano {plano_nome} permite {resumo_limite['limite']} anúncio(s) ativo(s). "
+            'Desative um anúncio ou faça upgrade para publicar mais.',
+            'error',
+        )
+        return redirect(url_for('index', aba='anunciar'))
+
+    try:
+        f = request.form
+
+        campos_obrigatorios = ['estado', 'cidade', 'bairro', 'tipo', 'negocio', 'valor']
+        for campo in campos_obrigatorios:
+            if not f.get(campo):
+                flash(f'Campo obrigatório não preenchido: {campo}', 'error')
+                return redirect(url_for('index', aba='anunciar'))
+
+        try:
+            preco = float(f.get('valor').replace('R$', '').replace('.', '').replace(',', '.').strip())
+        except Exception:
+            flash('Preço inválido!', 'error')
+            return redirect(url_for('index', aba='anunciar'))
+
+        arquivos = request.files.getlist('foto')
+        nome_foto_principal = None
+
+        if arquivos and arquivos[0].filename:
+            arq_principal = arquivos[0]
+            if arq_principal and legacy.allowed_file(arq_principal.filename):
+                nome_arquivo, sucesso = legacy.processar_imagem(arq_principal)
+                if sucesso and nome_arquivo:
+                    nome_foto_principal = nome_arquivo
+
+        quartos = int(f.get('quartos', 0)) if f.get('quartos') else None
+        vagas = int(f.get('vagas', 0)) if f.get('vagas') else None
+        area = float(f.get('area', 0)) if f.get('area') else None
+
+        imovel = Imovel(
+            usuario_id=usuario.id,
+            estado=f.get('estado'),
+            cidade=f.get('cidade'),
+            bairro=f.get('bairro'),
+            tipo=f.get('tipo'),
+            negocio=legacy._negocio_canonico(f.get('negocio')),
+            quartos=quartos,
+            vagas=vagas,
+            area=area,
+            preco=preco,
+            descricao=f.get('descricao', ''),
+            foto=nome_foto_principal,
+        )
+
+        legacy.db.session.add(imovel)
+        legacy.db.session.commit()
+
+        for idx, arq in enumerate(arquivos[1:], start=1):
+            if arq and legacy.allowed_file(arq.filename):
+                nome_arquivo, sucesso = legacy.processar_imagem(arq)
+
+                if sucesso and nome_arquivo:
+                    foto = FotoImovel(
+                        imovel_id=imovel.id,
+                        arquivo=nome_arquivo,
+                        ordem=idx,
+                    )
+                    legacy.db.session.add(foto)
+
+        legacy.db.session.commit()
+
+        flash('Anúncio publicado com sucesso! Você pode adicionar mais fotos se desejar.', 'success')
+        return redirect(url_for('detalhe_imovel', id=imovel.id))
+
+    except Exception as e:
+        legacy.db.session.rollback()
+        flash(f'Erro ao publicar anúncio: {str(e)}', 'error')
+        return redirect(url_for('index', aba='anunciar'))
 
 
 @imoveis_bp.route('/meus-anuncios')

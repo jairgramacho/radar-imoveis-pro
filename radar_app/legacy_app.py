@@ -76,6 +76,7 @@ def _registrar_alias_endpoints_auth():
 def _registrar_alias_endpoints_imoveis():
     aliases = [
         ('index', '/', ['GET'], 'imoveis.index'),
+        ('salvar', '/salvar', ['POST'], 'imoveis.salvar'),
         ('meus_anuncios', '/meus-anuncios', ['GET'], 'imoveis.meus_anuncios'),
         ('detalhe_imovel', '/imovel/<int:id>', ['GET'], 'imoveis.detalhe_imovel'),
         ('deletar_imovel', '/deletar-imovel/<int:id>', ['POST'], 'imoveis.deletar_imovel'),
@@ -941,106 +942,6 @@ def sitemap_xml():
 
     xml = render_template('sitemap.xml', urls=urls)
     return Response(xml, mimetype='application/xml')
-
-@app.route('/salvar', methods=['POST'])
-def salvar():
-    """Salva um novo anúncio de imóvel"""
-    usuario = get_usuario_logado()
-    
-    # Verificar autenticação
-    if not usuario:
-        flash('Você precisa estar logado para anunciar!', 'error')
-        return redirect(url_for('login'))
-
-    if _status_assinatura_bloqueada(getattr(usuario, 'status_assinatura', '')):
-        flash('Sua assinatura está pendente. Regularize seu pagamento para voltar a publicar anúncios.', 'error')
-        return redirect(url_for('dashboard'))
-
-    resumo_limite = _resumo_limite_anuncios(usuario)
-    if resumo_limite['atingiu_limite']:
-        plano_nome = resumo_limite['plano'].capitalize()
-        flash(
-            f"Limite atingido: seu plano {plano_nome} permite {resumo_limite['limite']} anúncio(s) ativo(s). "
-            "Desative um anúncio ou faça upgrade para publicar mais.",
-            'error',
-        )
-        return redirect(url_for('index', aba='anunciar'))
-    
-    try:
-        f = request.form
-        
-        # Validação de campos obrigatórios
-        campos_obrigatorios = ['estado', 'cidade', 'bairro', 'tipo', 'negocio', 'valor']
-        for campo in campos_obrigatorios:
-            if not f.get(campo):
-                flash(f'Campo obrigatório não preenchido: {campo}', 'error')
-                return redirect(url_for('index', aba='anunciar'))
-        
-        # Converter preço
-        try:
-            preco = float(f.get('valor').replace('R$','').replace('.','').replace(',','.').strip())
-        except:
-            flash('Preço inválido!', 'error')
-            return redirect(url_for('index', aba='anunciar'))
-        
-        # Processar fotos (agora aceita múltiplas e converte HEIC)
-        arquivos = request.files.getlist('foto')
-        nome_foto_principal = None
-        
-        if arquivos and arquivos[0].filename:
-            # Usar apenas a primeira foto como principal
-            arq_principal = arquivos[0]
-            if arq_principal and allowed_file(arq_principal.filename):
-                nome_arquivo, sucesso = processar_imagem(arq_principal)
-                if sucesso and nome_arquivo:
-                    nome_foto_principal = nome_arquivo
-        
-        # Converter valores numéricos
-        quartos = int(f.get('quartos', 0)) if f.get('quartos') else None
-        vagas = int(f.get('vagas', 0)) if f.get('vagas') else None
-        area = float(f.get('area', 0)) if f.get('area') else None
-        
-        # Criar novo imóvel
-        imovel = Imovel(
-            usuario_id=usuario.id,
-            estado=f.get('estado'),
-            cidade=f.get('cidade'),
-            bairro=f.get('bairro'),
-            tipo=f.get('tipo'),
-            negocio=_negocio_canonico(f.get('negocio')),
-            quartos=quartos,
-            vagas=vagas,
-            area=area,
-            preco=preco,
-            descricao=f.get('descricao', ''),
-            foto=nome_foto_principal
-        )
-        
-        db.session.add(imovel)
-        db.session.commit()
-        
-        # Adicionar fotos adicionais (as demais além da principal e converte HEIC)
-        for idx, arq in enumerate(arquivos[1:], start=1):
-            if arq and allowed_file(arq.filename):
-                nome_arquivo, sucesso = processar_imagem(arq)
-                
-                if sucesso and nome_arquivo:
-                    foto = FotoImovel(
-                        imovel_id=imovel.id,
-                        arquivo=nome_arquivo,
-                        ordem=idx
-                    )
-                    db.session.add(foto)
-        
-        db.session.commit()
-        
-        flash('Anúncio publicado com sucesso! Você pode adicionar mais fotos se desejar.', 'success')
-        return redirect(url_for('detalhe_imovel', id=imovel.id))
-    
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao publicar anúncio: {str(e)}', 'error')
-        return redirect(url_for('index', aba='anunciar'))
 
 @app.route('/og-placeholder')
 def og_placeholder():
