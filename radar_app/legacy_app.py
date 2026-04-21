@@ -25,7 +25,7 @@ load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
-from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp
+from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp, imoveis_bp
 from radar_app.blueprints.billing import _stripe_checkout_habilitado
 
 # Registrar conversor HEIC para PIL
@@ -43,6 +43,7 @@ app.register_blueprint(billing_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(imoveis_bp)
 
 
 def _registrar_alias_endpoints_auth():
@@ -56,6 +57,27 @@ def _registrar_alias_endpoints_auth():
         ('redefinir_senha', '/redefinir-senha/<token>', ['GET', 'POST'], 'auth.redefinir_senha'),
         ('configuracoes_conta', '/configuracoes-conta', ['GET', 'POST'], 'auth.configuracoes_conta'),
         ('excluir_conta', '/excluir-conta', ['POST'], 'auth.excluir_conta'),
+    ]
+
+    for endpoint_antigo, regra, metodos, endpoint_novo in aliases:
+        if endpoint_antigo in app.view_functions:
+            continue
+        if endpoint_novo not in app.view_functions:
+            continue
+
+        app.add_url_rule(
+            regra,
+            endpoint=endpoint_antigo,
+            view_func=app.view_functions[endpoint_novo],
+            methods=metodos,
+        )
+
+
+def _registrar_alias_endpoints_imoveis():
+    aliases = [
+        ('index', '/', ['GET'], 'imoveis.index'),
+        ('meus_anuncios', '/meus-anuncios', ['GET'], 'imoveis.meus_anuncios'),
+        ('detalhe_imovel', '/imovel/<int:id>', ['GET'], 'imoveis.detalhe_imovel'),
     ]
 
     for endpoint_antigo, regra, metodos, endpoint_novo in aliases:
@@ -143,6 +165,7 @@ app.view_functions['auth.login'] = limiter.limit('5 per minute')(app.view_functi
 app.view_functions['chat.enviar_mensagem'] = limiter.limit('20 per minute')(app.view_functions['chat.enviar_mensagem'])
 app.view_functions['chat.api_enviar_mensagem'] = limiter.limit('30 per minute')(app.view_functions['chat.api_enviar_mensagem'])
 _registrar_alias_endpoints_auth()
+_registrar_alias_endpoints_imoveis()
 
 if flask_env == 'production' and ratelimit_storage_uri == 'memory://':
     app.logger.warning(
@@ -917,85 +940,6 @@ def sitemap_xml():
     xml = render_template('sitemap.xml', urls=urls)
     return Response(xml, mimetype='application/xml')
 
-@app.route('/')
-def index():
-    """Página principal com abas de busca e anúncio"""
-    usuario = get_usuario_logado()
-    limite_anuncios = _resumo_limite_anuncios(usuario) if usuario else None
-    aba = request.args.get('aba', 'buscar')
-    filtros = request.args.to_dict()
-    pagina = request.args.get('pagina', 1, type=int)
-    
-    # Buscar imóveis
-    query = Imovel.query.filter_by(ativo=True).order_by(Imovel.criado_em.desc())
-    
-    # Aplicar filtros
-    if filtros.get('negocio'):
-        negocio_filtro = filtros['negocio']
-        if negocio_filtro == 'Venda':
-            # Compatibilidade com registros legados que podem usar "Compra"
-            query = query.filter(Imovel.negocio.in_(['Venda', 'Compra']))
-        else:
-            query = query.filter_by(negocio=negocio_filtro)
-    
-    if filtros.get('tipo'):
-        query = query.filter_by(tipo=filtros['tipo'])
-    
-    if filtros.get('estado'):
-        query = query.filter_by(estado=filtros['estado'])
-    
-    if filtros.get('cidade'):
-        query = query.filter(Imovel.cidade.ilike(f"%{filtros['cidade']}%"))
-    
-    if filtros.get('preco_max'):
-        try:
-            preco_max = float(filtros['preco_max'].replace('R$','').replace('.','').replace(',','.').strip())
-            query = query.filter(Imovel.preco <= preco_max)
-        except:
-            pass
-    
-    imoveis = query.all()
-    aplicar_radar_oportunidades(imoveis)
-
-    oportunidades = [imovel for imovel in imoveis if getattr(imovel, 'eh_oportunidade', False)]
-    oportunidades.sort(key=lambda item: item.desconto_oportunidade or 0, reverse=True)
-
-    if filtros.get('somente_oportunidades') == '1':
-        imoveis = [imovel for imovel in imoveis if getattr(imovel, 'eh_oportunidade', False)]
-
-    imoveis_pagina, imoveis_total, imoveis_total_paginas, pagina_ajustada = _paginar_lista(
-        imoveis,
-        pagina,
-        ITENS_POR_PAGINA,
-    )
-    oportunidades_pagina, oportunidades_total, oportunidades_total_paginas, pagina_oportunidades = _paginar_lista(
-        oportunidades,
-        pagina,
-        ITENS_POR_PAGINA,
-    )
-
-    argumentos_base = {k: v for k, v in filtros.items() if k != 'pagina'}
-    argumentos_base['aba'] = aba
-    total_paginas = imoveis_total_paginas if aba == 'buscar' else oportunidades_total_paginas
-    pagina_corrente = pagina_ajustada if aba == 'buscar' else pagina_oportunidades
-    links_paginacao = {
-        p: url_for('index', **{**argumentos_base, 'pagina': p})
-        for p in range(1, total_paginas + 1)
-    }
-    
-    return render_template('index.html', 
-                         imoveis=imoveis_pagina,
-                         imoveis_total=imoveis_total,
-                         oportunidades=oportunidades_pagina,
-                         oportunidades_total=oportunidades_total,
-                         aba=aba, 
-                         busca=filtros,
-                         pagina_atual=pagina_corrente,
-                         total_paginas=total_paginas,
-                         links_paginacao=links_paginacao,
-                         limite_anuncios=limite_anuncios,
-                         usuario=usuario)
-
 @app.route('/salvar', methods=['POST'])
 def salvar():
     """Salva um novo anúncio de imóvel"""
@@ -1096,20 +1040,6 @@ def salvar():
         flash(f'Erro ao publicar anúncio: {str(e)}', 'error')
         return redirect(url_for('index', aba='anunciar'))
 
-@app.route('/meus-anuncios')
-def meus_anuncios():
-    """Lista os anúncios do usuário logado"""
-    usuario = get_usuario_logado()
-    
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    imoveis = Imovel.query.filter_by(usuario_id=usuario.id).order_by(Imovel.criado_em.desc()).all()
-    _padronizar_negocio_imoveis(imoveis)
-    
-    return render_template('meus_anuncios.html', imoveis=imoveis, usuario=usuario)
-
 @app.route('/og-placeholder')
 def og_placeholder():
     """Gera imagem de placeholder otimizada para Open Graph (1200x628)."""
@@ -1176,32 +1106,6 @@ def og_placeholder():
         img.save(img_io, 'PNG')
         img_io.seek(0)
         return Response(img_io.getvalue(), mimetype='image/png')
-
-@app.route('/imovel/<int:id>')
-def detalhe_imovel(id):
-    """Página de detalhe do imóvel"""
-    usuario = get_usuario_logado()
-    imovel = Imovel.query.get_or_404(id)
-    _padronizar_negocio_imovel(imovel)
-
-    # Incrementar contador de visualizações
-    imovel.visualizacoes = (imovel.visualizacoes or 0) + 1
-    db.session.commit()
-
-    descricao_base = (imovel.descricao or '').strip()
-    if not descricao_base:
-        descricao_base = f"{imovel.tipo} em {imovel.cidade}/{imovel.estado}, no bairro {imovel.bairro}."
-    descricao_meta = f"{descricao_base[:140]} | Preço: R$ {moeda_brl(imovel.preco)}"
-    
-    # Determinar melhor foto para preview de compartilhamento.
-    foto_preview = _resolver_foto_preview(imovel)
-
-    # Cache buster para forçar atualização de preview em crawlers sociais
-    marca_tempo = int((imovel.atualizado_em or imovel.criado_em).timestamp())
-    separador = '&' if '?' in foto_preview else '?'
-    foto_preview = f"{foto_preview}{separador}v={marca_tempo}"
-    
-    return render_template('detalhe_imovel.html', imovel=imovel, usuario=usuario, descricao_meta=descricao_meta, foto_preview=foto_preview)
 
 @app.route('/deletar-imovel/<int:id>', methods=['POST'])
 def deletar_imovel(id):
