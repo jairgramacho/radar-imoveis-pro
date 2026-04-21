@@ -3,9 +3,10 @@
 import os
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
-from sqlalchemy import func
 
 from models import Imovel, Usuario, db
+from radar_app.auth import UsuarioRepository
+from radar_app.imoveis import ImovelRepository
 
 
 admin_bp = Blueprint('admin', __name__)
@@ -20,8 +21,16 @@ LIMITES_ANUNCIOS_POR_PLANO = {
 def _usuario_logado_atual():
     usuario_id = session.get('usuario_id')
     if usuario_id:
-        return Usuario.query.get(usuario_id)
+        return _usuario_repo().buscar_por_id(usuario_id)
     return None
+
+
+def _usuario_repo():
+    return UsuarioRepository(db, Usuario)
+
+
+def _imovel_repo():
+    return ImovelRepository(db, Imovel)
 
 
 def _emails_admin_configurados():
@@ -62,7 +71,7 @@ def admin_planos():
 
     if request.method == 'POST':
         alvo_id = request.form.get('usuario_id', type=int)
-        alvo = Usuario.query.get_or_404(alvo_id)
+        alvo = _usuario_repo().buscar_por_id_ou_404(alvo_id)
 
         plano = _normalizar_plano(request.form.get('plano'))
         status_assinatura = (request.form.get('status_assinatura') or 'ativa').strip().lower()
@@ -83,25 +92,13 @@ def admin_planos():
         alvo.status_assinatura = status_assinatura
         alvo.limite_anuncios = limite_final
 
-        db.session.commit()
+        _usuario_repo().commit()
         flash(f'Plano atualizado para {alvo.nome}.', 'success')
         return redirect(url_for('admin.admin_planos'))
 
     busca = (request.args.get('q') or '').strip()
-    query = Usuario.query
-    if busca:
-        query = query.filter(
-            Usuario.nome.ilike(f'%{busca}%') |
-            Usuario.email.ilike(f'%{busca}%')
-        )
-
-    usuarios = query.order_by(Usuario.criado_em.desc()).limit(200).all()
-    contagem_ativos = dict(
-        db.session.query(Imovel.usuario_id, func.count(Imovel.id))
-        .filter(Imovel.ativo.is_(True))
-        .group_by(Imovel.usuario_id)
-        .all()
-    )
+    usuarios = _usuario_repo().listar_para_admin(busca, limite=200)
+    contagem_ativos = _imovel_repo().contar_ativos_por_usuario_lote()
 
     return render_template(
         'admin_planos.html',

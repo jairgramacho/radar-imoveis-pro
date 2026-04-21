@@ -50,6 +50,17 @@ class UsuarioRepository:
         """Retorna todos os usuários."""
         return self.model.query.all()
 
+    def listar_para_admin(self, busca=None, limite=200):
+        """Lista usuários para painel admin com busca por nome/email."""
+        q = self.model.query
+        if busca:
+            termo = f"%{busca}%"
+            q = q.filter(
+                self.model.nome.ilike(termo)
+                | self.model.email.ilike(termo)
+            )
+        return q.order_by(self.model.criado_em.desc()).limit(limite).all()
+
     def salvar(self, usuario):
         """Persiste um novo usuário e faz commit."""
         self.db.session.add(usuario)

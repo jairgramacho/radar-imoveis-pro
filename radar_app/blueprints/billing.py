@@ -12,6 +12,8 @@ import logging
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from models import db, Usuario, Imovel, StripeEventoWebhook
+from radar_app.auth import UsuarioRepository
+from radar_app.imoveis import ImovelRepository
 
 billing_bp = Blueprint('billing', __name__)
 logger = logging.getLogger(__name__)
@@ -100,15 +102,15 @@ def _timestamp_para_datetime(timestamp):
 def _buscar_usuario_por_stripe(customer_id=None, subscription_id=None, usuario_id=None):
     """Localiza usuário via Stripe customer_id, subscription_id ou usuario_id."""
     if usuario_id:
-        return Usuario.query.get(usuario_id)
+        return _usuario_repo().buscar_por_id(usuario_id)
 
     if subscription_id:
-        usuario = Usuario.query.filter_by(stripe_subscription_id=subscription_id).first()
+        usuario = _usuario_repo().buscar_por_stripe_subscription_id(subscription_id)
         if usuario:
             return usuario
 
     if customer_id:
-        usuario = Usuario.query.filter_by(stripe_customer_id=customer_id).first()
+        usuario = _usuario_repo().buscar_por_stripe_customer_id(customer_id)
         if usuario:
             return usuario
 
@@ -158,8 +160,16 @@ def _usuario_logado_atual():
     """Retorna usuário logado na sessão atual."""
     usuario_id = session.get('usuario_id')
     if usuario_id:
-        return Usuario.query.get(usuario_id)
+        return _usuario_repo().buscar_por_id(usuario_id)
     return None
+
+
+def _usuario_repo():
+    return UsuarioRepository(db, Usuario)
+
+
+def _imovel_repo():
+    return ImovelRepository(db, Imovel)
 
 
 def _status_assinatura_bloqueada(status_assinatura):
@@ -170,18 +180,12 @@ def _status_assinatura_bloqueada(status_assinatura):
 
 def _pausar_todos_anuncios_usuario(usuario_id):
     """Pausa todos os anúncios ativos do usuário."""
-    Imovel.query.filter_by(usuario_id=usuario_id, ativo=True).update(
-        {Imovel.ativo: False},
-        synchronize_session=False
-    )
+    _imovel_repo().pausar_todos_anuncios_usuario(usuario_id)
 
 
 def _reativar_todos_anuncios_usuario(usuario_id):
     """Reativa todos os anúncios inativos do usuário."""
-    Imovel.query.filter_by(usuario_id=usuario_id, ativo=False).update(
-        {Imovel.ativo: True},
-        synchronize_session=False
-    )
+    _imovel_repo().reativar_todos_anuncios_usuario(usuario_id)
 
 
 # ============================================
@@ -301,7 +305,7 @@ def assinatura_checkout():
 
         if checkout_session.get('customer'):
             usuario.stripe_customer_id = checkout_session.get('customer')
-            db.session.commit()
+            _usuario_repo().commit()
 
         return redirect(checkout_session.url, code=303)
     except Exception as e:

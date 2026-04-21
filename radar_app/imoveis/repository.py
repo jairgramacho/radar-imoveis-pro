@@ -76,6 +76,15 @@ class ImovelRepository:
             .count()
         )
 
+    def contar_ativos_por_usuario_lote(self):
+        """Retorna dict {usuario_id: total_ativos} para todos os usuários com imóveis ativos."""
+        return dict(
+            self.db.session.query(self.model.usuario_id, func.count(self.model.id))
+            .filter(self.model.ativo.is_(True))
+            .group_by(self.model.usuario_id)
+            .all()
+        )
+
     def estatisticas_preco_por_grupo(self):
         """Retorna média de preço e contagem por grupo (negocio, cidade, bairro, tipo, quartos).
 
@@ -138,3 +147,17 @@ class ImovelRepository:
         for foto in fotos:
             self.db.session.add(foto)
         self.db.session.commit()
+
+    def pausar_todos_anuncios_usuario(self, usuario_id):
+        """Define ativo=False para todos os imóveis ativos do usuário."""
+        self.model.query.filter_by(usuario_id=usuario_id, ativo=True).update(
+            {self.model.ativo: False},
+            synchronize_session=False,
+        )
+
+    def reativar_todos_anuncios_usuario(self, usuario_id):
+        """Define ativo=True para todos os imóveis inativos do usuário."""
+        self.model.query.filter_by(usuario_id=usuario_id, ativo=False).update(
+            {self.model.ativo: True},
+            synchronize_session=False,
+        )

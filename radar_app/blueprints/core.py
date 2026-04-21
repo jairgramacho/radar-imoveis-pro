@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from models import Imovel, Mensagem, db
 from radar_app.blueprints.billing import _stripe_checkout_habilitado
+from radar_app.imoveis import ImovelRepository
 
 
 core_bp = Blueprint('core', __name__)
@@ -18,6 +19,10 @@ def _legacy():
     from radar_app import legacy_app
 
     return legacy_app
+
+
+def _imovel_repo():
+    return ImovelRepository(db, Imovel)
 
 
 @core_bp.route('/healthz')
@@ -84,7 +89,7 @@ def sitemap_xml():
         },
     ]
 
-    imoveis_ativos = Imovel.query.filter_by(ativo=True).all()
+    imoveis_ativos = _imovel_repo().listar_ativos()
     for imovel in imoveis_ativos:
         referencia_data = imovel.atualizado_em or imovel.criado_em or datetime.utcnow()
         urls.append({
@@ -169,7 +174,7 @@ def dashboard():
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    imoveis = Imovel.query.filter_by(usuario_id=usuario.id).all()
+    imoveis = _imovel_repo().listar_por_usuario(usuario.id)
     legacy._padronizar_negocio_imoveis(imoveis)
 
     total_imoveis = len(imoveis)

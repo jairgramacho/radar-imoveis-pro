@@ -4,6 +4,8 @@ from flask import Blueprint, current_app, flash, jsonify, redirect, render_templ
 
 from email_utils import enviar_email_nova_mensagem
 from models import Imovel, Mensagem, Usuario, db
+from radar_app.auth import UsuarioRepository
+from radar_app.imoveis import ImovelRepository
 
 
 chat_bp = Blueprint('chat', __name__)
@@ -12,8 +14,16 @@ chat_bp = Blueprint('chat', __name__)
 def _usuario_logado_atual():
     usuario_id = session.get('usuario_id')
     if usuario_id:
-        return Usuario.query.get(usuario_id)
+        return _usuario_repo().buscar_por_id(usuario_id)
     return None
+
+
+def _usuario_repo():
+    return UsuarioRepository(db, Usuario)
+
+
+def _imovel_repo():
+    return ImovelRepository(db, Imovel)
 
 
 @chat_bp.route('/chat')
@@ -128,10 +138,10 @@ def enviar_mensagem(usuario_id):
         flash('Voce precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    Usuario.query.get_or_404(usuario_id)
+    _usuario_repo().buscar_por_id_ou_404(usuario_id)
 
     imovel_id = request.form.get('imovel_id', type=int)
-    if imovel_id and not Imovel.query.get(imovel_id):
+    if imovel_id and not _imovel_repo().buscar_por_id(imovel_id):
         imovel_id = None
     texto = request.form.get('mensagem', '').strip()
 
@@ -164,7 +174,7 @@ def api_conversa(usuario_id):
     if not usuario:
         return jsonify({'ok': False, 'erro': 'nao_autenticado'}), 401
 
-    Usuario.query.get_or_404(usuario_id)
+    _usuario_repo().buscar_por_id_ou_404(usuario_id)
 
     imovel_id_param = request.args.get('imovel_id', '').strip().lower()
     imovel_id = None
@@ -219,7 +229,7 @@ def api_enviar_mensagem(usuario_id):
     if usuario.id == usuario_id:
         return jsonify({'ok': False, 'erro': 'destinatario_invalido'}), 400
 
-    Usuario.query.get_or_404(usuario_id)
+    _usuario_repo().buscar_por_id_ou_404(usuario_id)
 
     texto = ''
     imovel_id = None
@@ -239,7 +249,7 @@ def api_enviar_mensagem(usuario_id):
         except ValueError:
             return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
 
-    if imovel_id and not Imovel.query.get(imovel_id):
+    if imovel_id and not _imovel_repo().buscar_por_id(imovel_id):
         return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
 
     if not texto:
@@ -256,11 +266,11 @@ def api_enviar_mensagem(usuario_id):
         db.session.add(msg)
         db.session.commit()
 
-        destinatario = Usuario.query.get(usuario_id)
+        destinatario = _usuario_repo().buscar_por_id(usuario_id)
         if destinatario and destinatario.email:
             imovel_tipo = ''
             if imovel_id:
-                imovel = Imovel.query.get(imovel_id)
+                imovel = _imovel_repo().buscar_por_id(imovel_id)
                 if imovel:
                     imovel_tipo = imovel.tipo
 
