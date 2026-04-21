@@ -78,6 +78,8 @@ def _registrar_alias_endpoints_imoveis():
         ('index', '/', ['GET'], 'imoveis.index'),
         ('meus_anuncios', '/meus-anuncios', ['GET'], 'imoveis.meus_anuncios'),
         ('detalhe_imovel', '/imovel/<int:id>', ['GET'], 'imoveis.detalhe_imovel'),
+        ('deletar_imovel', '/deletar-imovel/<int:id>', ['POST'], 'imoveis.deletar_imovel'),
+        ('editar_imovel', '/editar-imovel/<int:id>', ['GET', 'POST'], 'imoveis.editar_imovel'),
     ]
 
     for endpoint_antigo, regra, metodos, endpoint_novo in aliases:
@@ -1106,116 +1108,6 @@ def og_placeholder():
         img.save(img_io, 'PNG')
         img_io.seek(0)
         return Response(img_io.getvalue(), mimetype='image/png')
-
-@app.route('/deletar-imovel/<int:id>', methods=['POST'])
-def deletar_imovel(id):
-    """Deleta um anúncio (apenas o dono pode)"""
-    usuario = get_usuario_logado()
-    
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    imovel = Imovel.query.get_or_404(id)
-    
-    if imovel.usuario_id != usuario.id:
-        flash('Você não tem permissão para deletar este anúncio!', 'error')
-        return redirect(url_for('index'))
-    
-    try:
-        # Deletar foto se existir
-        if imovel.foto and not _foto_eh_url(imovel.foto):
-            caminho_foto = os.path.join(app.config['UPLOAD_FOLDER'], imovel.foto)
-            if os.path.exists(caminho_foto):
-                os.remove(caminho_foto)
-        
-        db.session.delete(imovel)
-        db.session.commit()
-        
-        flash('Anúncio deletado com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao deletar: {str(e)}', 'error')
-    
-    return redirect(url_for('meus_anuncios'))
-
-@app.route('/editar-imovel/<int:id>', methods=['GET', 'POST'])
-def editar_imovel(id):
-    """Edita um anúncio (apenas o dono pode)"""
-    usuario = get_usuario_logado()
-    
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    imovel = Imovel.query.get_or_404(id)
-    
-    if imovel.usuario_id != usuario.id:
-        flash('Você não tem permissão para editar este anúncio!', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        try:
-            f = request.form
-            
-            # Validação de campos obrigatórios
-            campos_obrigatorios = ['estado', 'cidade', 'bairro', 'tipo', 'negocio', 'valor']
-            for campo in campos_obrigatorios:
-                if not f.get(campo):
-                    flash(f'Campo obrigatório não preenchido: {campo}', 'error')
-                    return redirect(url_for('editar_imovel', id=id))
-            
-            # Converter preço
-            try:
-                preco = float(f.get('valor').replace('R$','').replace('.','').replace(',','.').strip())
-            except:
-                flash('Preço inválido!', 'error')
-                return redirect(url_for('editar_imovel', id=id))
-            
-            # Processar foto se uma nova foi enviada (converte HEIC se necessário)
-            arq = request.files.get('foto')
-            if arq and arq.filename:
-                if allowed_file(arq.filename):
-                    # Deletar foto antiga se existir
-                    if imovel.foto and not _foto_eh_url(imovel.foto):
-                        caminho_foto = os.path.join(app.config['UPLOAD_FOLDER'], imovel.foto)
-                        if os.path.exists(caminho_foto):
-                            os.remove(caminho_foto)
-                    
-                    nome_foto, sucesso = processar_imagem(arq)
-                    if sucesso and nome_foto:
-                        imovel.foto = nome_foto
-            
-            # Converter valores numéricos
-            quartos = int(f.get('quartos', 0)) if f.get('quartos') else None
-            vagas = int(f.get('vagas', 0)) if f.get('vagas') else None
-            area = float(f.get('area', 0)) if f.get('area') else None
-            
-            # Atualizar imóvel
-            imovel.estado = f.get('estado')
-            imovel.cidade = f.get('cidade')
-            imovel.bairro = f.get('bairro')
-            imovel.tipo = f.get('tipo')
-            imovel.negocio = _negocio_canonico(f.get('negocio'))
-            imovel.quartos = quartos
-            imovel.vagas = vagas
-            imovel.area = area
-            imovel.preco = preco
-            imovel.descricao = f.get('descricao', '')
-            
-            db.session.commit()
-            
-            flash('Anúncio atualizado com sucesso!', 'success')
-            return redirect(url_for('meus_anuncios'))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar anúncio: {str(e)}', 'error')
-            return redirect(url_for('editar_imovel', id=id))
-    
-    _padronizar_negocio_imovel(imovel)
-    return render_template('editar_imovel.html', imovel=imovel, usuario=usuario)
-
 
 # ============================================
 # TRATAMENTO DE ERROS
