@@ -3,7 +3,6 @@ import re
 import math
 import logging
 from logging.handlers import RotatingFileHandler
-from threading import Thread
 from pathlib import Path
 from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
 from flask_cors import CORS
@@ -34,6 +33,11 @@ from radar_app.services.auth_tokens import (
     gerar_token_email,
     serializer_tokens,
     validar_token_email,
+)
+from radar_app.services.email_delivery import (
+    disparar_email_assincrono,
+    enviar_email_com_status,
+    smtp_configurado,
 )
 
 # Registrar conversor HEIC para PIL
@@ -462,27 +466,7 @@ def _resumo_limite_anuncios(usuario):
 
 
 def _smtp_configurado():
-    """Verifica se há provedor de email configurado (Resend API ou SMTP)."""
-    resend_api_key = (app.config.get('RESEND_API_KEY') or '').strip().lower()
-    resend_placeholders = {
-        '',
-        'your-resend-api-key',
-        'sua-chave-resend',
-    }
-    if resend_api_key not in resend_placeholders:
-        return True
-
-    username = (app.config.get('MAIL_USERNAME') or '').strip().lower()
-    password = (app.config.get('MAIL_PASSWORD') or '').strip().lower()
-
-    placeholders = {
-        '',
-        'seu-email@gmail.com',
-        'sua-senha-app',
-        'your-email@gmail.com',
-        'your-app-password',
-    }
-    return username not in placeholders and password not in placeholders
+    return smtp_configurado(app.config)
 
 
 def _permitir_fallback_reset_local():
@@ -506,63 +490,11 @@ def _confirmacao_email_obrigatoria():
 
 
 def _enviar_email_com_status(funcao_envio, *args):
-    """Executa envio de email e retorna (sucesso, mensagem_erro)."""
-    if not _smtp_configurado():
-        return False, 'Envio de email não configurado no servidor (configure RESEND_API_KEY ou SMTP).'
-
-    timeout_segundos = int(os.getenv('EMAIL_SEND_TIMEOUT', '12'))
-    resultado = {'enviado': False, 'erro': None}
-    flask_app = app
-
-    def _worker_envio():
-        with flask_app.app_context():
-            try:
-                resultado['enviado'] = bool(funcao_envio(*args))
-            except Exception as e:
-                resultado['erro'] = str(e)
-                resultado['enviado'] = False
-
-    try:
-        thread = Thread(target=_worker_envio, daemon=True)
-        thread.start()
-        thread.join(timeout=timeout_segundos)
-
-        if thread.is_alive():
-            app.logger.warning('Timeout no envio de email após %ss', timeout_segundos)
-            return False, 'Timeout no envio de email. Tente novamente em alguns instantes.'
-
-        enviado = resultado['enviado']
-    except Exception:
-        enviado = False
-
-    if resultado['erro']:
-        app.logger.warning('Falha no envio de email: %s', resultado['erro'])
-
-    if not enviado:
-        return False, 'Não foi possível enviar email no momento.'
-
-    return True, None
+    return enviar_email_com_status(app, funcao_envio, *args)
 
 
 def _disparar_email_assincrono(funcao_envio, *args):
-    """Dispara envio de email sem bloquear a requisição do usuário."""
-    if not _smtp_configurado():
-        return False
-
-    flask_app = app
-
-    def _worker_envio():
-        with flask_app.app_context():
-            try:
-                funcao_envio(*args)
-            except Exception:
-                flask_app.logger.warning('Falha ao enviar email em background.', exc_info=True)
-
-    try:
-        Thread(target=_worker_envio, daemon=True).start()
-        return True
-    except Exception:
-        return False
+    return disparar_email_assincrono(app, funcao_envio, *args)
 
 
 def _validar_whatsapp(whatsapp):
