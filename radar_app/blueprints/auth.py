@@ -5,9 +5,20 @@ from datetime import datetime
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 
 from models import Avaliacao, Imovel, Mensagem, Notificacao, Usuario, db
+from radar_app.auth import UsuarioRepository
 
 
 auth_bp = Blueprint('auth', __name__)
+
+
+def _repo():
+    return UsuarioRepository(
+        db, Usuario,
+        imovel_model=Imovel,
+        avaliacao_model=Avaliacao,
+        mensagem_model=Mensagem,
+        notificacao_model=Notificacao,
+    )
 
 
 def _legacy():
@@ -42,11 +53,11 @@ def cadastro():
                 flash('WhatsApp invalido. Informe DDD + numero (10 ou 11 digitos).', 'error')
                 return redirect(url_for('cadastro'))
 
-            if Usuario.query.filter_by(email=email).first():
+            if _repo().buscar_por_email(email):
                 flash('Este e-mail ja esta cadastrado!', 'error')
                 return redirect(url_for('cadastro'))
 
-            if Usuario.query.filter_by(whatsapp=whatsapp_validado).first():
+            if _repo().buscar_por_whatsapp(whatsapp_validado):
                 flash('Este WhatsApp ja esta cadastrado! Use outro numero.', 'error')
                 return redirect(url_for('cadastro'))
 
@@ -59,8 +70,7 @@ def cadastro():
                 confirmado_em=(datetime.utcnow() if not exigir_confirmacao else None),
             )
             novo_usuario.set_password(senha)
-            db.session.add(novo_usuario)
-            db.session.commit()
+            _repo().salvar(novo_usuario)
 
             if exigir_confirmacao:
                 token_confirmacao = legacy._gerar_token_email(novo_usuario.email, 'confirmar-email')
@@ -88,7 +98,7 @@ def cadastro():
             return redirect(url_for('login'))
 
         except Exception as e:
-            db.session.rollback()
+            _repo().rollback()
             flash(f'Erro ao cadastrar: {str(e)}', 'error')
 
     return render_template('cadastro.html')
@@ -108,14 +118,14 @@ def login():
                 flash('E-mail e senha sao obrigatorios!', 'error')
                 return redirect(url_for('login'))
 
-            usuario = Usuario.query.filter_by(email=email).first()
+            usuario = _repo().buscar_por_email(email)
 
             if usuario and usuario.check_password(senha):
                 if not getattr(usuario, 'email_confirmado', True) and not legacy._confirmacao_email_obrigatoria():
                     usuario.email_confirmado = True
                     if not getattr(usuario, 'confirmado_em', None):
                         usuario.confirmado_em = datetime.utcnow()
-                    db.session.commit()
+                    _repo().commit()
 
                 if not getattr(usuario, 'email_confirmado', True):
                     token_confirmacao = legacy._gerar_token_email(usuario.email, 'confirmar-email')
@@ -167,7 +177,7 @@ def confirmar_email(token):
         flash('Link de confirmacao invalido ou expirado.', 'error')
         return redirect(url_for('login'))
 
-    usuario = Usuario.query.filter_by(email=email).first()
+    usuario = _repo().buscar_por_email(email)
     if not usuario:
         flash('Conta nao encontrada para este link.', 'error')
         return redirect(url_for('login'))
@@ -175,7 +185,7 @@ def confirmar_email(token):
     if not usuario.email_confirmado:
         usuario.email_confirmado = True
         usuario.confirmado_em = datetime.utcnow()
-        db.session.commit()
+        _repo().commit()
 
     flash('Email confirmado com sucesso! Agora voce ja pode entrar.', 'success')
     return redirect(url_for('login'))
@@ -187,7 +197,7 @@ def reenviar_confirmacao():
     legacy = _legacy()
 
     email = request.form.get('email', '').strip()
-    usuario = Usuario.query.filter_by(email=email).first() if email else None
+    usuario = _repo().buscar_por_email(email) if email else None
 
     if usuario and not getattr(usuario, 'email_confirmado', True):
         token_confirmacao = legacy._gerar_token_email(usuario.email, 'confirmar-email')
@@ -213,7 +223,7 @@ def esqueci_senha():
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
-        usuario = Usuario.query.filter_by(email=email).first() if email else None
+        usuario = _repo().buscar_por_email(email) if email else None
 
         if usuario:
             token_reset = legacy._gerar_token_email(usuario.email, 'reset-senha')
@@ -261,7 +271,7 @@ def redefinir_senha(token):
         flash('Link de redefinicao invalido ou expirado.', 'error')
         return redirect(url_for('esqueci_senha'))
 
-    usuario = Usuario.query.filter_by(email=email).first()
+    usuario = _repo().buscar_por_email(email)
     if not usuario:
         flash('Conta nao encontrada.', 'error')
         return redirect(url_for('esqueci_senha'))
@@ -279,7 +289,7 @@ def redefinir_senha(token):
             return redirect(url_for('redefinir_senha', token=token))
 
         usuario.set_password(senha)
-        db.session.commit()
+        _repo().commit()
 
         flash('Senha redefinida com sucesso! Faca login com a nova senha.', 'success')
         return redirect(url_for('login'))
@@ -316,12 +326,7 @@ def configuracoes_conta():
                 flash('WhatsApp invalido. Informe DDD + numero (10 ou 11 digitos).', 'error')
                 return redirect(url_for('configuracoes_conta'))
 
-            email_em_uso = Usuario.query.filter(
-                Usuario.email == email,
-                Usuario.id != usuario.id
-            ).first()
-
-            if email_em_uso:
+            if _repo().email_em_uso_por_outro(email, usuario.id):
                 flash('Este e-mail ja esta em uso por outra conta.', 'error')
                 return redirect(url_for('configuracoes_conta'))
 
@@ -344,14 +349,14 @@ def configuracoes_conta():
             usuario.email = email
             usuario.whatsapp = whatsapp_validado
 
-            db.session.commit()
+            _repo().commit()
 
             session['usuario_nome'] = usuario.nome
             flash('Configuracoes atualizadas com sucesso!', 'success')
             return redirect(url_for('configuracoes_conta'))
 
         except Exception as e:
-            db.session.rollback()
+            _repo().rollback()
             flash(f'Erro ao atualizar configuracoes: {str(e)}', 'error')
             return redirect(url_for('configuracoes_conta'))
 
@@ -380,30 +385,13 @@ def excluir_conta():
         return redirect(url_for('configuracoes_conta'))
 
     try:
-        usuario_id = usuario.id
-
-        Mensagem.query.filter(
-            (Mensagem.remetente_id == usuario_id) | (Mensagem.destinatario_id == usuario_id)
-        ).delete(synchronize_session=False)
-
-        Avaliacao.query.filter(
-            (Avaliacao.usuario_id == usuario_id) | (Avaliacao.avaliador_id == usuario_id)
-        ).delete(synchronize_session=False)
-
-        Notificacao.query.filter_by(usuario_id=usuario_id).delete(synchronize_session=False)
-
-        imoveis_usuario = Imovel.query.filter_by(usuario_id=usuario_id).all()
-        for imovel in imoveis_usuario:
-            db.session.delete(imovel)
-
-        db.session.delete(usuario)
-        db.session.commit()
+        _repo().excluir_com_dados(usuario)
 
         session.clear()
         flash('Sua conta foi excluida com sucesso.', 'success')
         return redirect(url_for('index', aba='buscar'))
     except Exception as e:
-        db.session.rollback()
+        _repo().rollback()
         current_app.logger.warning('Erro ao excluir conta do usuario %s: %s', usuario.id, str(e), exc_info=True)
         flash('Nao foi possivel excluir sua conta agora. Tente novamente em instantes.', 'error')
         return redirect(url_for('configuracoes_conta'))
