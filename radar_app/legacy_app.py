@@ -8,7 +8,7 @@ from flask import Flask, request, redirect, url_for, flash, session, jsonify, ha
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import inspect, text
+
 from dotenv import load_dotenv
 # import pillow_heif  # Comentado: trava no Codespace
 from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook
@@ -58,6 +58,12 @@ from radar_app.services.imoveis import (
     normalizar_texto as normalizar_texto_imovel,
     padronizar_negocio_imovel,
     padronizar_negocio_imoveis,
+)
+from radar_app.services.bootstrap import (
+    configurar_logging_estruturado,
+    deve_executar_bootstrap_db,
+    garantir_colunas_usuario,
+    marcar_admin_proprietario,
 )
 
 # Registrar conversor HEIC para PIL
@@ -159,32 +165,7 @@ else:
 
 
 def _configurar_logging_estruturado():
-    """Configura logging consistente para facilitar diagnostico em producao."""
-    if flask_env == 'testing':
-        return
-
-    formatter = logging.Formatter(
-        '%(asctime)s %(levelname)s %(name)s: %(message)s [%(pathname)s:%(lineno)d]'
-    )
-
-    app.logger.setLevel(logging.INFO)
-
-    for handler in app.logger.handlers:
-        handler.setFormatter(formatter)
-
-    if not app.debug:
-        os.makedirs('logs', exist_ok=True)
-        if not any(isinstance(handler, RotatingFileHandler) for handler in app.logger.handlers):
-            file_handler = RotatingFileHandler(
-                'logs/radar.log',
-                maxBytes=10 * 1024 * 1024,
-                backupCount=10,
-            )
-            file_handler.setLevel(logging.INFO)
-            file_handler.setFormatter(formatter)
-            app.logger.addHandler(file_handler)
-
-    app.logger.info('Radar Imoveis Pro startup - env=%s', flask_env)
+    return configurar_logging_estruturado(app, flask_env, logging, RotatingFileHandler)
 
 
 _configurar_logging_estruturado()
@@ -237,103 +218,15 @@ db.init_app(app)
 
 
 def _garantir_colunas_usuario():
-    """Adiciona colunas novas em `usuarios` quando o banco já existia sem migração."""
-    inspetor = inspect(db.engine)
-    colunas = {coluna['name'] for coluna in inspetor.get_columns('usuarios')}
-    dialect = db.engine.dialect.name
-
-    comandos = []
-    if 'email_confirmado' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN email_confirmado BOOLEAN NOT NULL DEFAULT 1")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN email_confirmado BOOLEAN NOT NULL DEFAULT TRUE")
-
-    if 'confirmado_em' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN confirmado_em DATETIME")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN confirmado_em TIMESTAMP")
-
-    if 'plano' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN plano VARCHAR(20) NOT NULL DEFAULT 'free'")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN plano VARCHAR(20) NOT NULL DEFAULT 'free'")
-
-    if 'limite_anuncios' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
-
-    if 'is_admin' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE")
-
-    # Criar índice único no campo whatsapp (se não existir)
-    try:
-        if dialect == 'sqlite':
-            db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
-        else:
-            db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_whatsapp ON usuarios(whatsapp)"))
-    except Exception:
-        pass  # Índice pode já existir
-
-    if 'status_assinatura' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN status_assinatura VARCHAR(20) NOT NULL DEFAULT 'ativa'")
-
-    if 'assinatura_renova_em' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN assinatura_renova_em DATETIME")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN assinatura_renova_em TIMESTAMP")
-
-    if 'stripe_customer_id' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN stripe_customer_id VARCHAR(120)")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN stripe_customer_id VARCHAR(120)")
-
-    if 'stripe_subscription_id' not in colunas:
-        if dialect == 'sqlite':
-            comandos.append("ALTER TABLE usuarios ADD COLUMN stripe_subscription_id VARCHAR(120)")
-        else:
-            comandos.append("ALTER TABLE usuarios ADD COLUMN stripe_subscription_id VARCHAR(120)")
-
-    for comando in comandos:
-        db.session.execute(text(comando))
-
-    if comandos:
-        db.session.commit()
-
-    StripeEventoWebhook.__table__.create(bind=db.engine, checkfirst=True)
+    return garantir_colunas_usuario(db, StripeEventoWebhook)
 
 
 def _deve_executar_bootstrap_db():
-    """Controla bootstrap automático do banco para evitar travas no boot em produção."""
-    override = os.getenv('RUN_DB_BOOTSTRAP')
-    if override is not None:
-        return override.strip().lower() in {'1', 'true', 'yes', 'on'}
-    return flask_env != 'production'
+    return deve_executar_bootstrap_db(flask_env)
 
 
 def _marcar_admin_proprietario():
-    """Marca o email do proprietário como admin para limite ilimitado."""
-    email_admin = 'jairgramacho82160@gmail.com'
-    try:
-        usuario = Usuario.query.filter_by(email=email_admin).first()
-        if usuario and not usuario.is_admin:
-            usuario.is_admin = True
-            db.session.commit()
-            app.logger.info(f'Conta {email_admin} marcada como admin')
-    except Exception as e:
-        app.logger.warning(f'Erro ao marcar admin: {str(e)}')
+    return marcar_admin_proprietario(Usuario, db, app.logger)
 
 
 def _cloudinary_configurado():
