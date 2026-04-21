@@ -3,9 +3,15 @@
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 
 from models import Avaliacao, FotoImovel, Imovel, Usuario
+from radar_app.imoveis import ImovelRepository
 
 
 imoveis_bp = Blueprint('imoveis', __name__)
+
+
+def _repo():
+    from models import db
+    return ImovelRepository(db, Imovel)
 
 
 def _legacy():
@@ -24,32 +30,7 @@ def index():
     filtros = request.args.to_dict()
     pagina = request.args.get('pagina', 1, type=int)
 
-    query = Imovel.query.filter_by(ativo=True).order_by(Imovel.criado_em.desc())
-
-    if filtros.get('negocio'):
-        negocio_filtro = filtros['negocio']
-        if negocio_filtro == 'Venda':
-            query = query.filter(Imovel.negocio.in_(['Venda', 'Compra']))
-        else:
-            query = query.filter_by(negocio=negocio_filtro)
-
-    if filtros.get('tipo'):
-        query = query.filter_by(tipo=filtros['tipo'])
-
-    if filtros.get('estado'):
-        query = query.filter_by(estado=filtros['estado'])
-
-    if filtros.get('cidade'):
-        query = query.filter(Imovel.cidade.ilike(f"%{filtros['cidade']}%"))
-
-    if filtros.get('preco_max'):
-        try:
-            preco_max = float(filtros['preco_max'].replace('R$', '').replace('.', '').replace(',', '.').strip())
-            query = query.filter(Imovel.preco <= preco_max)
-        except Exception:
-            pass
-
-    imoveis = query.all()
+    imoveis = _repo().buscar(filtros)
     legacy.aplicar_radar_oportunidades(imoveis)
 
     oportunidades = [imovel for imovel in imoveis if getattr(imovel, 'eh_oportunidade', False)]
@@ -198,7 +179,7 @@ def meus_anuncios():
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    imoveis = Imovel.query.filter_by(usuario_id=usuario.id).order_by(Imovel.criado_em.desc()).all()
+    imoveis = _repo().listar_por_usuario(usuario.id)
     legacy._padronizar_negocio_imoveis(imoveis)
 
     return render_template('meus_anuncios.html', imoveis=imoveis, usuario=usuario)
@@ -209,7 +190,7 @@ def detalhe_imovel(id):
     """Pagina de detalhe do imovel."""
     legacy = _legacy()
     usuario = legacy.get_usuario_logado()
-    imovel = Imovel.query.get_or_404(id)
+    imovel = _repo().buscar_por_id_ou_404(id)
     legacy._padronizar_negocio_imovel(imovel)
 
     imovel.visualizacoes = (imovel.visualizacoes or 0) + 1
@@ -244,7 +225,7 @@ def deletar_imovel(id):
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    imovel = Imovel.query.get_or_404(id)
+    imovel = _repo().buscar_por_id_ou_404(id)
 
     if imovel.usuario_id != usuario.id:
         flash('Você não tem permissão para deletar este anúncio!', 'error')
@@ -277,7 +258,7 @@ def editar_imovel(id):
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    imovel = Imovel.query.get_or_404(id)
+    imovel = _repo().buscar_por_id_ou_404(id)
 
     if imovel.usuario_id != usuario.id:
         flash('Você não tem permissão para editar este anúncio!', 'error')
@@ -383,7 +364,7 @@ def avaliar_anunciante(usuario_id):
     imovel_id = request.args.get('imovel_id')
     imovel = None
     if imovel_id:
-        imovel = Imovel.query.get(imovel_id)
+        imovel = _repo().buscar_por_id(imovel_id)
         legacy._padronizar_negocio_imovel(imovel)
 
     return render_template(
@@ -404,7 +385,7 @@ def adicionar_fotos(id):
         flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
-    imovel = Imovel.query.get_or_404(id)
+    imovel = _repo().buscar_por_id_ou_404(id)
     legacy._padronizar_negocio_imovel(imovel)
 
     if imovel.usuario_id != usuario.id:

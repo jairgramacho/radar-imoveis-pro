@@ -21,6 +21,40 @@ class ImovelRepository:
                 q = q.filter_by(negocio=filtros['negocio'])
         return q.all()
 
+    def buscar(self, filtros=None):
+        """Busca imóveis ativos com filtros avançados (negocio Venda/Compra, cidade ilike, preco_max)."""
+        q = self.model.query.filter_by(ativo=True).order_by(self.model.criado_em.desc())
+        if filtros:
+            negocio = filtros.get('negocio')
+            if negocio:
+                if negocio == 'Venda':
+                    q = q.filter(self.model.negocio.in_(['Venda', 'Compra']))
+                else:
+                    q = q.filter_by(negocio=negocio)
+            if filtros.get('tipo'):
+                q = q.filter_by(tipo=filtros['tipo'])
+            if filtros.get('estado'):
+                q = q.filter_by(estado=filtros['estado'])
+            if filtros.get('cidade'):
+                q = q.filter(self.model.cidade.ilike(f"%{filtros['cidade']}%"))
+            if filtros.get('preco_max'):
+                try:
+                    preco_max = float(
+                        filtros['preco_max'].replace('R$', '').replace('.', '').replace(',', '.').strip()
+                    )
+                    q = q.filter(self.model.preco <= preco_max)
+                except Exception:
+                    pass
+        return q.all()
+
+    def buscar_por_id_ou_404(self, id):
+        """Retorna um imóvel pelo id, ou aborta com 404 se não encontrado."""
+        from flask import abort
+        imovel = self.db.session.get(self.model, id)
+        if imovel is None:
+            abort(404)
+        return imovel
+
     def listar_por_usuario(self, usuario_id):
         """Retorna todos os imóveis de um usuário, do mais recente ao mais antigo."""
         return (
