@@ -84,6 +84,8 @@ def _registrar_alias_endpoints_imoveis():
         ('detalhe_imovel', '/imovel/<int:id>', ['GET'], 'imoveis.detalhe_imovel'),
         ('deletar_imovel', '/deletar-imovel/<int:id>', ['POST'], 'imoveis.deletar_imovel'),
         ('editar_imovel', '/editar-imovel/<int:id>', ['GET', 'POST'], 'imoveis.editar_imovel'),
+        ('avaliar_anunciante', '/avaliar-anunciante/<int:usuario_id>', ['GET', 'POST'], 'imoveis.avaliar_anunciante'),
+        ('adicionar_fotos', '/imovel/<int:id>/adicionar-fotos', ['GET', 'POST'], 'imoveis.adicionar_fotos'),
     ])
 
 
@@ -899,113 +901,6 @@ def erro_interno(e):
     """Erro interno do servidor"""
     flash('Erro interno do servidor. Tente novamente.', 'error')
     return redirect(url_for('index', aba='buscar'))
-
-# ============================================
-# AVALIAÇÕES
-# ============================================
-
-@app.route('/avaliar-anunciante/<int:usuario_id>', methods=['GET', 'POST'])
-def avaliar_anunciante(usuario_id):
-    """Avalia um anunciante"""
-    usuario_logado = get_usuario_logado()
-    
-    if not usuario_logado:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    anunciante = Usuario.query.get_or_404(usuario_id)
-    
-    if request.method == 'POST':
-        try:
-            estrelas = int(request.form.get('estrelas', 5))
-            comentario = request.form.get('comentario', '').strip()
-            imovel_id = request.form.get('imovel_id')
-            
-            if estrelas < 1 or estrelas > 5:
-                flash('Avaliação deve ser entre 1 e 5 estrelas!', 'error')
-                return redirect(url_for('avaliar_anunciante', usuario_id=usuario_id))
-            
-            avaliacao = Avaliacao(
-                usuario_id=usuario_id,
-                imovel_id=imovel_id,
-                avaliador_id=usuario_logado.id,
-                estrelas=estrelas,
-                comentario=comentario
-            )
-            
-            db.session.add(avaliacao)
-            db.session.commit()
-            
-            flash('Avaliação enviada com sucesso!', 'success')
-            return redirect(url_for('detalhe_imovel', id=imovel_id) if imovel_id else url_for('index', aba='buscar'))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao enviar avaliação: {str(e)}', 'error')
-    
-    imovel_id = request.args.get('imovel_id')
-    imovel = None
-    if imovel_id:
-        imovel = Imovel.query.get(imovel_id)
-        _padronizar_negocio_imovel(imovel)
-    
-    return render_template('avaliar.html', 
-                          usuario=usuario_logado,
-                          anunciante=anunciante,
-                          imovel=imovel)
-
-# ============================================
-# MÚLTIPLAS FOTOS
-# ============================================
-
-@app.route('/imovel/<int:id>/adicionar-fotos', methods=['GET', 'POST'])
-def adicionar_fotos(id):
-    """Adiciona múltiplas fotos a um imóvel"""
-    usuario = get_usuario_logado()
-    
-    if not usuario:
-        flash('Você precisa estar logado!', 'error')
-        return redirect(url_for('login'))
-    
-    imovel = Imovel.query.get_or_404(id)
-    _padronizar_negocio_imovel(imovel)
-    
-    # Verificar se é o dono
-    if imovel.usuario_id != usuario.id:
-        flash('Você não tem permissão!', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        files = request.files.getlist('fotos')
-        
-        if not files:
-            flash('Selecione pelo menos uma foto!', 'error')
-            return redirect(url_for('adicionar_fotos', id=id))
-        
-        try:
-            for arq in files:
-                if arq and allowed_file(arq.filename):
-                    nome_arquivo, sucesso = processar_imagem(arq)
-                    
-                    if sucesso and nome_arquivo:
-                        foto = FotoImovel(
-                            imovel_id=id,
-                            arquivo=nome_arquivo,
-                            ordem=len(imovel.fotos)
-                        )
-                        db.session.add(foto)
-            
-            db.session.commit()
-            flash(f'{len(files)} foto(s) adicionada(s) com sucesso!', 'success')
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao adicionar fotos: {str(e)}', 'error')
-        
-        return redirect(url_for('detalhe_imovel', id=id))
-    
-    return render_template('adicionar_fotos.html', usuario=usuario, imovel=imovel)
-
 
 def create_app(config_override=None):
     """Retorna a aplicação Flask já inicializada, com overrides opcionais."""

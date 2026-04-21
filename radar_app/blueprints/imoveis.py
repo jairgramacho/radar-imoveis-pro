@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 
-from models import FotoImovel, Imovel
+from models import Avaliacao, FotoImovel, Imovel, Usuario
 
 
 imoveis_bp = Blueprint('imoveis', __name__)
@@ -338,3 +338,106 @@ def editar_imovel(id):
 
     legacy._padronizar_negocio_imovel(imovel)
     return render_template('editar_imovel.html', imovel=imovel, usuario=usuario)
+
+
+@imoveis_bp.route('/avaliar-anunciante/<int:usuario_id>', methods=['GET', 'POST'])
+def avaliar_anunciante(usuario_id):
+    """Avalia um anunciante."""
+    legacy = _legacy()
+    usuario_logado = legacy.get_usuario_logado()
+
+    if not usuario_logado:
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('login'))
+
+    anunciante = Usuario.query.get_or_404(usuario_id)
+
+    if request.method == 'POST':
+        try:
+            estrelas = int(request.form.get('estrelas', 5))
+            comentario = request.form.get('comentario', '').strip()
+            imovel_id = request.form.get('imovel_id')
+
+            if estrelas < 1 or estrelas > 5:
+                flash('Avaliação deve ser entre 1 e 5 estrelas!', 'error')
+                return redirect(url_for('avaliar_anunciante', usuario_id=usuario_id))
+
+            avaliacao = Avaliacao(
+                usuario_id=usuario_id,
+                imovel_id=imovel_id,
+                avaliador_id=usuario_logado.id,
+                estrelas=estrelas,
+                comentario=comentario,
+            )
+
+            legacy.db.session.add(avaliacao)
+            legacy.db.session.commit()
+
+            flash('Avaliação enviada com sucesso!', 'success')
+            return redirect(url_for('detalhe_imovel', id=imovel_id) if imovel_id else url_for('index', aba='buscar'))
+
+        except Exception as e:
+            legacy.db.session.rollback()
+            flash(f'Erro ao enviar avaliação: {str(e)}', 'error')
+
+    imovel_id = request.args.get('imovel_id')
+    imovel = None
+    if imovel_id:
+        imovel = Imovel.query.get(imovel_id)
+        legacy._padronizar_negocio_imovel(imovel)
+
+    return render_template(
+        'avaliar.html',
+        usuario=usuario_logado,
+        anunciante=anunciante,
+        imovel=imovel,
+    )
+
+
+@imoveis_bp.route('/imovel/<int:id>/adicionar-fotos', methods=['GET', 'POST'])
+def adicionar_fotos(id):
+    """Adiciona múltiplas fotos a um imóvel."""
+    legacy = _legacy()
+    usuario = legacy.get_usuario_logado()
+
+    if not usuario:
+        flash('Você precisa estar logado!', 'error')
+        return redirect(url_for('login'))
+
+    imovel = Imovel.query.get_or_404(id)
+    legacy._padronizar_negocio_imovel(imovel)
+
+    if imovel.usuario_id != usuario.id:
+        flash('Você não tem permissão!', 'error')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        files = request.files.getlist('fotos')
+
+        if not files:
+            flash('Selecione pelo menos uma foto!', 'error')
+            return redirect(url_for('adicionar_fotos', id=id))
+
+        try:
+            for arq in files:
+                if arq and legacy.allowed_file(arq.filename):
+                    nome_arquivo, sucesso = legacy.processar_imagem(arq)
+
+                    if sucesso and nome_arquivo:
+                        foto = FotoImovel(
+                            imovel_id=id,
+                            arquivo=nome_arquivo,
+                            ordem=len(imovel.fotos),
+                        )
+                        legacy.db.session.add(foto)
+
+            legacy.db.session.commit()
+            flash(f'{len(files)} foto(s) adicionada(s) com sucesso!', 'success')
+
+        except Exception as e:
+            legacy.db.session.rollback()
+            flash(f'Erro ao adicionar fotos: {str(e)}', 'error')
+
+        return redirect(url_for('detalhe_imovel', id=id))
+
+    return render_template('adicionar_fotos.html', usuario=usuario, imovel=imovel)
