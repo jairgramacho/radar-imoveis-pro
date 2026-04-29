@@ -72,7 +72,11 @@
             <strong>Plano {{ limite_anuncios.plano|capitalize }}:</strong>
             {{ limite_anuncios.usados }} de {{ limite_anuncios.limite }} anúncios ativos utilizados.
             {% if limite_anuncios.atingiu_limite %}
+            {% if limite_anuncios.plano == 'free' %}
+            O plano Free não permite novos anúncios. Faça upgrade para voltar a publicar.
+            {% else %}
             Você chegou ao limite atual. Desative anúncios ou atualize seu plano.
+            {% endif %}
             {% else %}
             Você ainda pode publicar {{ limite_anuncios.disponiveis }} anúncio(s).
             {% endif %}

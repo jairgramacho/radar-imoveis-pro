@@ -2,7 +2,7 @@ import os
 
 
 LIMITES_ANUNCIOS_POR_PLANO = {
-    'free': 3,
+    'free': 0,
     'pro': 15,
     'empresa': 50,
 }
@@ -53,14 +53,18 @@ def limite_anuncios_usuario(usuario, limites_por_plano=LIMITES_ANUNCIOS_POR_PLAN
     if not usuario:
         return limites_por_plano['free']
 
-    if getattr(usuario, 'is_admin', False):
+    # Admin permanece ilimitado, incluindo administradores por email configurado.
+    if getattr(usuario, 'is_admin', False) or usuario_eh_admin(usuario):
         return 999999
+
+    plano_usuario = normalizar_plano(getattr(usuario, 'plano', 'free'), limites_por_plano)
+    if plano_usuario == 'free':
+        return limites_por_plano['free']
 
     limite_custom = getattr(usuario, 'limite_anuncios', None)
     if isinstance(limite_custom, int) and limite_custom > 0:
         return limite_custom
 
-    plano_usuario = normalizar_plano(getattr(usuario, 'plano', 'free'), limites_por_plano)
     return limites_por_plano[plano_usuario]
 
 

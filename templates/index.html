@@ -343,7 +343,11 @@
                 <strong>Plano {{ limite_anuncios.plano|capitalize }}:</strong>
                 {{ limite_anuncios.usados }} de {{ limite_anuncios.limite }} anúncios ativos em uso.
                 {% if limite_anuncios.atingiu_limite %}
+                {% if limite_anuncios.plano == 'free' %}
+                O plano Free não permite novos anúncios. Faça upgrade para publicar.
+                {% else %}
                 Desative um anúncio para liberar vaga ou faça upgrade para publicar mais.
+                {% endif %}
                 {% else %}
                 Restam {{ limite_anuncios.disponiveis }} vaga(s) para novos anúncios.
                 {% endif %}

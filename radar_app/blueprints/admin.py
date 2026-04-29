@@ -12,7 +12,7 @@ from radar_app.imoveis import ImovelRepository
 admin_bp = Blueprint('admin', __name__)
 
 LIMITES_ANUNCIOS_POR_PLANO = {
-    'free': 3,
+    'free': 0,
     'pro': 15,
     'empresa': 50,
 }

@@ -98,6 +98,12 @@ def salvar():
     resumo_limite = legacy._resumo_limite_anuncios(usuario)
     if resumo_limite['atingiu_limite']:
         plano_nome = resumo_limite['plano'].capitalize()
+        if resumo_limite['plano'] == 'free':
+            flash(
+                'Seu plano Free não permite novos anúncios. Faça upgrade para o plano Pro ou Empresa para publicar.',
+                'error',
+            )
+            return redirect(url_for('index', aba='anunciar'))
         flash(
             f"Limite atingido: seu plano {plano_nome} permite {resumo_limite['limite']} anúncio(s) ativo(s). "
             'Desative um anúncio ou faça upgrade para publicar mais.',

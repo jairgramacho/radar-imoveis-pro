@@ -55,7 +55,7 @@ def garantir_colunas_usuario(db, stripe_evento_webhook_model):
         comandos.append("ALTER TABLE usuarios ADD COLUMN plano VARCHAR(20) NOT NULL DEFAULT 'free'")
 
     if 'limite_anuncios' not in colunas:
-        comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 3")
+        comandos.append("ALTER TABLE usuarios ADD COLUMN limite_anuncios INTEGER NOT NULL DEFAULT 0")
 
     if 'is_admin' not in colunas:
         if dialect == 'sqlite':

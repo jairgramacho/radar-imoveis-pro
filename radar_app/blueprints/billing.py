@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # ============================================
 
 LIMITES_ANUNCIOS_POR_PLANO = {
-    'free': 3,
+    'free': 0,
     'pro': 15,
     'empresa': 50,
 }
@@ -200,9 +200,9 @@ def planos():
             'nome': 'Free',
             'descricao': 'Para quem está começando',
             'preco': 'Grátis',
-            'limite_anuncios': 3,
+            'limite_anuncios': 0,
             'features': [
-                '3 anúncios ativos',
+                'Sem anúncios ativos',
                 'Contato via WhatsApp',
                 'Chat integrado',
                 'Visualizações básicas',

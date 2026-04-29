@@ -98,3 +98,40 @@ def test_salvar_bloqueia_quando_atingiu_limite(client, app, user_factory, login_
     assert response.status_code == 302
     assert '/?aba=anunciar' in response.headers['Location']
     assert before_count == after_count
+
+    # Bloqueio de novo anúncio não pode alterar anúncios já publicados.
+    assert Imovel.query.filter_by(usuario_id=usuario.id, ativo=True).count() == 1
+
+
+def test_salvar_permite_admin_ilimitado_mesmo_no_plano_free(client, user_factory, login_as):
+    usuario = user_factory(
+        email='admin-ilimitado@example.com',
+        plano='free',
+        limite_anuncios=0,
+        status_assinatura='ativa',
+    )
+    usuario.is_admin = True
+    from models import db
+    db.session.commit()
+
+    login_as(usuario.id, usuario.nome)
+    before_count = Imovel.query.filter_by(usuario_id=usuario.id).count()
+
+    response = client.post(
+        '/salvar',
+        data={
+            'estado': 'SP',
+            'cidade': 'Sao Paulo',
+            'bairro': 'Centro',
+            'tipo': 'Apartamento',
+            'negocio': 'Venda',
+            'valor': '450000',
+            'descricao': 'Teste admin ilimitado',
+        },
+    )
+
+    after_count = Imovel.query.filter_by(usuario_id=usuario.id).count()
+
+    assert response.status_code == 302
+    assert '/imovel/' in response.headers['Location']
+    assert after_count == before_count + 1
