@@ -8,7 +8,7 @@ O projeto foi construido para operacao real em producao, com dominio proprio, en
 
 Principais capacidades da plataforma:
 
-- Busca e filtros de imoveis (compra, venda e aluguel)
+- Busca e filtros de imoveis (compre, venda e alugue)
 - Publicacao e gestao de anuncios com multiplas fotos
 - Processamento de imagens (incluindo HEIC/HEIF)
 - Chat entre usuarios com contexto por imovel
