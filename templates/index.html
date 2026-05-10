@@ -199,13 +199,7 @@
                                 </div>
 
                             </div>
-                            {% if imovel.anunciante and imovel.anunciante.whatsapp %}
-                            <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}?text=Ol%C3%A1%2C%20vi%20o%20an%C3%BAncio%20de%20{{ imovel.tipo }}%20no%20Radar%20Im%C3%B3veis%20Pro.%20Gostaria%20de%20saber%20mais%20sobre%20em%20{{ imovel.bairro }}%2C%20{{ imovel.cidade }}." target="_blank" class="btn btn-success btn-sm w-100 mt-2" onclick="event.stopPropagation();">
-                                <i class="fab fa-whatsapp me-1"></i>Quero visitar
-                            </a>
-                            {% endif %}
                         </div>
-                    </div>
                     </a>
                 </div>
                 {% endfor %}
