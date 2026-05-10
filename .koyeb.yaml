@@ -1,0 +1,18 @@
+# Koyeb deployment config
+# Uso: conectar repo pelo dashboard da Koyeb e usar Docker
+
+name: radar-imoveis-pro
+service:
+  port: 8000
+  env:
+    - key: FLASK_ENV
+      value: production
+    - key: FLASK_DEBUG
+      value: "0"
+    - key: REQUIRE_EMAIL_CONFIRMATION
+      value: "1"
+    - key: ALLOWED_HOSTS
+      value: "www.radarimoveispro.com.br,radarimoveispro.com.br"
+    - key: APP_URL
+      value: "https://www.radarimoveispro.com.br"
+    # Database, Cloudinary, Stripe, Resend - preencher no dashboard
