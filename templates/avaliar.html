@@ -37,6 +37,7 @@
                         {% endwith %}
 
                         <form method="POST" class="mt-4">
+                            {{ csrf_token() }}
                             {% if imovel %}
                             <div class="mb-4">
                                 <label class="form-label"><strong>Sobre o imóvel:</strong></label>

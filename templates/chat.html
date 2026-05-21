@@ -332,6 +332,7 @@
 
                 <div class="ig-compose">
                     <form method="POST" action="{{ url_for('chat.enviar_mensagem', usuario_id=conversa_ativa.outro_usuario.id) }}" autocomplete="off">
+                        {{ csrf_token() }}
                         <input type="hidden" name="imovel_id" value="{{ conversa_ativa.imovel_id if conversa_ativa.imovel_id else '' }}">
                         <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." maxlength="1000" required autofocus>
                         <button type="submit" class="btn btn-primary ig-send">

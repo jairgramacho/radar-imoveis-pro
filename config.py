@@ -40,6 +40,11 @@ class Config:
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # CSRF Protection (Flask-WTF)
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None  # Tokens CSRF não expiram
+    WTF_CSRF_CHECK_DEFAULT = True
 
     # Upload
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'static/uploads')

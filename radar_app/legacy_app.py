@@ -8,6 +8,8 @@ from flask import Flask, request, redirect, url_for, flash, session, jsonify, ha
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from markupsafe import Markup
 
 from dotenv import load_dotenv
 # import pillow_heif  # Comentado: trava no Codespace
@@ -105,6 +107,7 @@ def _registrar_alias_endpoints_auth():
         ('cadastro', '/cadastro', ['GET', 'POST'], 'auth.cadastro'),
         ('login', '/login', ['GET', 'POST'], 'auth.login'),
         ('logout', '/logout', ['GET'], 'auth.logout'),
+        ('verificar_2fa', '/verificar-2fa', ['GET', 'POST'], 'auth.verificar_2fa'),
         ('confirmar_email', '/confirmar-email/<token>', ['GET'], 'auth.confirmar_email'),
         ('reenviar_confirmacao', '/reenviar-confirmacao', ['POST'], 'auth.reenviar_confirmacao'),
         ('esqueci_senha', '/esqueci-senha', ['GET', 'POST'], 'auth.esqueci_senha'),
@@ -153,6 +156,18 @@ def moeda_brl(valor):
 flask_env = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config)
 
+# ✅ CSRF Protection (Flask-WTF)
+csrf = CSRFProtect(app)
+
+
+def _csrf_hidden_input():
+    """Renderiza hidden input CSRF para templates que chamam `csrf_token()`."""
+    token = generate_csrf()
+    return Markup(f'<input type="hidden" name="csrf_token" value="{token}">')
+
+
+app.jinja_env.globals['csrf_token'] = _csrf_hidden_input
+
 # Validar produção
 if flask_env == 'production':
     config.validate()
@@ -180,9 +195,23 @@ limiter = Limiter(
     enabled=(flask_env != 'testing'),
 )
 limiter.init_app(app)
-app.view_functions['auth.login'] = limiter.limit('5 per minute')(app.view_functions['auth.login'])
-app.view_functions['chat.enviar_mensagem'] = limiter.limit('20 per minute')(app.view_functions['chat.enviar_mensagem'])
-app.view_functions['chat.api_enviar_mensagem'] = limiter.limit('30 per minute')(app.view_functions['chat.api_enviar_mensagem'])
+
+
+def _aplicar_limite_endpoint(endpoint, regra):
+    if endpoint in app.view_functions:
+        app.view_functions[endpoint] = limiter.limit(regra)(app.view_functions[endpoint])
+
+
+_aplicar_limite_endpoint('auth.login', '5 per minute')
+_aplicar_limite_endpoint('auth.cadastro', '5 per hour')
+_aplicar_limite_endpoint('auth.reenviar_confirmacao', '5 per hour')
+_aplicar_limite_endpoint('auth.esqueci_senha', '5 per hour')
+_aplicar_limite_endpoint('chat.enviar_mensagem', '20 per minute')
+_aplicar_limite_endpoint('chat.api_enviar_mensagem', '30 per minute')
+_aplicar_limite_endpoint('imoveis.salvar', '10 per hour')
+_aplicar_limite_endpoint('imoveis.adicionar_fotos', '20 per hour')
+_aplicar_limite_endpoint('billing.assinatura_checkout', '10 per hour')
+_aplicar_limite_endpoint('public.denunciar_abuso', '5 per hour')
 _registrar_alias_endpoints_auth()
 _registrar_alias_endpoints_imoveis()
 _registrar_alias_endpoints_core()

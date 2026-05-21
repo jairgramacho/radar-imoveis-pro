@@ -30,7 +30,9 @@
                         <h3 class="mb-2"><i class="fas fa-cog me-2"></i>Configurações da Conta</h3>
                         <p class="text-muted mb-4">Atualize seus dados de perfil e segurança sem complicação.</p>
 
-                        <form method="POST" class="row g-3">
+                        <form method="POST" class="row g-3" novalidate>
+                            {{ csrf_token() }}
+                            
                             <div class="col-12">
                                 <h5 class="mb-2">Perfil</h5>
                             </div>
@@ -61,12 +63,12 @@
 
                             <div class="col-md-4">
                                 <label class="form-label">Nova senha</label>
-                                <input type="password" name="nova_senha" class="form-control" placeholder="Mínimo 6 caracteres">
+                                <input type="password" name="nova_senha" class="form-control" placeholder="Mínimo 12 caracteres" minlength="12">
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label">Confirmar nova senha</label>
-                                <input type="password" name="confirmar_senha" class="form-control" placeholder="Repita a nova senha">
+                                <input type="password" name="confirmar_senha" class="form-control" placeholder="Repita a nova senha" minlength="12">
                             </div>
 
                             <div class="col-12 d-flex gap-2 mt-3">
@@ -79,15 +81,98 @@
 
                         <hr class="my-4">
 
+                        <div class="border rounded p-3 bg-light">
+                            <h5 class="mb-2"><i class="fas fa-shield-alt me-2"></i>Autenticação em dois fatores (2FA)</h5>
+                            <p class="small text-muted mb-3">
+                                Opcional, mas recomendado. Ao ativar, o login passa a exigir um código do app autenticador.
+                            </p>
+
+                            {% if token_2fa and token_2fa.habilitado %}
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="fas fa-check-circle me-2"></i>2FA ativo nesta conta.
+                            </div>
+
+                            <form method="POST" action="{{ url_for('auth.desativar_2fa') }}" class="row g-2" novalidate>
+                                {{ csrf_token() }}
+                                <div class="col-md-6">
+                                    <label class="form-label">Senha da conta</label>
+                                    <input type="password" name="senha_desativar_2fa" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Código 2FA ou backup</label>
+                                    <input type="text" name="codigo_desativar_2fa" class="form-control" placeholder="000000" required>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="fas fa-unlock me-2"></i>Desativar 2FA
+                                    </button>
+                                </div>
+                            </form>
+                            {% else %}
+                                {% if token_2fa and chave_2fa %}
+                                <div class="alert alert-info py-2">
+                                    <strong>Chave secreta:</strong> {{ chave_2fa }}
+                                </div>
+                                {% if uri_2fa %}
+                                <p class="small mb-2">
+                                    <a href="{{ uri_2fa }}" class="text-decoration-none">Abrir no autenticador (link otpauth)</a>
+                                </p>
+                                {% endif %}
+
+                                {% if token_2fa.backup_codes %}
+                                <div class="mb-3">
+                                    <div class="small text-muted mb-1">Códigos de backup (use uma vez cada):</div>
+                                    <div class="small">
+                                        {% for backup in token_2fa.backup_codes %}
+                                        <span class="badge text-bg-secondary me-1 mb-1">{{ backup }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <form method="POST" action="{{ url_for('auth.ativar_2fa') }}" class="row g-2" novalidate>
+                                    {{ csrf_token() }}
+                                    <div class="col-md-8">
+                                        <label class="form-label">Código do autenticador</label>
+                                        <input type="text" name="codigo_2fa" class="form-control" placeholder="000000" required>
+                                    </div>
+                                    <div class="col-md-4 d-grid align-items-end">
+                                        <button type="submit" class="btn btn-success mt-4 mt-md-0">
+                                            <i class="fas fa-check me-2"></i>Ativar 2FA
+                                        </button>
+                                    </div>
+                                </form>
+                                <hr>
+                                {% endif %}
+
+                                <form method="POST" action="{{ url_for('auth.preparar_2fa') }}" class="row g-2" novalidate>
+                                    {{ csrf_token() }}
+                                    <div class="col-md-8">
+                                        <label class="form-label">Senha da conta</label>
+                                        <input type="password" name="senha_2fa" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4 d-grid align-items-end">
+                                        <button type="submit" class="btn btn-outline-primary mt-4 mt-md-0">
+                                            <i class="fas fa-key me-2"></i>{% if token_2fa %}Regenerar chave{% else %}Preparar 2FA{% endif %}
+                                        </button>
+                                    </div>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <hr class="my-4">
+
                         <div class="border border-danger-subtle rounded p-3 bg-danger-subtle">
                             <h5 class="text-danger mb-2"><i class="fas fa-user-slash me-2"></i>Excluir conta</h5>
                             <p class="mb-3 small text-danger-emphasis">
                                 Esta ação é permanente e excluirá sua conta e dados associados.
                                 Após a confirmação, não será possível recuperar o acesso.
-                                Registros mínimos poderão ser mantidos apenas quando exigidos por lei.
+                                Registros mínimos poderão ser mantidos apenas quando exigidos por lei (LGPD).
                             </p>
 
-                            <form method="POST" action="{{ url_for('excluir_conta') }}" class="row g-2" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.');">
+                            <form method="POST" action="{{ url_for('excluir_conta') }}" class="row g-2" novalidate onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.');">
+                                {{ csrf_token() }}
+                                
                                 <div class="col-md-6">
                                     <label class="form-label">Digite sua senha</label>
                                     <input type="password" name="senha_confirmacao" class="form-control" required>

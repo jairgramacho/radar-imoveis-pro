@@ -193,3 +193,61 @@ class StripeEventoWebhook(db.Model):
     def __repr__(self):
         return f'<StripeEventoWebhook {self.stripe_event_id}>'
 
+
+class ConsentimentoUsuario(db.Model):
+    """Registro LGPD de Consentimentos do Usuário"""
+    __tablename__ = 'consentimentos_usuario'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True)
+    tipo = db.Column(db.String(50), nullable=False)  # 'termos', 'politica_privacidade', 'marketing_email'
+    aceito = db.Column(db.Boolean, nullable=False, default=False)
+    data_consentimento = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    ip_address = db.Column(db.String(45), nullable=True)  # IPv4 ou IPv6
+    user_agent = db.Column(db.String(500), nullable=True)  # Browser info
+    versao_documento = db.Column(db.String(20), nullable=True)  # ex: "1.0", "1.1"
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    usuario = db.relationship('Usuario', backref='consentimentos')
+    
+    def __repr__(self):
+        return f'<ConsentimentoUsuario {self.tipo}>'
+
+
+class AuditLog(db.Model):
+    """Registro de Auditoria (LGPD Compliance)"""
+    __tablename__ = 'audit_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True, index=True)
+    acao = db.Column(db.String(100), nullable=False)  # 'login', 'logout', 'deletar_conta', 'exportar_dados'
+    entidade = db.Column(db.String(50), nullable=False)  # 'usuario', 'imovel', 'mensagem'
+    entidade_id = db.Column(db.Integer, nullable=True)  # ID da entidade afetada
+    detalhes = db.Column(db.JSON, nullable=True)  # Dados adicionais
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(500), nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    usuario = db.relationship('Usuario', backref='audit_logs')
+    
+    def __repr__(self):
+        return f'<AuditLog {self.acao}>'
+
+
+class TokenDoisFatores(db.Model):
+    """Tokens para Autenticação de Dois Fatores (2FA)"""
+    __tablename__ = 'tokens_2fa'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True, unique=True)
+    secret = db.Column(db.String(32), nullable=False)  # TOTP secret (base32)
+    habilitado = db.Column(db.Boolean, nullable=False, default=False)
+    backup_codes = db.Column(db.JSON, nullable=True)  # Lista de códigos de recuperação
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    usuario = db.relationship('Usuario', backref='token_2fa', uselist=False)
+    
+    def __repr__(self):
+        return f'<TokenDoisFatores usuario_id={self.usuario_id}>'
+

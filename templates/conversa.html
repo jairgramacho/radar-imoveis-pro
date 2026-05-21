@@ -182,6 +182,7 @@
 
             <div class="dm-compose">
                 <form method="POST" action="{{ url_for('chat.enviar_mensagem', usuario_id=outro_usuario.id) }}">
+                    {{ csrf_token() }}
                     <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." required autofocus>
                     <button type="submit" class="btn btn-primary dm-send">
                         <i class="fas fa-paper-plane me-1"></i>Enviar

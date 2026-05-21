@@ -1,10 +1,13 @@
 """Blueprint para operacoes de imoveis."""
 
 from flask import Blueprint, render_template, request, redirect, flash, url_for
+from pydantic import ValidationError
 
 from models import Avaliacao, FotoImovel, Imovel, Usuario
 from radar_app.imoveis import ImovelRepository
 from radar_app.imoveis.avaliacao_repository import AvaliacaoRepository
+from radar_app.security.sanitization import sanitizar_descricao, sanitizar_mensagem_chat
+from radar_app.security.validation_schemas import ImovelDescricaoSchema, AvaliacaoSchema
 
 
 imoveis_bp = Blueprint('imoveis', __name__)
@@ -140,6 +143,19 @@ def salvar():
         vagas = int(f.get('vagas', 0)) if f.get('vagas') else None
         area = float(f.get('area', 0)) if f.get('area') else None
 
+        # ✅ VALIDAÇÃO E SANITIZAÇÃO DE DESCRIÇÃO (XSS Protection)
+        descricao_raw = f.get('descricao', '').strip()
+        try:
+            if descricao_raw:
+                schema_data = ImovelDescricaoSchema(descricao=descricao_raw)
+                descricao_sanitizada = sanitizar_descricao(schema_data.descricao)
+            else:
+                descricao_sanitizada = ''
+        except ValidationError as e:
+            erros = ', '.join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
+            flash(f'Descrição inválida: {erros}', 'error')
+            return redirect(url_for('index', aba='anunciar'))
+
         imovel = Imovel(
             usuario_id=usuario.id,
             estado=f.get('estado'),
@@ -151,7 +167,7 @@ def salvar():
             vagas=vagas,
             area=area,
             preco=preco,
-            descricao=f.get('descricao', ''),
+            descricao=descricao_sanitizada,
             foto=nome_foto_principal,
         )
 
@@ -317,7 +333,19 @@ def editar_imovel(id):
             imovel.vagas = vagas
             imovel.area = area
             imovel.preco = preco
-            imovel.descricao = f.get('descricao', '')
+
+            # ✅ VALIDAÇÃO E SANITIZAÇÃO DE DESCRIÇÃO (XSS Protection)
+            descricao_raw = f.get('descricao', '').strip()
+            try:
+                if descricao_raw:
+                    schema_data = ImovelDescricaoSchema(descricao=descricao_raw)
+                    imovel.descricao = sanitizar_descricao(schema_data.descricao)
+                else:
+                    imovel.descricao = ''
+            except ValidationError as e:
+                erros = ', '.join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
+                flash(f'Descrição inválida: {erros}', 'error')
+                return redirect(url_for('editar_imovel', id=id))
 
             _repo().commit()
 
@@ -349,18 +377,23 @@ def avaliar_anunciante(usuario_id):
         try:
             estrelas = int(request.form.get('estrelas', 5))
             comentario = request.form.get('comentario', '').strip()
-            imovel_id = request.form.get('imovel_id')
+            imovel_id = request.form.get('imovel_id', type=int)
 
-            if estrelas < 1 or estrelas > 5:
-                flash('Avaliação deve ser entre 1 e 5 estrelas!', 'error')
-                return redirect(url_for('avaliar_anunciante', usuario_id=usuario_id))
+            try:
+                payload = AvaliacaoSchema(estrelas=estrelas, comentario=comentario)
+            except ValidationError as e:
+                erros = ', '.join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
+                flash(f'Validação falhou: {erros}', 'error')
+                return redirect(url_for('avaliar_anunciante', usuario_id=usuario_id, imovel_id=imovel_id))
+
+            comentario_sanitizado = sanitizar_mensagem_chat(payload.comentario)
 
             avaliacao = Avaliacao(
                 usuario_id=usuario_id,
                 imovel_id=imovel_id,
                 avaliador_id=usuario_logado.id,
-                estrelas=estrelas,
-                comentario=comentario,
+                estrelas=payload.estrelas,
+                comentario=comentario_sanitizado,
             )
 
             _avaliacao_repo().salvar(avaliacao)

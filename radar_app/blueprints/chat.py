@@ -1,11 +1,14 @@
 """Blueprint de chat entre usuarios."""
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, session, url_for
+from pydantic import ValidationError
 
 from email_utils import enviar_email_nova_mensagem
 from models import Imovel, Mensagem, Usuario, db
 from radar_app.auth import UsuarioRepository
 from radar_app.imoveis import ImovelRepository
+from radar_app.security.sanitization import sanitizar_mensagem_chat
+from radar_app.security.validation_schemas import MensagemChatSchema
 
 
 chat_bp = Blueprint('chat', __name__)
@@ -131,11 +134,11 @@ def conversa(usuario_id):
 
 @chat_bp.route('/enviar-mensagem/<int:usuario_id>', methods=['POST'])
 def enviar_mensagem(usuario_id):
-    """Envia uma mensagem para outro usuario."""
+    """Envia uma mensagem para outro usuario (com validação e sanitização)."""
     usuario = _usuario_logado_atual()
 
     if not usuario:
-        flash('Voce precisa estar logado!', 'error')
+        flash('Você precisa estar logado!', 'error')
         return redirect(url_for('login'))
 
     _usuario_repo().buscar_por_id_ou_404(usuario_id)
@@ -143,19 +146,29 @@ def enviar_mensagem(usuario_id):
     imovel_id = request.form.get('imovel_id', type=int)
     if imovel_id and not _imovel_repo().buscar_por_id(imovel_id):
         imovel_id = None
+    
+    titulo = request.form.get('titulo', '').strip()
     texto = request.form.get('mensagem', '').strip()
 
-    if not texto:
-        flash('Mensagem nao pode estar vazia!', 'error')
+    # ✅ VALIDAÇÃO COM PYDANTIC
+    try:
+        form_data = MensagemChatSchema(mensagem=texto, titulo=titulo)
+    except ValidationError as e:
+        erros = ', '.join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors()])
+        flash(f'Validação falhou: {erros}', 'error')
         return redirect(url_for('chat.chat', usuario_id=usuario_id))
 
     try:
+        # ✅ SANITIZAR MENSAGEM (XSS Protection)
+        mensagem_sanitizada = sanitizar_mensagem_chat(form_data.mensagem)
+        titulo_sanitizado = form_data.titulo[:100] if form_data.titulo else f"Mensagem de {usuario.nome}"
+
         msg = Mensagem(
             remetente_id=usuario.id,
             destinatario_id=usuario_id,
             imovel_id=imovel_id,
-            titulo=f"Mensagem de {usuario.nome}",
-            mensagem=texto
+            titulo=titulo_sanitizado,
+            mensagem=mensagem_sanitizada
         )
 
         db.session.add(msg)
@@ -163,6 +176,7 @@ def enviar_mensagem(usuario_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao enviar mensagem: {str(e)}', 'error')
+        current_app.logger.error(f"Erro ao enviar mensagem: {e}", exc_info=True)
 
     return redirect(url_for('chat.chat', usuario_id=usuario_id, imovel_id=imovel_id))
 
@@ -252,8 +266,13 @@ def api_enviar_mensagem(usuario_id):
     if imovel_id and not _imovel_repo().buscar_por_id(imovel_id):
         return jsonify({'ok': False, 'erro': 'imovel_invalido'}), 400
 
-    if not texto:
-        return jsonify({'ok': False, 'erro': 'mensagem_vazia'}), 400
+    try:
+        form_data = MensagemChatSchema(mensagem=texto, titulo='')
+    except ValidationError as e:
+        detalhes = [{'campo': err['loc'][0], 'erro': err['msg']} for err in e.errors()]
+        return jsonify({'ok': False, 'erro': 'validacao', 'detalhes': detalhes}), 400
+
+    mensagem_sanitizada = sanitizar_mensagem_chat(form_data.mensagem)
 
     try:
         msg = Mensagem(
@@ -261,7 +280,7 @@ def api_enviar_mensagem(usuario_id):
             destinatario_id=usuario_id,
             imovel_id=imovel_id,
             titulo=f"Mensagem de {usuario.nome}",
-            mensagem=texto,
+            mensagem=mensagem_sanitizada,
         )
         db.session.add(msg)
         db.session.commit()

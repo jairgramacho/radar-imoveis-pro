@@ -32,7 +32,9 @@
                             {% endif %}
                         {% endwith %}
 
-                        <form method="POST">
+                        <form method="POST" novalidate>
+                            {{ csrf_token() }}
+                            
                             <div class="mb-4">
                                 <label class="form-label">E-mail</label>
                                 <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>

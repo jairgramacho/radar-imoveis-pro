@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redefinir Senha - Radar Imóveis Pro</title>
+    <title>Verificar 2FA - Radar Imóveis Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -14,12 +14,14 @@
     <div class="container-lg py-5">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
-                <div class="card shadow">
-                    <div class="card-body p-5">
-                        <h2 class="card-title mb-3 text-center">
-                            <i class="fas fa-lock me-2" style="color: #f39233;"></i>Redefinir Senha
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4 p-md-5">
+                        <h2 class="h4 mb-3 text-center">
+                            <i class="fas fa-shield-alt me-2" style="color: #f39233;"></i>Verificação 2FA
                         </h2>
-                        <p class="text-muted text-center mb-4">Digite sua nova senha para concluir a recuperação da conta.</p>
+                        <p class="text-muted text-center mb-4">
+                            Olá, {{ pending_nome }}. Informe o código do autenticador para concluir seu login.
+                        </p>
 
                         {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
@@ -34,34 +36,23 @@
 
                         <form method="POST" novalidate>
                             {{ csrf_token() }}
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Nova senha</label>
-                                <input type="password" name="senha" class="form-control" placeholder="Mínimo 12 caracteres" minlength="12" required>
-                            </div>
-
                             <div class="mb-4">
-                                <label class="form-label">Confirmar nova senha</label>
-                                <input type="password" name="confirmar_senha" class="form-control" placeholder="Repita a nova senha" minlength="12" required>
+                                <label class="form-label">Código 2FA ou backup</label>
+                                <input type="text" name="codigo_2fa" class="form-control" placeholder="000000" autocomplete="one-time-code" required>
+                                <small class="text-muted">Aceita código do autenticador ou um código de backup.</small>
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-save me-2"></i>Salvar nova senha
+                                <i class="fas fa-check-circle me-2"></i>Confirmar login
                             </button>
                         </form>
-
-                        <hr>
-
-                        <p class="text-center text-muted mb-0">
-                            Lembrou a senha?
-                            <a href="{{ url_for('login') }}" class="fw-bold text-decoration-none" style="color: #f39233;">Voltar ao login</a>
-                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {% include '_footer.html' %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

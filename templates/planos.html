@@ -67,6 +67,7 @@
                         {% if plano.botao %}
                             {% if usuario %}
                                 <form method="POST" action="{{ url_for('billing.assinatura_checkout') }}" class="w-100">
+                                    {{ csrf_token() }}
                                     {% if plano.nome == 'Pro' %}
                                     <input type="hidden" name="plano" value="pro">
                                     <button type="submit" class="btn btn-warning w-100 fw-bold" {% if not stripe_checkout_habilitado %}disabled{% endif %}>
