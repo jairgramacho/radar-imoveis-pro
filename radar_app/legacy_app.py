@@ -4,8 +4,8 @@ import math
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from urllib.parse import urlparse
 from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
-from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -172,12 +172,6 @@ app.jinja_env.globals['csrf_token'] = _csrf_hidden_input
 if flask_env == 'production':
     config.validate()
 
-# CORS - apenas domínios autorizados em produção
-if flask_env == 'production':
-    CORS(app, resources={r"/api/*": {"origins": os.getenv('ALLOWED_HOSTS', 'localhost').split(',')}})
-else:
-    CORS(app, origins="*")
-
 
 def _configurar_logging_estruturado():
     return configurar_logging_estruturado(app, flask_env, logging, RotatingFileHandler)
@@ -221,9 +215,49 @@ if flask_env == 'production' and ratelimit_storage_uri == 'memory://':
         'Flask-Limiter em modo memory://. Configure RATELIMIT_STORAGE_URI para Redis em producao.'
     )
 
+
+def _origens_cors_permitidas():
+    permitidas = set()
+
+    app_url = (app.config.get('APP_URL') or '').strip()
+    if app_url:
+        parsed = urlparse(app_url)
+        if parsed.scheme and parsed.netloc:
+            permitidas.add(f'{parsed.scheme}://{parsed.netloc}')
+
+    hosts_raw = os.getenv('ALLOWED_HOSTS', '')
+    for host in hosts_raw.split(','):
+        item = host.strip()
+        if not item:
+            continue
+        if item.startswith('http://') or item.startswith('https://'):
+            permitidas.add(item.rstrip('/'))
+        else:
+            permitidas.add(f'https://{item}')
+            permitidas.add(f'http://{item}')
+
+    if flask_env != 'production':
+        permitidas.update({
+            'http://localhost:5000',
+            'http://127.0.0.1:5000',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+        })
+
+    return permitidas
+
 # Security Headers
 @app.after_request
 def set_security_headers(response):
+    if request.path.startswith('/api/'):
+        origin = (request.headers.get('Origin') or '').rstrip('/')
+        if origin and origin in _origens_cors_permitidas():
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRFToken'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response.headers['Vary'] = 'Origin'
+
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
