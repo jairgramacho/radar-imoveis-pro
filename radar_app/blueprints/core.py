@@ -76,16 +76,49 @@ def robots_txt():
 @core_bp.route('/sitemap.xml')
 def sitemap_xml():
     """Gera sitemap dinâmico com páginas principais e imóveis ativos."""
+    hoje = datetime.utcnow().strftime('%Y-%m-%d')
     urls = [
         {
             'loc': url_for('index', _external=True),
-            'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
+            'lastmod': hoje,
             'changefreq': 'hourly',
+            'priority': '1.0',
+        },
+        {
+            'loc': url_for('index', aba='oportunidades', _external=True),
+            'lastmod': hoje,
+            'changefreq': 'daily',
+            'priority': '0.9',
         },
         {
             'loc': url_for('billing.planos', _external=True),
-            'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
+            'lastmod': hoje,
             'changefreq': 'weekly',
+            'priority': '0.8',
+        },
+        {
+            'loc': url_for('public.faq_ajuda', _external=True),
+            'lastmod': hoje,
+            'changefreq': 'monthly',
+            'priority': '0.6',
+        },
+        {
+            'loc': url_for('public.termos_uso', _external=True),
+            'lastmod': hoje,
+            'changefreq': 'yearly',
+            'priority': '0.4',
+        },
+        {
+            'loc': url_for('public.politica_privacidade', _external=True),
+            'lastmod': hoje,
+            'changefreq': 'yearly',
+            'priority': '0.4',
+        },
+        {
+            'loc': url_for('public.denunciar_abuso', _external=True),
+            'lastmod': hoje,
+            'changefreq': 'yearly',
+            'priority': '0.3',
         },
     ]
 
@@ -96,6 +129,7 @@ def sitemap_xml():
             'loc': url_for('detalhe_imovel', id=imovel.id, _external=True),
             'lastmod': referencia_data.strftime('%Y-%m-%d'),
             'changefreq': 'daily',
+            'priority': '0.9',
         })
 
     xml = render_template('sitemap.xml', urls=urls)

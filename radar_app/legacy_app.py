@@ -4,7 +4,7 @@ import math
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -320,6 +320,142 @@ def _resolver_foto_preview(imovel):
     return resolver_foto_preview(imovel, _url_publica)
 
 
+def _canonical_url_atual():
+    """Monta canonical removendo parâmetros de rastreamento e paginação redundante."""
+    if not has_request_context():
+        return _url_publica('index')
+
+    parametros_filtrados = []
+    parametros_removiveis = {
+        'gclid',
+        'fbclid',
+        'yclid',
+        'msclkid',
+        'ref',
+        'source',
+    }
+
+    for chave, valor in request.args.items(multi=True):
+        chave_normalizada = (chave or '').strip().lower()
+        if chave_normalizada.startswith('utm_') or chave_normalizada in parametros_removiveis:
+            continue
+        if chave_normalizada == 'pagina' and str(valor).strip() in {'', '1'}:
+            continue
+        parametros_filtrados.append((chave, valor))
+
+    query = urlencode(parametros_filtrados, doseq=True)
+    caminho = request.path
+    if query:
+        caminho = f'{caminho}?{query}'
+
+    base = (app.config.get('APP_URL') or '').strip().rstrip('/')
+    if has_request_context() and (not base or 'localhost' in base or '127.0.0.1' in base):
+        proto = (request.headers.get('X-Forwarded-Proto') or request.scheme or 'https').split(',')[0].strip()
+        host = (request.headers.get('X-Forwarded-Host') or request.host or '').split(',')[0].strip()
+        if host:
+            return f'{proto}://{host}{caminho}'
+
+    if base:
+        return f'{base}{caminho}'
+    return _url_publica('index')
+
+
+def _seo_defaults():
+    """Define metadados padrão de SEO por endpoint."""
+    endpoint = (request.endpoint or '').strip().lower() if has_request_context() else ''
+    aba_atual = (request.args.get('aba', 'buscar') if has_request_context() else 'buscar').strip().lower()
+    cidade_busca = (request.args.get('cidade', '') if has_request_context() else '').strip()
+
+    seo_title = 'Radar Imoveis Pro | Imoveis em Barreiras e Oeste da Bahia'
+    seo_description = (
+        'Encontre imoveis para compra e aluguel em Barreiras e no Oeste da Bahia. '
+        'Anuncie com alcance regional e contato direto via WhatsApp.'
+    )
+    seo_robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+    seo_keywords = (
+        'imoveis em barreiras, imobiliaria barreiras, casas em barreiras, apartamentos barreiras, '
+        'imoveis oeste da bahia, aluguel barreiras, compra de imoveis bahia'
+    )
+
+    if endpoint in {'imoveis.index', 'index'}:
+        if aba_atual == 'oportunidades':
+            seo_title = 'Oportunidades de Imoveis em Barreiras e Regiao | Radar Imoveis Pro'
+            seo_description = (
+                'Descubra imoveis com preco competitivo em Barreiras e no Oeste da Bahia. '
+                'Radar de oportunidades com comparativo local de valores.'
+            )
+        elif aba_atual == 'anunciar':
+            seo_title = 'Anunciar Imovel em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
+            seo_description = (
+                'Publique seu imovel em Barreiras e alcance compradores e locatarios de toda a regiao. '
+                'Anuncio rapido com fotos, chat e WhatsApp.'
+            )
+            seo_robots = 'noindex,nofollow,noarchive'
+
+        if cidade_busca:
+            seo_title = f'Imoveis em {cidade_busca} | Radar Imoveis Pro'
+            seo_description = (
+                f'Veja anuncios de imoveis em {cidade_busca} com filtros por tipo, preco e bairro. '
+                'Radar Imoveis Pro com foco em Barreiras e Oeste da Bahia.'
+            )
+
+    if endpoint in {'billing.planos'}:
+        seo_title = 'Planos para Anunciar Imoveis | Radar Imoveis Pro'
+        seo_description = (
+            'Compare os planos da Radar Imoveis Pro e anuncie com mais alcance em Barreiras '
+            'e no Oeste da Bahia.'
+        )
+
+    if endpoint in {'public.faq_ajuda', 'public.termos_uso', 'public.politica_privacidade'}:
+        seo_robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+
+    if endpoint in {
+        'auth.login',
+        'login',
+        'auth.cadastro',
+        'cadastro',
+        'auth.esqueci_senha',
+        'esqueci_senha',
+        'auth.redefinir_senha',
+        'redefinir_senha',
+        'auth.verificar_2fa',
+        'verificar_2fa',
+        'auth.configuracoes_conta',
+        'configuracoes_conta',
+        'core.dashboard',
+        'dashboard',
+        'chat.chat',
+        'chat',
+        'chat.conversa',
+        'conversa',
+        'imoveis.meus_anuncios',
+        'meus_anuncios',
+        'imoveis.editar_imovel',
+        'editar_imovel',
+        'imoveis.adicionar_fotos',
+        'adicionar_fotos',
+        'admin.admin_planos',
+        'admin_planos',
+    }:
+        seo_robots = 'noindex,nofollow,noarchive'
+
+    seo_canonical_url = _canonical_url_atual()
+    seo_og_image = _url_publica('og_placeholder', tipo='Radar Imoveis Pro', cidade='Barreiras')
+
+    return {
+        'seo_site_name': 'Radar Imoveis Pro',
+        'seo_locale': 'pt_BR',
+        'seo_title': seo_title,
+        'seo_description': seo_description,
+        'seo_robots': seo_robots,
+        'seo_keywords': seo_keywords,
+        'seo_canonical_url': seo_canonical_url,
+        'seo_og_type': 'website',
+        'seo_og_image': seo_og_image,
+        'seo_twitter_card': 'summary_large_image',
+    }
+
+
 @app.context_processor
 def inject_template_helpers():
     """Disponibiliza helpers e contadores globais para templates."""
@@ -339,10 +475,14 @@ def inject_template_helpers():
             mensagens_nao_lidas = 0
             usuario_admin = False
 
+    seo_contexto = _seo_defaults()
+
     return {
         'foto_url': _foto_url,
+        'url_publica': _url_publica,
         'mensagens_nao_lidas': mensagens_nao_lidas,
         'usuario_admin': usuario_admin,
+        **seo_contexto,
     }
 
 

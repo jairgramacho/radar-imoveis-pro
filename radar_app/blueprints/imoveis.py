@@ -68,6 +68,67 @@ def index():
         for p in range(1, total_paginas + 1)
     }
 
+    seo_prev_url = None
+    seo_next_url = None
+    if total_paginas > 1 and pagina_corrente > 1:
+        seo_prev_url = legacy._url_publica('index', **{**argumentos_base, 'pagina': pagina_corrente - 1})
+    if total_paginas > 1 and pagina_corrente < total_paginas:
+        seo_next_url = legacy._url_publica('index', **{**argumentos_base, 'pagina': pagina_corrente + 1})
+
+    cidade_seo = (filtros.get('cidade') or '').strip()
+    estado_seo = (filtros.get('estado') or '').strip()
+    local_seo = cidade_seo if not estado_seo else f'{cidade_seo}/{estado_seo}' if cidade_seo else estado_seo
+
+    if aba == 'oportunidades':
+        seo_title = 'Oportunidades de Imoveis em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
+        seo_description = (
+            'Encontre oportunidades de compra e aluguel com comparativo de preco local '
+            'em Barreiras e no Oeste da Bahia.'
+        )
+    elif aba == 'anunciar':
+        seo_title = 'Anunciar Imovel em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
+        seo_description = (
+            'Publique seu imovel e alcance compradores e locatarios em Barreiras e em toda '
+            'a regiao oeste da Bahia.'
+        )
+    else:
+        seo_title = 'Imoveis em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
+        seo_description = (
+            'Busque imoveis por tipo, bairro e preco em Barreiras e no Oeste da Bahia. '
+            'Plataforma com contato direto e anuncios atualizados.'
+        )
+
+    if local_seo and aba != 'anunciar':
+        seo_title = f'Imoveis em {local_seo} | Radar Imoveis Pro'
+        seo_description = (
+            f'Anuncios de imoveis em {local_seo} para compra e aluguel com filtros por tipo, '
+            'preco e bairro na Radar Imoveis Pro.'
+        )
+
+    seo_json_ld_list = []
+    if aba in {'buscar', 'oportunidades'}:
+        seo_json_ld_list = [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                'name': 'Radar Imoveis Pro',
+                'url': legacy._url_publica('index'),
+                'inLanguage': 'pt-BR',
+                'potentialAction': {
+                    '@type': 'SearchAction',
+                    'target': f"{legacy._url_publica('index')}?aba=buscar&cidade={{search_term_string}}",
+                    'query-input': 'required name=search_term_string',
+                },
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'RealEstateAgent',
+                'name': 'Radar Imoveis Pro',
+                'url': legacy._url_publica('index'),
+                'areaServed': ['Barreiras', 'Oeste da Bahia'],
+            },
+        ]
+
     return render_template(
         'index.html',
         imoveis=imoveis_pagina,
@@ -81,6 +142,12 @@ def index():
         links_paginacao=links_paginacao,
         limite_anuncios=limite_anuncios,
         usuario=usuario,
+        seo_title=seo_title,
+        seo_description=seo_description,
+        seo_robots=('noindex,nofollow,noarchive' if aba == 'anunciar' else None),
+        seo_prev_url=seo_prev_url,
+        seo_next_url=seo_next_url,
+        seo_json_ld_list=seo_json_ld_list,
     )
 
 
@@ -235,12 +302,65 @@ def detalhe_imovel(id):
     separador = '&' if '?' in foto_preview else '?'
     foto_preview = f"{foto_preview}{separador}v={marca_tempo}"
 
+    titulo_imovel = f"{imovel.tipo} em {imovel.cidade} - Radar Imoveis Pro"
+    canonical_imovel = legacy._url_publica('detalhe_imovel', id=imovel.id)
+    data_publicacao = (imovel.criado_em or imovel.atualizado_em)
+
+    seo_json_ld_list = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'RealEstateListing',
+            'name': titulo_imovel,
+            'description': descricao_meta,
+            'url': canonical_imovel,
+            'datePosted': data_publicacao.isoformat() if data_publicacao else None,
+            'image': [foto_preview],
+            'offers': {
+                '@type': 'Offer',
+                'price': float(imovel.preco or 0),
+                'priceCurrency': 'BRL',
+                'availability': 'https://schema.org/InStock',
+            },
+            'address': {
+                '@type': 'PostalAddress',
+                'streetAddress': imovel.bairro,
+                'addressLocality': imovel.cidade,
+                'addressRegion': imovel.estado,
+                'addressCountry': 'BR',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+                {
+                    '@type': 'ListItem',
+                    'position': 1,
+                    'name': 'Inicio',
+                    'item': legacy._url_publica('index'),
+                },
+                {
+                    '@type': 'ListItem',
+                    'position': 2,
+                    'name': 'Imovel',
+                    'item': canonical_imovel,
+                },
+            ],
+        },
+    ]
+
     return render_template(
         'detalhe_imovel.html',
         imovel=imovel,
         usuario=usuario,
         descricao_meta=descricao_meta,
         foto_preview=foto_preview,
+        seo_title=titulo_imovel,
+        seo_description=descricao_meta,
+        seo_canonical_url=canonical_imovel,
+        seo_og_type='article',
+        seo_og_image=foto_preview,
+        seo_json_ld_list=seo_json_ld_list,
     )
 
 

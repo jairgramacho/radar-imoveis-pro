@@ -3,21 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis Pro</title>
-    <meta name="description" content="{{ descricao_meta }}">
-    <meta property="og:title" content="{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis Pro">
-    <meta property="og:description" content="{{ descricao_meta }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:image" content="{{ foto_preview }}">
-    <meta property="og:image:secure_url" content="{{ foto_preview }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="628">
-    <meta property="og:site_name" content="Radar Imóveis Pro">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ imovel.tipo }} em {{ imovel.cidade }} - Radar Imóveis Pro">
-    <meta name="twitter:description" content="{{ descricao_meta }}">
-    <meta name="twitter:image" content="{{ foto_preview }}">
+    {% include '_seo_head.html' %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -195,7 +181,8 @@
                 <!-- INFORMAÇÕES PRINCIPAIS -->
                 <div class="card shadow mb-4">
                     <div class="card-body">
-                        <h3 class="mb-3 text-primary fw-bold">R$ {{ imovel.preco|moeda_brl }}</h3>
+                        <h1 class="h4 mb-2">{{ imovel.tipo }} em {{ imovel.cidade }} - {{ imovel.estado }}</h1>
+                        <h2 class="h3 mb-3 text-primary fw-bold">R$ {{ imovel.preco|moeda_brl }}</h2>
                         
                         <div class="row mb-4">
                             <div class="col-md-6">

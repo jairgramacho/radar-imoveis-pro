@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar Imóveis Pro - Compre, Venda e Alugue</title>
+    {% include '_seo_head.html' %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
@@ -23,11 +23,12 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
         <!-- ABA BUSCAR -->
         {% if aba == 'buscar' %}
         <div class="buscar-section">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h2><i class="fas fa-search me-2"></i>Buscar Imóveis</h2>
+                <h1 class="h2 mb-0"><i class="fas fa-search me-2"></i>Buscar Imóveis</h1>
                 {% if usuario %}
                     <a href="/?aba=anunciar" class="btn btn-warning btn-sm" style="white-space: nowrap;">
                         <i class="fas fa-plus-circle me-1"></i>Anuncie
@@ -222,7 +223,7 @@
         {% elif aba == 'oportunidades' %}
         <div class="buscar-section">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h2><i class="fas fa-bullseye me-2"></i>Radar de Oportunidades</h2>
+                <h1 class="h2 mb-0"><i class="fas fa-bullseye me-2"></i>Radar de Oportunidades</h1>
                 <a href="/?aba=buscar&somente_oportunidades=1" class="btn btn-outline-primary btn-sm" style="white-space: nowrap;">
                     <i class="fas fa-filter me-1"></i>Ver com filtros
                 </a>
@@ -320,7 +321,7 @@
         <!-- ABA ANUNCIAR -->
         {% elif aba == 'anunciar' %}
         <div class="anunciar-section">
-            <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel</h2>
+            <h1 class="h2 mb-4"><i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel</h1>
 
             {% if not usuario %}
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
