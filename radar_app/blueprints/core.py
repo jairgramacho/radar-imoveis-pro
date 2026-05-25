@@ -1,6 +1,7 @@
 """Blueprint com rotas centrais da aplicação."""
 
 import io
+import secrets
 from datetime import datetime
 
 from flask import Blueprint, Response, current_app, flash, jsonify, redirect, render_template, request, url_for
@@ -25,6 +26,24 @@ def _imovel_repo():
     return ImovelRepository(db, Imovel)
 
 
+def _token_exportacao_imoveis():
+    """Retorna token configurado para exportacao publica de imoveis."""
+    return (current_app.config.get('IMOVEIS_EXPORT_API_TOKEN') or '').strip()
+
+
+def _token_requisicao_exportacao():
+    """Extrai token da requisicao (Bearer, X-API-Key ou query param)."""
+    auth_header = (request.headers.get('Authorization') or '').strip()
+    if auth_header.lower().startswith('bearer '):
+        return auth_header[7:].strip()
+
+    api_key_header = (request.headers.get('X-API-Key') or '').strip()
+    if api_key_header:
+        return api_key_header
+
+    return (request.args.get('token') or '').strip()
+
+
 @core_bp.route('/healthz')
 def healthcheck():
     """Healthcheck simples para monitoramento do serviço."""
@@ -44,6 +63,64 @@ def healthcheck():
         'smtp_configurado': legacy._smtp_configurado(),
     }
     return jsonify(payload), (200 if db_status == 'ok' else 503)
+
+
+@core_bp.route('/api/public/imoveis', methods=['GET'])
+def api_publica_imoveis():
+    """Exporta imoveis ativos em JSON para integracoes externas (ex.: n8n)."""
+    token_configurado = _token_exportacao_imoveis()
+    if not token_configurado:
+        current_app.logger.warning('Exportacao publica de imoveis chamada sem token configurado.')
+        return jsonify({'ok': False, 'erro': 'token_nao_configurado'}), 503
+
+    token_recebido = _token_requisicao_exportacao()
+    if not token_recebido or not secrets.compare_digest(token_recebido, token_configurado):
+        return jsonify({'ok': False, 'erro': 'nao_autorizado'}), 401
+
+    legacy = _legacy()
+    imoveis = _imovel_repo().listar_ativos()
+    payload_imoveis = []
+
+    for imovel in imoveis:
+        legacy._padronizar_negocio_imovel(imovel)
+
+        foto_principal_valor = imovel.get_foto_principal()
+        foto_principal_url = None
+        if foto_principal_valor:
+            foto_principal_url = legacy._foto_url(foto_principal_valor, external=True)
+
+        fotos_urls = []
+        for foto in (imovel.fotos or []):
+            if foto.arquivo:
+                fotos_urls.append(legacy._foto_url(foto.arquivo, external=True))
+
+        payload_imoveis.append({
+            'id': imovel.id,
+            'estado': imovel.estado,
+            'cidade': imovel.cidade,
+            'bairro': imovel.bairro,
+            'tipo': imovel.tipo,
+            'negocio': imovel.negocio,
+            'preco': imovel.preco,
+            'quartos': imovel.quartos,
+            'vagas': imovel.vagas,
+            'area': imovel.area,
+            'descricao': imovel.descricao,
+            'foto_principal': foto_principal_url,
+            'fotos': fotos_urls,
+            'url': url_for('detalhe_imovel', id=imovel.id, _external=True),
+            'criado_em': imovel.criado_em.isoformat() if imovel.criado_em else None,
+            'atualizado_em': imovel.atualizado_em.isoformat() if imovel.atualizado_em else None,
+        })
+
+    response = jsonify({
+        'ok': True,
+        'total': len(payload_imoveis),
+        'gerado_em': datetime.utcnow().isoformat() + 'Z',
+        'imoveis': payload_imoveis,
+    })
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @core_bp.route('/healthz/ready', methods=['GET'])

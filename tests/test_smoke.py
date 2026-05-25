@@ -28,6 +28,48 @@ def test_readiness_check_ok(client):
     assert payload['stripe'] in {'ok', 'unconfigured'}
 
 
+def test_api_publica_imoveis_retorna_503_sem_token_configurado(client):
+    response = client.get('/api/public/imoveis')
+
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload['ok'] is False
+    assert payload['erro'] == 'token_nao_configurado'
+
+
+def test_api_publica_imoveis_retorna_401_com_token_invalido(client, app):
+    app.config.update(IMOVEIS_EXPORT_API_TOKEN='token-correto')
+
+    response = client.get('/api/public/imoveis', headers={'X-API-Key': 'token-errado'})
+
+    assert response.status_code == 401
+    payload = response.get_json()
+    assert payload['ok'] is False
+    assert payload['erro'] == 'nao_autorizado'
+
+
+def test_api_publica_imoveis_retorna_apenas_ativos(client, app, user_factory, imovel_factory):
+    app.config.update(IMOVEIS_EXPORT_API_TOKEN='token-n8n')
+    usuario = user_factory(email='api-imoveis@example.com')
+
+    ativo = imovel_factory(usuario.id, ativo=True)
+    imovel_factory(usuario.id, ativo=False)
+
+    response = client.get('/api/public/imoveis', headers={'X-API-Key': 'token-n8n'})
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['ok'] is True
+    assert payload['total'] == 1
+    assert len(payload['imoveis']) == 1
+
+    imovel_payload = payload['imoveis'][0]
+    assert imovel_payload['id'] == ativo.id
+    assert imovel_payload['negocio'] == 'Venda'
+    assert imovel_payload['preco'] == ativo.preco
+    assert imovel_payload['url'].endswith(f'/imovel/{ativo.id}')
+
+
 def test_robots_txt_disponivel(client):
     response = client.get('/robots.txt')
     conteudo = response.get_data(as_text=True)

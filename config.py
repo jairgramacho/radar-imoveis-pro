@@ -52,6 +52,7 @@ class Config:
 
     # URL pública da aplicação (usada em emails)
     APP_URL = os.getenv('APP_URL', 'http://localhost:5000').rstrip('/')
+    IMOVEIS_EXPORT_API_TOKEN = os.getenv('IMOVEIS_EXPORT_API_TOKEN', '').strip()
 
     # Email
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')

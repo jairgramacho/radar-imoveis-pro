@@ -62,6 +62,7 @@ Use o arquivo .env.example como base.
 Blocos mais importantes:
 
 - Aplicacao e seguranca: SECRET_KEY, APP_URL, FLASK_ENV
+- Integracao n8n (exportacao de imoveis): IMOVEIS_EXPORT_API_TOKEN
 - Banco: DATABASE_URL
 - Email (Resend): RESEND_API_KEY, RESEND_FROM
 - Email (fallback): MAIL_DEFAULT_SENDER, MAIL_USERNAME, MAIL_PASSWORD
