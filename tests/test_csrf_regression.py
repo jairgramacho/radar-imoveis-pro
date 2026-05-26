@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
 
 from app import create_app
 from models import Usuario, db
@@ -83,3 +84,36 @@ def test_templates_nao_usam_csrf_standalone():
             offenders.append(template_path.name)
 
     assert offenders == []
+
+
+def test_login_nao_quebra_quando_audit_logs_nao_existe(csrf_client, csrf_app):
+    with csrf_app.app_context():
+        usuario = Usuario(
+            nome='Teste Sem AuditLog',
+            email='sem-auditlog@example.com',
+            whatsapp='11999997777',
+            email_confirmado=True,
+        )
+        usuario.set_password('abc12345')
+        db.session.add(usuario)
+        db.session.commit()
+
+        db.session.execute(text('DROP TABLE audit_logs'))
+        db.session.commit()
+
+    html = csrf_client.get('/login').get_data(as_text=True)
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    assert match is not None
+
+    response = csrf_client.post(
+        '/login',
+        data={
+            'email': 'sem-auditlog@example.com',
+            'senha': 'abc12345',
+            'csrf_token': match.group(1),
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert '/?aba=buscar' in response.headers['Location']

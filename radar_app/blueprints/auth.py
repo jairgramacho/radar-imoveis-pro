@@ -46,8 +46,10 @@ def _registrar_consentimento(usuario_id, tipo, aceito, versao='1.0'):
             user_agent=request.headers.get('User-Agent', '')[:500],
             versao_documento=versao,
         )
-        db.session.add(consentimento)
-        db.session.flush()
+        # Usa SAVEPOINT para evitar que falhas no log auxiliar quebrem a transacao principal.
+        with db.session.begin_nested():
+            db.session.add(consentimento)
+            db.session.flush()
     except Exception as e:
         current_app.logger.warning(f"Erro ao registrar consentimento: {e}")
 
@@ -64,8 +66,10 @@ def _registrar_audit_log(usuario_id, acao, entidade, entidade_id=None, detalhes=
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent', '')[:500],
         )
-        db.session.add(audit)
-        db.session.flush()
+        # Usa SAVEPOINT para evitar que falhas no log auxiliar quebrem a transacao principal.
+        with db.session.begin_nested():
+            db.session.add(audit)
+            db.session.flush()
     except Exception as e:
         current_app.logger.warning(f"Erro ao registrar audit log: {e}")
 
