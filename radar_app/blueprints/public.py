@@ -24,6 +24,13 @@ def politica_privacidade():
     return render_template('politica_privacidade.html', usuario=usuario)
 
 
+@public_bp.route('/sobre-a-radar')
+def sobre_radar():
+    """Pagina institucional explicando o modelo de atuacao da Radar."""
+    usuario = _usuario_logado_atual()
+    return render_template('sobre_radar.html', usuario=usuario)
+
+
 @public_bp.route('/denunciar-abuso', methods=['GET', 'POST'])
 def denunciar_abuso():
     """Pagina de denuncia de abuso."""
