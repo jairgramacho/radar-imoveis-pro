@@ -35,7 +35,7 @@
                         {% endwith %}
 
                         <form method="POST" novalidate>
-                            {{ csrf_token() }}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-4">
                                 <label class="form-label">Código 2FA ou backup</label>
                                 <input type="text" name="codigo_2fa" class="form-control" placeholder="000000" autocomplete="one-time-code" required>

@@ -32,7 +32,7 @@
                         {% endwith %}
 
                         <form method="POST" novalidate>
-                            {{ csrf_token() }}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             
                             <div class="mb-3">
                                 <label class="form-label">E-mail</label>
@@ -57,7 +57,7 @@
                             <div class="card-body py-3">
                                 <p class="small mb-2 fw-semibold">Não recebeu o email de confirmação?</p>
                                 <form method="POST" action="{{ url_for('reenviar_confirmacao') }}" class="row g-2">
-                                    {{ csrf_token() }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="col-8">
                                         <input type="email" name="email" class="form-control form-control-sm" placeholder="seu@email.com" required>
                                     </div>

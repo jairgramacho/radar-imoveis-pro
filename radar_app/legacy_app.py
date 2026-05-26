@@ -8,8 +8,7 @@ from urllib.parse import urlencode, urlparse
 from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_wtf.csrf import CSRFProtect, generate_csrf
-from markupsafe import Markup
+from flask_wtf.csrf import CSRFProtect
 
 from dotenv import load_dotenv
 # import pillow_heif  # Comentado: trava no Codespace
@@ -158,15 +157,6 @@ app.config.from_object(config)
 
 # ✅ CSRF Protection (Flask-WTF)
 csrf = CSRFProtect(app)
-
-
-def _csrf_hidden_input():
-    """Renderiza hidden input CSRF para templates que chamam `csrf_token()`."""
-    token = generate_csrf()
-    return Markup(f'<input type="hidden" name="csrf_token" value="{token}">')
-
-
-app.jinja_env.globals['csrf_token'] = _csrf_hidden_input
 
 # Validar produção
 if flask_env == 'production':

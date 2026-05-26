@@ -42,7 +42,7 @@
                         {% endwith %}
 
                         <form method="POST" enctype="multipart/form-data">
-                            {{ csrf_token() }}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <!-- FOTOS ATUAIS -->
                             {% if imovel.fotos %}
                             <div class="mb-4">

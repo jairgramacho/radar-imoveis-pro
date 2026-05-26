@@ -59,7 +59,7 @@
                         <td>{{ alvo.limite_anuncios }}</td>
                         <td>
                             <form method="POST" class="row g-2">
-                                {{ csrf_token() }}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="usuario_id" value="{{ alvo.id }}">
                                 <div class="col-12 col-lg-4">
                                     <select class="form-select form-select-sm" name="plano">

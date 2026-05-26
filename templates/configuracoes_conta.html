@@ -31,7 +31,7 @@
                         <p class="text-muted mb-4">Atualize seus dados de perfil e segurança sem complicação.</p>
 
                         <form method="POST" class="row g-3" novalidate>
-                            {{ csrf_token() }}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             
                             <div class="col-12">
                                 <h5 class="mb-2">Perfil</h5>
@@ -93,7 +93,7 @@
                             </div>
 
                             <form method="POST" action="{{ url_for('auth.desativar_2fa') }}" class="row g-2" novalidate>
-                                {{ csrf_token() }}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="col-md-6">
                                     <label class="form-label">Senha da conta</label>
                                     <input type="password" name="senha_desativar_2fa" class="form-control" required>
@@ -131,7 +131,7 @@
                                 {% endif %}
 
                                 <form method="POST" action="{{ url_for('auth.ativar_2fa') }}" class="row g-2" novalidate>
-                                    {{ csrf_token() }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="col-md-8">
                                         <label class="form-label">Código do autenticador</label>
                                         <input type="text" name="codigo_2fa" class="form-control" placeholder="000000" required>
@@ -146,7 +146,7 @@
                                 {% endif %}
 
                                 <form method="POST" action="{{ url_for('auth.preparar_2fa') }}" class="row g-2" novalidate>
-                                    {{ csrf_token() }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="col-md-8">
                                         <label class="form-label">Senha da conta</label>
                                         <input type="password" name="senha_2fa" class="form-control" required>
@@ -171,7 +171,7 @@
                             </p>
 
                             <form method="POST" action="{{ url_for('excluir_conta') }}" class="row g-2" novalidate onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.');">
-                                {{ csrf_token() }}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 
                                 <div class="col-md-6">
                                     <label class="form-label">Digite sua senha</label>
