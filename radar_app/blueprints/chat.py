@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from email_utils import enviar_email_nova_mensagem
 from models import Imovel, Mensagem, Usuario, db
 from radar_app.auth import UsuarioRepository
+from radar_app.blueprints.crm import registrar_interacao_chat
 from radar_app.imoveis import ImovelRepository
 from radar_app.security.sanitization import sanitizar_mensagem_chat
 from radar_app.security.validation_schemas import MensagemChatSchema
@@ -173,6 +174,11 @@ def enviar_mensagem(usuario_id):
 
         db.session.add(msg)
         db.session.commit()
+        if imovel_id:
+            destinatario = _usuario_repo().buscar_por_id(usuario_id)
+            imovel = _imovel_repo().buscar_por_id(imovel_id)
+            registrar_interacao_chat(usuario, destinatario, imovel, msg)
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao enviar mensagem: {str(e)}', 'error')
@@ -284,6 +290,12 @@ def api_enviar_mensagem(usuario_id):
         )
         db.session.add(msg)
         db.session.commit()
+
+        if imovel_id:
+            destinatario = _usuario_repo().buscar_por_id(usuario_id)
+            imovel = _imovel_repo().buscar_por_id(imovel_id)
+            registrar_interacao_chat(usuario, destinatario, imovel, msg)
+            db.session.commit()
 
         destinatario = _usuario_repo().buscar_por_id(usuario_id)
         if destinatario and destinatario.email:

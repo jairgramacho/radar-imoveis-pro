@@ -12,13 +12,14 @@ from flask_wtf.csrf import CSRFProtect
 
 from dotenv import load_dotenv
 # import pillow_heif  # Comentado: trava no Codespace
-from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook
+from models import db, Usuario, Imovel, Mensagem, StripeEventoWebhook, CRMLead, CRMLeadHistorico
 
 load_dotenv()
 
 from email_utils import mail, enviar_email_confirmacao_cadastro, enviar_email_redefinicao_senha
 from config import config
 from radar_app.blueprints import public_bp, billing_bp, chat_bp, admin_bp, auth_bp, imoveis_bp, core_bp
+from radar_app.blueprints import crm_bp
 from radar_app.infra.media import (
     allowed_file as media_allowed_file,
     arquivo_upload_existe,
@@ -64,6 +65,7 @@ from radar_app.infra.bootstrap import (
     configurar_logging_estruturado,
     deve_executar_bootstrap_db,
     garantir_colunas_usuario,
+    garantir_tabelas_crm,
     marcar_admin_proprietario,
 )
 
@@ -84,6 +86,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(imoveis_bp)
 app.register_blueprint(core_bp)
+app.register_blueprint(crm_bp)
 
 
 def _registrar_alias_endpoints(aliases):
@@ -137,6 +140,14 @@ def _registrar_alias_endpoints_core():
         ('sitemap_xml', '/sitemap.xml', ['GET'], 'core.sitemap_xml'),
         ('og_placeholder', '/og-placeholder', ['GET'], 'core.og_placeholder'),
         ('dashboard', '/dashboard', ['GET'], 'core.dashboard'),
+    ])
+
+
+def _registrar_alias_endpoints_crm():
+    _registrar_alias_endpoints([
+        ('crm', '/crm', ['GET'], 'crm.crm_dashboard'),
+        ('crm_rastrear_whatsapp', '/crm/whatsapp/<int:imovel_id>', ['GET'], 'crm.rastrear_whatsapp'),
+        ('crm_atualizar_lead', '/crm/leads/<int:lead_id>/status', ['POST'], 'crm.atualizar_lead_status'),
     ])
 
 
@@ -199,6 +210,7 @@ _aplicar_limite_endpoint('public.denunciar_abuso', '5 per hour')
 _registrar_alias_endpoints_auth()
 _registrar_alias_endpoints_imoveis()
 _registrar_alias_endpoints_core()
+_registrar_alias_endpoints_crm()
 
 if flask_env == 'production' and ratelimit_storage_uri == 'memory://':
     app.logger.warning(
@@ -481,6 +493,7 @@ if _deve_executar_bootstrap_db():
     with app.app_context():
         db.create_all()
         _garantir_colunas_usuario()
+        garantir_tabelas_crm(db, CRMLead, CRMLeadHistorico)
 
 # Em produção, executa apenas migração leve de colunas já existentes (sem create_all)
 # para evitar quebra após deploy quando novas colunas são adicionadas ao modelo.
@@ -488,6 +501,7 @@ if flask_env == 'production':
     with app.app_context():
         try:
             _garantir_colunas_usuario()
+            garantir_tabelas_crm(db, CRMLead, CRMLeadHistorico)
             _marcar_admin_proprietario()
         except Exception as e:
             app.logger.warning('Falha ao garantir colunas em produção: %s', str(e), exc_info=True)

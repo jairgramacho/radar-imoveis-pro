@@ -51,6 +51,9 @@
                         <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-chart-line me-2"></i>Dashboard
                         </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('crm.crm_dashboard') }}">
+                            <i class="fas fa-filter me-2"></i>CRM
+                        </a></li>
                         {% if usuario_admin %}
                         <li><a class="dropdown-item" href="{{ url_for('admin.admin_planos') }}">
                             <i class="fas fa-crown me-2"></i>Admin Planos

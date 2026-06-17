@@ -297,7 +297,7 @@
                         </a>
                         {% endif %}
                         
-                        <a href="https://wa.me/55{{ imovel.anunciante.whatsapp|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}?text=Olá, vi seu anúncio de {{ imovel.tipo }} no Radar Imóveis Pro. Gostaria de saber mais sobre a propriedade em {{ imovel.cidade }}. Confira: {{ request.url }}" target="_blank" class="btn btn-success w-100 mt-2">
+                        <a href="{{ url_for('crm.rastrear_whatsapp', imovel_id=imovel.id) }}" target="_blank" class="btn btn-success w-100 mt-2">
                             <i class="fab fa-whatsapp me-2"></i>Contatar via WhatsApp
                         </a>
                         

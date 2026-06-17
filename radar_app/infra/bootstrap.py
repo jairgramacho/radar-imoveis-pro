@@ -92,6 +92,12 @@ def garantir_colunas_usuario(db, stripe_evento_webhook_model):
     stripe_evento_webhook_model.__table__.create(bind=db.engine, checkfirst=True)
 
 
+def garantir_tabelas_crm(db, crm_lead_model, crm_lead_historico_model):
+    """Cria as tabelas do CRM quando o banco já existe sem migração."""
+    crm_lead_model.__table__.create(bind=db.engine, checkfirst=True)
+    crm_lead_historico_model.__table__.create(bind=db.engine, checkfirst=True)
+
+
 def deve_executar_bootstrap_db(flask_env):
     """Controla bootstrap automático do banco para evitar travas no boot em produção."""
     override = os.getenv('RUN_DB_BOOTSTRAP')

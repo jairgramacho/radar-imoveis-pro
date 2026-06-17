@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_seo_head.html' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    {% include '_navbar.html' %}
+
+    <div class="container-lg py-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <h2 class="mb-1"><i class="fas fa-filter me-2"></i>CRM Radar</h2>
+                <p class="text-muted mb-0">Leads rastreados a partir de WhatsApp e chat interno.</p>
+            </div>
+            <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao site
+            </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Total</div><div class="fs-3 fw-bold">{{ resumo.total }}</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Novos</div><div class="fs-3 fw-bold">{{ resumo.novo }}</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Em andamento</div><div class="fs-3 fw-bold">{{ resumo.em_andamento }}</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Fechados</div><div class="fs-3 fw-bold">{{ resumo.fechado }}</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Perdidos</div><div class="fs-3 fw-bold">{{ resumo.perdido }}</div></div></div></div>
+            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Pendências</div><div class="fs-3 fw-bold">{{ resumo.pendencias }}</div></div></div></div>
+        </div>
+
+        {% if leads %}
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white"><strong>Leads e etapas</strong></div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light"><tr><th>Lead</th><th>Status</th><th>Contato</th><th>Próxima ação</th><th>Ação</th></tr></thead>
+                        <tbody>
+                        {% for lead in leads %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ lead.imovel.tipo }} em {{ lead.imovel.cidade }}</div>
+                                    <div class="text-muted small">{{ lead.imovel.bairro }} · origem {{ lead.origem }}</div>
+                                    <div class="text-muted small">Código {{ lead.codigo }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge {% if lead.status == 'fechado' %}bg-success{% elif lead.status == 'perdido' %}bg-danger{% elif lead.status == 'novo' %}bg-secondary{% else %}bg-primary{% endif %}">{{ lead.status|capitalize }}</span>
+                                    {% if lead.primeiro_contato_em %}<div class="small text-muted mt-1">1º contato: {{ lead.primeiro_contato_em.strftime('%d/%m/%Y %H:%M') }}</div>{% endif %}
+                                </td>
+                                <td>
+                                    <div class="small"><strong>WhatsApp:</strong> {{ lead.whatsapp or '-' }}</div>
+                                    <div class="small text-muted">{{ lead.email or '' }}</div>
+                                </td>
+                                <td>
+                                    <div class="small">{{ lead.observacoes or 'Sem observação' }}</div>
+                                    {% if lead.proxima_acao_em %}
+                                    <div class="small text-muted">{{ lead.proxima_acao_em.strftime('%d/%m/%Y %H:%M') }}</div>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 320px;">
+                                    <form method="POST" action="{{ url_for('crm.atualizar_lead_status', lead_id=lead.id) }}" class="row g-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="col-12">
+                                            <select name="status" class="form-select form-select-sm">
+                                                {% for etapa in etapas %}
+                                                <option value="{{ etapa }}" {% if lead.status == etapa %}selected{% endif %}>{{ etapa|capitalize }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="text" name="observacoes" class="form-control form-control-sm" placeholder="Observações" value="{{ lead.observacoes or '' }}">
+                                        </div>
+                                        <div class="col-12 col-lg-6">
+                                            <input type="datetime-local" name="proxima_acao_em" class="form-control form-control-sm" value="{{ lead.proxima_acao_em.strftime('%Y-%m-%dT%H:%M') if lead.proxima_acao_em else '' }}">
+                                        </div>
+                                        <div class="col-12 col-lg-6">
+                                            <select name="perda_motivo" class="form-select form-select-sm">
+                                                <option value="">Motivo da perda</option>
+                                                {% for motivo in motivos_perda %}
+                                                <option value="{{ motivo }}" {% if lead.perda_motivo == motivo %}selected{% endif %}>{{ motivo.replace('_', ' ')|capitalize }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-12"><button class="btn btn-primary btn-sm w-100" type="submit">Salvar</button></div>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">Nenhum lead encontrado ainda. Os cliques em WhatsApp e mensagens do chat aparecerão aqui.</div>
+        {% endif %}
+    </div>
+
+    {% include '_footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

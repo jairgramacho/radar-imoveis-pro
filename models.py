@@ -161,6 +161,60 @@ class Mensagem(db.Model):
         return f'<Mensagem de {self.remetente_id} para {self.destinatario_id}>'
 
 
+class CRMLead(db.Model):
+    """Lead de CRM gerado a partir de WhatsApp, chat ou cadastro manual."""
+    __tablename__ = 'crm_leads'
+
+    id = db.Column(db.Integer, primary_key=True)
+    codigo = db.Column(db.String(24), nullable=False, unique=True, index=True)
+    anunciante_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True)
+    imovel_id = db.Column(db.Integer, db.ForeignKey('imoveis.id'), nullable=True, index=True)
+    interessado_usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True, index=True)
+
+    origem = db.Column(db.String(20), nullable=False, default='whatsapp', index=True)
+    status = db.Column(db.String(30), nullable=False, default='novo', index=True)
+    nome = db.Column(db.String(120), nullable=True)
+    email = db.Column(db.String(120), nullable=True, index=True)
+    whatsapp = db.Column(db.String(20), nullable=True, index=True)
+    origem_url = db.Column(db.String(500), nullable=True)
+    visitor_key = db.Column(db.String(64), nullable=True, index=True)
+    observacoes = db.Column(db.Text, nullable=True)
+    perda_motivo = db.Column(db.String(120), nullable=True)
+    proxima_acao_em = db.Column(db.DateTime, nullable=True, index=True)
+    primeiro_contato_em = db.Column(db.DateTime, nullable=True)
+    ultima_interacao_em = db.Column(db.DateTime, nullable=True, index=True)
+    status_alterado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    anunciante = db.relationship('Usuario', foreign_keys=[anunciante_id], backref='crm_leads_recebidos')
+    interessado = db.relationship('Usuario', foreign_keys=[interessado_usuario_id], backref='crm_leads_gerados')
+    imovel = db.relationship('Imovel', backref='crm_leads')
+    historicos = db.relationship('CRMLeadHistorico', backref='lead', lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<CRMLead {self.codigo}>'
+
+
+class CRMLeadHistorico(db.Model):
+    """Histórico de mudanças e interações do lead no CRM."""
+    __tablename__ = 'crm_lead_historicos'
+
+    id = db.Column(db.Integer, primary_key=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('crm_leads.id'), nullable=False, index=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True, index=True)
+    acao = db.Column(db.String(30), nullable=False, default='status', index=True)
+    de_status = db.Column(db.String(30), nullable=True)
+    para_status = db.Column(db.String(30), nullable=True)
+    nota = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    autor = db.relationship('Usuario', backref='crm_lead_historicos')
+
+    def __repr__(self):
+        return f'<CRMLeadHistorico lead_id={self.lead_id} acao={self.acao}>'
+
+
 class Notificacao(db.Model):
     """Modelo de Notificações por Email"""
     __tablename__ = 'notificacoes'

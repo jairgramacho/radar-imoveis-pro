@@ -5,3 +5,4 @@ from .admin import admin_bp
 from .auth import auth_bp
 from .imoveis import imoveis_bp
 from .core import core_bp
+from .crm import crm_bp
