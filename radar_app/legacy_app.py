@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urlencode, urlparse
 from flask import Flask, request, redirect, url_for, flash, session, jsonify, has_request_context
 from flask_limiter import Limiter
+from flask_migrate import Migrate
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 
@@ -303,6 +304,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Inicializar banco de dados
 db.init_app(app)
+migrate = Migrate(app, db, compare_type=True)
 
 
 def _garantir_colunas_usuario():
