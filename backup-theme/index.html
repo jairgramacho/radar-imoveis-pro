@@ -7,21 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
-    <!-- Background Effects -->
-    <div class="radar-bg">
-        <div class="radar-bg-blob radar-bg-blob-1"></div>
-        <div class="radar-bg-blob radar-bg-blob-2"></div>
-        <div class="radar-bg-blob radar-bg-blob-3"></div>
-    </div>
-
     <!-- NAVBAR -->
     {% include '_navbar.html' %}
 
-    <div class="container-lg py-4 section-radar">
+    <div class="container-lg py-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -37,24 +28,25 @@
         {% if aba == 'buscar' %}
         <div class="buscar-section">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h1 class="h2 mb-0"><i class="fas fa-search me-2" style="color:var(--laranja, #F28A1F);"></i>Buscar Imóveis</h1>
+                <h1 class="h2 mb-0"><i class="fas fa-search me-2"></i>Buscar Imóveis</h1>
                 {% if usuario %}
-                    <a href="/?aba=anunciar" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+                    <a href="/?aba=anunciar" class="btn btn-warning btn-sm" style="white-space: nowrap;">
                         <i class="fas fa-plus-circle me-1"></i>Anuncie
                     </a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+                    <a href="{{ url_for('login') }}" class="btn btn-warning btn-sm" style="white-space: nowrap;">
                         <i class="fas fa-plus-circle me-1"></i>Anuncie
                     </a>
                 {% endif %}
             </div>
 
-            <!-- FILTROS - GLASS CARD -->
-            <div class="glass-card mb-4">
+            <!-- FILTROS -->
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
                         <input type="hidden" name="aba" value="buscar">
                         
+                        <!-- Tipo de Negócio -->
                         <div class="col-md-6 col-lg-2">
                             <label class="form-label">Negócio</label>
                             <select name="negocio" class="form-select">
@@ -64,6 +56,7 @@
                             </select>
                         </div>
 
+                        <!-- Tipo de Imóvel -->
                         <div class="col-md-6 col-lg-2">
                             <label class="form-label">Tipo</label>
                             <select name="tipo" class="form-select">
@@ -79,6 +72,7 @@
                             </select>
                         </div>
 
+                        <!-- Estado -->
                         <div class="col-md-6 col-lg-2">
                             <label class="form-label">Estado</label>
                             <select name="estado" class="form-select">
@@ -94,16 +88,19 @@
                             </select>
                         </div>
 
+                        <!-- Cidade -->
                         <div class="col-md-6 col-lg-2">
                             <label class="form-label">Cidade</label>
-                            <input type="text" name="cidade" class="form-control" placeholder="Ex: Barreiras" value="{{busca.get('cidade', '')}}">
+                            <input type="text" name="cidade" class="form-control" placeholder="Ex: São Paulo" value="{{busca.get('cidade', '')}}">
                         </div>
 
+                        <!-- Preço Máximo -->
                         <div class="col-md-6 col-lg-2">
                             <label class="form-label">Preço Máximo</label>
                             <input type="text" name="preco_max" class="form-control" placeholder="R$ 0,00" value="{{busca.get('preco_max', '')}}">
                         </div>
 
+                        <!-- Botão -->
                         <div class="col-md-6 col-lg-2 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-filter me-2"></i>Filtrar
@@ -124,7 +121,7 @@
 
             <!-- RESULTADOS -->
             <h5 class="mb-3">
-                <i class="fas fa-home me-2" style="color:var(--laranja, #F28A1F);"></i>
+                <i class="fas fa-home me-2"></i>
                 {% if imoveis_total > 0 %}
                     {{ imoveis_total }} imóvel(is) encontrado(s)
                 {% else %}
@@ -142,57 +139,66 @@
             <div class="row g-4">
                 {% for imovel in imoveis %}
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="text-decoration-none">
-                        <div class="card-imovel h-100">
-                            <div class="card-imovel-media">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
+                        <div class="card card-imovel h-100 shadow-sm overflow-hidden">
+                            <!-- FOTO -->
+                            <div class="position-relative overflow-hidden card-imovel-media">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
-                                    <img src="{{ foto_url(imovel.foto) }}" class="card-img-top" loading="lazy" decoding="async">
+                                    <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
                                     <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3;"></i>
+                                        <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
                                     </div>
                                 {% endif %}
-                                <span class="badge-negocio">{{ imovel.negocio }}</span>
+                                <!-- BADGE -->
+                                <span class="badge badge-negocio position-absolute top-0 start-0 m-2">{{ imovel.negocio }}</span>
                                 {% if imovel.eh_oportunidade %}
-                                <span class="badge-oportunidade">Oportunidade</span>
+                                <span class="badge badge-oportunidade position-absolute top-0 end-0 m-2">
+                                    Oportunidade
+                                </span>
                                 {% endif %}
                             </div>
 
                             <div class="card-body">
-                                <h6 class="card-title">R$ {{ imovel.preco|moeda_brl }}</h6>
+                                <!-- PREÇO -->
+                                <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
                                 {% if imovel.eh_oportunidade and imovel.preco_medio_regiao %}
-                                <p class="card-imovel-note mb-2" style="color:#79c99e;">
+                                <p class="card-imovel-note text-success fw-semibold mb-2">
                                     {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
                                 </p>
-                                <p class="card-imovel-note mb-2">
+                                <p class="card-imovel-note text-muted mb-2">
                                     Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
                                 </p>
                                 {% endif %}
-                                <p class="card-imovel-type mb-2">
-                                    <i class="fas fa-home me-1" style="color:var(--laranja, #F28A1F);"></i>{{ imovel.tipo }}
+                                <!-- TIPO -->
+                                <p class="card-imovel-type text-muted mb-2">
+                                    <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
                                 </p>
+                                <!-- LOCALIZAÇÃO -->
                                 <p class="card-imovel-location mb-2">
-                                    <i class="fas fa-map-marker-alt me-1" style="color:var(--laranja, #F28A1F);"></i>
+                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                     {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
                                 </p>
 
+                                <!-- CARACTERÍSTICAS -->
                                 <div class="row g-2 mb-3 card-imovel-features">
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-bed"></i> {{ imovel.quartos if imovel.quartos else '-' }}
+                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos if imovel.quartos else '-' }}
                                         </span>
                                     </div>
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-car"></i> {{ imovel.vagas if imovel.vagas else '-' }}
+                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas if imovel.vagas else '-' }}
                                         </span>
                                     </div>
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-ruler"></i> {% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
+                                            <i class="fas fa-ruler me-1"></i>{% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
                                         </span>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </a>
@@ -217,16 +223,16 @@
         {% elif aba == 'oportunidades' %}
         <div class="buscar-section">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h1 class="h2 mb-0"><i class="fas fa-bullseye me-2" style="color:var(--laranja, #F28A1F);"></i>Radar de Oportunidades</h1>
+                <h1 class="h2 mb-0"><i class="fas fa-bullseye me-2"></i>Radar de Oportunidades</h1>
                 <a href="/?aba=buscar&somente_oportunidades=1" class="btn btn-outline-primary btn-sm" style="white-space: nowrap;">
                     <i class="fas fa-filter me-1"></i>Ver com filtros
                 </a>
             </div>
 
-            <p class="mb-4" style="color:var(--texto-suave, rgba(255,255,255,0.45));">Imóveis ordenados do maior para o menor desconto em relação à média de imóveis semelhantes da mesma região.</p>
+            <p class="text-muted mb-4">Imóveis ordenados do maior para o menor desconto em relação à média de imóveis semelhantes da mesma região.</p>
 
             <h5 class="mb-3">
-                <i class="fas fa-tags me-2" style="color:var(--laranja, #F28A1F);"></i>
+                <i class="fas fa-tags me-2"></i>
                 {% if oportunidades_total > 0 %}
                     {{ oportunidades_total }} oportunidade(s) encontrada(s)
                 {% else %}
@@ -244,50 +250,51 @@
             <div class="row g-4">
                 {% for imovel in oportunidades %}
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="text-decoration-none">
-                        <div class="card-imovel h-100">
-                            <div class="card-imovel-media">
+                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="imovel-card-link">
+                        <div class="card card-imovel h-100 shadow-sm overflow-hidden">
+                            <div class="position-relative overflow-hidden card-imovel-media">
                                 {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
-                                    <img src="{{ foto_url(imovel.foto) }}" loading="lazy" decoding="async">
+                                    <img src="{{ foto_url(imovel.foto) }}" class="card-img-top img-fluid" style="height: 100%; object-fit: cover;" loading="lazy" decoding="async">
                                 {% else %}
                                     <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3;"></i>
+                                        <i class="fas fa-image text-muted" style="font-size: 3rem;"></i>
                                     </div>
                                 {% endif %}
-                                <span class="badge-negocio">{{ imovel.negocio }}</span>
-                                <span class="badge-oportunidade">Oportunidade</span>
+
+                                <span class="badge badge-negocio position-absolute top-0 start-0 m-2">{{ imovel.negocio }}</span>
+                                <span class="badge badge-oportunidade position-absolute top-0 end-0 m-2">Oportunidade</span>
                             </div>
 
                             <div class="card-body">
-                                <h6 class="card-title">R$ {{ imovel.preco|moeda_brl }}</h6>
-                                <p class="card-imovel-note mb-2" style="color:#79c99e;">
+                                <h6 class="card-title text-primary fw-bold mb-2">R$ {{ imovel.preco|moeda_brl }}</h6>
+                                <p class="card-imovel-note text-success fw-semibold mb-2">
                                     {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
                                 </p>
-                                <p class="card-imovel-note mb-2">
+                                <p class="card-imovel-note text-muted mb-2">
                                     Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
                                 </p>
-                                <p class="card-imovel-type mb-2">
-                                    <i class="fas fa-home me-1" style="color:var(--laranja, #F28A1F);"></i>{{ imovel.tipo }}
+                                <p class="card-imovel-type text-muted mb-2">
+                                    <i class="fas fa-home me-1"></i>{{ imovel.tipo }}
                                 </p>
                                 <p class="card-imovel-location mb-0">
-                                    <i class="fas fa-map-marker-alt me-1" style="color:var(--laranja, #F28A1F);"></i>
+                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                     {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
                                 </p>
 
                                 <div class="row g-2 mt-2 card-imovel-features">
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-bed"></i> {{ imovel.quartos if imovel.quartos else '-' }}
+                                            <i class="fas fa-bed me-1"></i>{{ imovel.quartos if imovel.quartos else '-' }}
                                         </span>
                                     </div>
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-car"></i> {{ imovel.vagas if imovel.vagas else '-' }}
+                                            <i class="fas fa-car me-1"></i>{{ imovel.vagas if imovel.vagas else '-' }}
                                         </span>
                                     </div>
                                     <div class="col-4">
                                         <span class="badge badge-soft w-100">
-                                            <i class="fas fa-ruler"></i> {% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
+                                            <i class="fas fa-ruler me-1"></i>{% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
                                         </span>
                                     </div>
                                 </div>
@@ -314,7 +321,7 @@
         <!-- ABA ANUNCIAR -->
         {% elif aba == 'anunciar' %}
         <div class="anunciar-section">
-            <h1 class="h2 mb-4"><i class="fas fa-plus-circle me-2" style="color:var(--laranja, #F28A1F);"></i>Anunciar Imóvel</h1>
+            <h1 class="h2 mb-4"><i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel</h1>
 
             {% if not usuario %}
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -350,12 +357,12 @@
 
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="glass-card">
+                    <div class="card shadow">
                         <div class="card-body">
                             <form method="POST" action="/salvar" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                
-                                <h5 class="mb-3" style="color:var(--branco);">📍 Localização</h5>
+                                <!-- SEÇÃO 1: LOCALIZAÇÃO -->
+                                <h5 class="mb-3">📍 Localização</h5>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label">Estado *</label>
@@ -373,15 +380,16 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Cidade *</label>
-                                        <input type="text" name="cidade" class="form-control" placeholder="Ex: Barreiras" required>
+                                        <input type="text" name="cidade" class="form-control" placeholder="Ex: São Paulo" required>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Bairro *</label>
-                                        <input type="text" name="bairro" class="form-control" placeholder="Ex: Centro" required>
+                                        <input type="text" name="bairro" class="form-control" placeholder="Ex: Pinheiros" required>
                                     </div>
                                 </div>
 
-                                <h5 class="mb-3" style="color:var(--branco);">🏠 Tipo de Imóvel</h5>
+                                <!-- SEÇÃO 2: TIPO DE IMÓVEL -->
+                                <h5 class="mb-3">🏠 Tipo de Imóvel</h5>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label">Tipo *</label>
@@ -407,7 +415,8 @@
                                     </div>
                                 </div>
 
-                                <h5 class="mb-3" style="color:var(--branco);">📊 Detalhes</h5>
+                                <!-- SEÇÃO 3: DETALHES -->
+                                <h5 class="mb-3">📊 Detalhes</h5>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label">Quartos</label>
@@ -423,33 +432,37 @@
                                     </div>
                                 </div>
 
-                                <h5 class="mb-3" style="color:var(--branco);">💰 Preço</h5>
+                                <!-- SEÇÃO 4: PREÇO -->
+                                <h5 class="mb-3">💰 Preço</h5>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label">Valor *</label>
                                         <input type="text" name="valor" class="form-control" placeholder="R$ 0,00" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <p class="mb-0" style="color:var(--texto);"><strong>WhatsApp:</strong> {{ usuario.whatsapp }}</p>
-                                        <small style="color:var(--texto-suave);">Será usado o WhatsApp do seu perfil</small>
+                                        <p class="form-text"><strong>WhatsApp:</strong> {{ usuario.whatsapp }}</p>
+                                        <small class="text-muted">Será usado o WhatsApp do seu perfil</small>
                                     </div>
                                 </div>
 
-                                <h5 class="mb-3" style="color:var(--branco);">📝 Descrição</h5>
+                                <!-- SEÇÃO 5: DESCRIÇÃO -->
+                                <h5 class="mb-3">📝 Descrição</h5>
                                 <div class="mb-4">
                                     <label class="form-label">Descrição do Imóvel</label>
                                     <textarea name="descricao" class="form-control" rows="5" placeholder="Descreva as características principais..."></textarea>
                                 </div>
 
-                                <h5 class="mb-3" style="color:var(--branco);">📸 Carregar Fotos</h5>
+                                <!-- SEÇÃO 6: FOTOS -->
+                                <h5 class="mb-3">📸 Carregar Fotos</h5>
                                 <div class="mb-4">
                                     <div class="input-group">
                                         <input type="file" name="foto" class="form-control" accept="image/*" multiple>
-                                        <label class="input-group-text" for="foto" style="background:var(--glass); border:1px solid var(--glass-border); color:var(--texto);">Escolher</label>
+                                        <label class="input-group-text" for="foto">Escolher</label>
                                     </div>
-                                    <small style="color:var(--texto-suave);">Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF, WebP, BMP, SVG, TIFF, HEIC/HEIF (iPhone)</small>
+                                    <small class="text-muted">Tamanho máximo: 5MB. Formatos: JPG, PNG, GIF, WebP, BMP, SVG, TIFF, HEIC/HEIF (iPhone) (primeira será a principal)</small>
                                 </div>
 
+                                <!-- BOTÃO SUBMIT -->
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg" {% if limite_anuncios and limite_anuncios.atingiu_limite %}disabled{% endif %}>
                                         <i class="fas fa-check-circle me-2"></i>Publicar Anúncio
@@ -460,11 +473,12 @@
                     </div>
                 </div>
 
+                <!-- SIDEBAR INFORMAÇÕES -->
                 <div class="col-lg-4">
-                    <div class="glass-card mb-3">
+                    <div class="card shadow mb-3">
                         <div class="card-body">
                             <h6 class="card-title mb-3">
-                                <i class="fas fa-lightbulb me-2" style="color:var(--laranja, #F28A1F);"></i>Dicas para um Bom Anúncio
+                                <i class="fas fa-lightbulb me-2 text-warning"></i>Dicas para um Bom Anúncio
                             </h6>
                             <ul class="small">
                                 <li>✓ Use uma foto de qualidade</li>
@@ -476,12 +490,12 @@
                         </div>
                     </div>
 
-                    <div class="glass-card mb-3" style="background: linear-gradient(135deg, rgba(242,138,31,0.12), rgba(255,122,0,0.05)); border-color: rgba(242,138,31,0.2);">
+                    <div class="card shadow" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                         <div class="card-body">
                             <h6 class="card-title mb-3">
-                                <i class="fas fa-chart-line me-2" style="color:var(--laranja, #F28A1F);"></i>Vantagens da Plataforma
+                                <i class="fas fa-chart-line me-2"></i>Vantagens da Plataforma
                             </h6>
-                            <ul class="small" style="color:var(--texto);">
+                            <ul class="small">
                                 <li>✓ Alcance amplo de interessados</li>
                                 <li>✓ Contato direto via WhatsApp</li>
                                 <li>✓ Anúncios destacados</li>
@@ -502,9 +516,9 @@
     </div>
 
     <!-- FOOTER -->
+
     {% include '_footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Estudo — Processo Civil II</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: #0f0f1a;
+  color: #e0e0f0;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Background particles-like blobs */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 40%, rgba(243,146,51,0.04) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(31,58,125,0.06) 0%, transparent 50%),
+              radial-gradient(circle at 50% 80%, rgba(243,146,51,0.02) 0%, transparent 50%);
+  z-index: -1;
+  animation: blobMove 30s ease-in-out infinite;
+}
+
+@keyframes blobMove {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(-2%, -1%) rotate(1deg); }
+  66% { transform: translate(2%, 1%) rotate(-1deg); }
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 40px 20px 30px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f39233, #ffb347);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.header .sub {
+  font-size: 1rem;
+  font-weight: 300;
+  color: #8888aa;
+  letter-spacing: 1px;
+}
+
+.header .date {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 20px;
+  background: rgba(243,146,51,0.12);
+  border: 1px solid rgba(243,146,51,0.25);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #f39233;
+  font-weight: 500;
+}
+
+/* Hero Card - Structure */
+.hero-card {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.hero-card h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f39233;
+  margin-bottom: 6px;
+}
+
+.hero-card .pts {
+  color: #6666cc;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.hero-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.hero-card li {
+  padding: 6px 0;
+  font-size: 0.95rem;
+  color: #cccce8;
+  line-height: 1.5;
+}
+
+.hero-card li::before {
+  content: '▸ ';
+  color: #f39233;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 40px 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(243,146,51,0.2);
+  color: #ffffff;
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Judgment Cards Grid */
+
+
+.julgados-grid {\n  display: grid;\n  gap: 16px;\n  margin-bottom: 30px;\n}\n\n.julgado-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  animation: cardIn 0.5s ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+.julgado-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(243,146,51,0.2);
+  transform: translateY(-2px);
+}
+
+.julgado-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #f39233, #ffb347);
+  border-radius: 0 2px 2px 0;
+  opacity: 0.6;
+}
+
+.julgado-num {
+  display: inline-block;
+  background: rgba(243,146,51,0.15);
+  color: #f39233;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 3px 12px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.julgado-tema {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.julgado-ref {
+  font-size: 0.8rem;
+  color: #6666aa;
+  margin-bottom: 12px;
+}
+
+.julgado-tese {
+  font-size: 0.9rem;
+  color: #cccce8;
+  line-height: 1.5;
+  padding: 10px 14px;
+  background: rgba(243,146,51,0.05);
+  border-left: 2px solid rgba(243,146,51,0.3);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 10px;
+}
+
+.julgado-chave {
+  font-size: 0.85rem;
+  color: #aaaacc;
+  padding: 8px 0;
+}
+
+.julgado-chave strong {
+  color: #ffb347;
+}
+
+/* Revisao Cards */
+
+
+
+
+/* Tips Card */
+.tips-card {
+  background: linear-gradient(135deg, rgba(243,146,51,0.08), rgba(31,58,125,0.08));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(243,146,51,0.15);
+  border-radius: 20px;
+  padding: 28px;
+  margin: 30px 0;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.tips-card h2 {
+  color: #f39233;
+  font-size: 1.2rem;
+  margin-bottom: 14px;
+}
+
+.tips-card li {
+  padding: 6px 0;
+  font-size: 0.92rem;
+  color: #cccce8;
+  line-height: 1.5;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 30px 20px;
+  color: #555577;
+  font-size: 0.8rem;
+}
+
+.footer strong {
+  color: #f39233;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.julgado-card:nth-child(1) { animation-delay: 0.03s; }
+.julgado-card:nth-child(2) { animation-delay: 0.06s; }
+.julgado-card:nth-child(3) { animation-delay: 0.09s; }
+.julgado-card:nth-child(4) { animation-delay: 0.12s; }
+.julgado-card:nth-child(5) { animation-delay: 0.15s; }
+.julgado-card:nth-child(6) { animation-delay: 0.18s; }
+.julgado-card:nth-child(7) { animation-delay: 0.21s; }
+.julgado-card:nth-child(8) { animation-delay: 0.24s; }
+.julgado-card:nth-child(9) { animation-delay: 0.27s; }
+.julgado-card:nth-child(10) { animation-delay: 0.3s; }
+.julgado-card:nth-child(11) { animation-delay: 0.33s; }
+.julgado-card:nth-child(12) { animation-delay: 0.36s; }
+.julgado-card:nth-child(13) { animation-delay: 0.39s; }
+.julgado-card:nth-child(14) { animation-delay: 0.42s; }
+.julgado-card:nth-child(15) { animation-delay: 0.45s; }
+.julgado-card:nth-child(16) { animation-delay: 0.48s; }
+.julgado-card:nth-child(17) { animation-delay: 0.51s; }
+.julgado-card:nth-child(18) { animation-delay: 0.54s; }
+.julgado-card:nth-child(19) { animation-delay: 0.57s; }
+.julgado-card:nth-child(20) { animation-delay: 0.6s; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  body { padding: 12px; }
+  .header h1 { font-size: 1.5rem; }
+  .hero-card, .julgado-card, .revisao-card, .tips-card { padding: 18px; }
+}
+
+@media (min-width: 768px) {
+  .julgados-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 767px) {
+  .julgados-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>📚 Processo Civil II</h1>
+  <div class="sub">Profª Fabiana Calixto — Avaliação Final</div>
+  <div class="date">📅 16 de Julho de 2026 ⏰ 18h-21h40</div>
+</div>
+
+<!-- STRUCTURE -->
+<div class="hero-card">
+  <h2>📋 Estrutura da Prova</h2>
+  <div class="pts">Total: 8,0 pontos</div>
+  <ul>
+    <li><strong>Parte I — Julgados (3,0 pts):</strong> 10 afirmativas de Verdadeiro ou Falso (0,3 cada)</li>
+    <li><strong>Parte II — Teórica (5,0 pts):</strong> Questões discursivas e/ou objetivas sobre o semestre</li>
+  </ul>
+</div>
+
+<!-- JULGADOS -->
+<h2 class="section-title">🔥 Mapa Mental — 10 Julgados (Parte I — V/F)</h2>
+
+<div class="julgados-grid">
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 1</div>
+  <div class="julgado-tema">Ponto I — Forma, tempo, lugar e prazo dos atos processuais</div>
+  <div class="julgado-ref">STJ, Corte Especial, AgInt nos EREsp 1.745.855/PI, Rel. Min. Raul Araújo, 19/02/2025 — Info 842</div>
+  <div class="julgado-tese">Prazo para agravo interno contra decisão monocrática em recurso repetitivo conta-se em <strong>dias úteis</strong> (art. 219 CPC). A sistemática dos repetitivos não afasta a regra geral.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Dias úteis valem para TODOS os prazos processuais, inclusive repetitivos.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 2</div>
+  <div class="julgado-tema">Ponto II — Comunicação dos atos processuais</div>
+  <div class="julgado-ref">STJ, 4ª Turma, REsp 2.152.938/DF, Rel. Min. Antonio Carlos Ferreira, 22/10/2024 — Info 832</div>
+  <div class="julgado-tese">Citação com hora certa (arts. 252-254 CPC) exige comprovação de que o réu <strong>se oculta deliberadamente</strong> para não ser citado. Não basta a mera ausência reiterada.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Ocultação deliberada ≠ simples ausência. Certidão do oficial deve descrever indícios.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 3</div>
+  <div class="julgado-tema">Ponto II — Comunicação dos atos processuais</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 2.045.633/RJ, Rel. Min. Nancy Andrighi, 08/08/2023, DJe 14/08/2023</div>
+  <div class="julgado-tese">Citação por edital é medida <strong>excepcional</strong>. Só se justifica após esgotamento efetivo de todas as diligências para localização do réu.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Edital = último recurso. Não basta uma única tentativa.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 4</div>
+  <div class="julgado-tema">Ponto III — Petição Inicial</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 2.113.605/CE, Rel. Min. Moura Ribeiro, 16/09/2025 — Info 867</div>
+  <div class="julgado-tese">A emenda da petição inicial pode ser aceita <strong>mesmo após o decurso do prazo</strong> fixado pelo juiz, desde que ocorra antes da sentença de extinção e desde que sane o vício.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Emenda extemporânea é válida se feita antes da sentença e sanar o vício.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 5</div>
+  <div class="julgado-tema">Ponto III — Petição Inicial</div>
+  <div class="julgado-ref">STF, Plenário, ADI 7.553/TO, Rel. Min. Gilmar Mendes, 26/05/2025 — Info 1179</div>
+  <div class="julgado-tese">Estados-membros <strong>não podem criar requisitos adicionais</strong> para a petição inicial além dos previstos no CPC. Competência privativa da União (art. 22 CF).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Só a União legisla sobre direito processual. Estados não podem exigir mais que o CPC.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 6</div>
+  <div class="julgado-tema">Ponto IV — Tutelas Provisórias</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 2.066.868/SP, Rel. Min. Nancy Andrighi, 20/06/2023 — Info 780</div>
+  <div class="julgado-tese">Na tutela antecipada antecedente (art. 303 CPC), o autor deve demonstrar a urgência e aditar a petição em <strong>15 dias</strong> (ou prazo judicial maior), complementando o pedido.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Tutela antecedente → aditamento em 15 dias. Urgência deve ser demonstrada.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 7</div>
+  <div class="julgado-tema">Ponto V — Audiência de Conciliação ou Mediação</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 1.909.271/PR, Rel. Min. Ricardo Villas Bôas Cueva, 11/02/2025 — Info 842</div>
+  <div class="julgado-tese">Autor ausente na audiência de conciliação → <strong>extinção sem resolução do mérito</strong> (art. 485, X). Réu ausente → <strong>multa por ato atentatório</strong> (até 2% da vantagem pretendida, art. 334, §8º).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Autor falta = extinção. Réu falta = multa.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 8</div>
+  <div class="julgado-tema">Ponto VI — Resposta do Réu</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 2.046.666/SP, Rel. Min. Nancy Andrighi, 16/05/2023 — Info 775</div>
+  <div class="julgado-tese">Revelia (art. 344 CPC) gera <strong>presunção relativa</strong> de veracidade. Exceções: citação por edital ou hora certa, e direitos indisponíveis.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Presunção é relativa (pode ser afastada). Exceções: edital/hora certa e direitos indisponíveis.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 9</div>
+  <div class="julgado-tema">Ponto VII — Providências Preliminares e Julgamento conforme Estado do Processo</div>
+  <div class="julgado-ref">STJ, 2ª Seção, EREsp 1.488.048/MT, Rel. Min. Marco Aurélio Bellizze, 13/11/2024 — Info 23 (Ed. Extraordinária)</div>
+  <div class="julgado-tese">Julgamento antecipado parcial do mérito (art. 356 CPC) é cabível para pedidos <strong>incontroversos</strong> ou em condições de <strong>julgamento imediato</strong>, independentemente do restante.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Art. 356 permite julgar parte do processo sem esperar o resto.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Julgado 10</div>
+  <div class="julgado-tema">Ponto VII — Providências Preliminares e Julgamento conforme Estado do Processo</div>
+  <div class="julgado-ref">STJ, 3ª Turma, REsp 2.179.688/RS, Rel. Min. Ricardo Villas Bôas Cueva, 02/09/2025 — Info 861</div>
+  <div class="julgado-tese">Da decisão que indefere a petição inicial cabe <strong>apelação</strong> (art. 331, parágrafo único c/c art. 1.009), e não agravo de instrumento.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Indeferimento da inicial → apelação. Não confundir: decisão interlocutória → agravo.</div>
+</div>
+
+</div>
+
+<!-- REVISÃO TEÓRICA -->
+<h2 class="section-title">🧠 Mapa Mental — Pontos I a X</h2>
+
+<div class="julgados-grid">
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto I</div>
+  <div class="julgado-tema">Forma, tempo, lugar e prazo dos atos processuais</div>
+  <div class="julgado-ref">Arts. 188-235 CPC</div>
+  <div class="julgado-tese"><strong>Forma:</strong> atos públicos (art. 189), praticados na forma legal.<br><strong>Tempo:</strong> dias úteis (art. 219) — exclui feriados, fins de semana, recesso.<br><strong>Lugar:</strong> sede do juízo (art. 217), salvo exceções.<br><strong>Prazo:</strong> exclui começo, inclui vencimento (art. 224).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Contagem sempre em dias úteis. Peremptórios × dilatórios. Preclusão: temporal, consumativa, lógica.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto II</div>
+  <div class="julgado-tema">Comunicação dos atos processuais</div>
+  <div class="julgado-ref">Arts. 238-275 CPC</div>
+  <div class="julgado-tese"><strong>Citação:</strong> correio, oficial de justiça, hora certa, edital.<br><strong>Hora certa:</strong> exige ocultação deliberada comprovada (não basta ausência).<br><strong>Edital:</strong> excepcional — exige esgotamento de todas as diligências de busca.<br><strong>Intimação:</strong> ciência de atos (art. 269).<br><strong>Cartas:</strong> precatória, rogatória, de ordem.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Validade da citação depende do meio correto. Edital é último recurso.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto III</div>
+  <div class="julgado-tema">Petição Inicial</div>
+  <div class="julgado-ref">Arts. 319-331 CPC</div>
+  <div class="julgado-tese"><strong>Requisitos:</strong> juízo, partes, causa de pedir, pedido, valor (art. 319).<br><strong>Pedido:</strong> certo, determinado e expresso (arts. 322-325).<br><strong>Emenda:</strong> art. 321 — juiz concede prazo. Pode ser aceita mesmo fora do prazo, se antes da sentença.<br><strong>Indeferimento:</strong> art. 330 — inépcia, falta de requisitos, pedido juridicamente impossível. Cabe <strong>apelação</strong>.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Emenda extemporânea é válida antes da sentença. Indeferimento → apelação.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto IV</div>
+  <div class="julgado-tema">Tutelas Provisórias</div>
+  <div class="julgado-ref">Arts. 294-311 CPC</div>
+  <div class="julgado-tese"><strong>Urgência:</strong> probabilidade do direito + perigo de dano ou risco ao resultado (art. 300).<br><strong>Antecedente</strong> (art. 303) × <strong>incidente</strong> (art. 299).<br><strong>Estabilização:</strong> se não há recurso, tutela se estabiliza (art. 304).<br><strong>Evidência:</strong> dispensa perigo de dano (art. 311) — abuso de direito, precedente obrigatório, etc.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Urgência = probabilidade + perigo. Evidência = dispensa perigo. Antecedente = aditamento em 15 dias.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto V</div>
+  <div class="julgado-tema">Audiência de Conciliação ou Mediação</div>
+  <div class="julgado-ref">Art. 334 CPC</div>
+  <div class="julgado-tese"><strong>Obrigatória</strong>, salvo direitos indisponíveis ou ambas as partes manifestarem desinteresse.<br><strong>Autor ausente</strong> → extinção sem resolução do mérito (art. 485, X).<br><strong>Réu ausente</strong> → multa por ato atentatório à dignidade da justiça (até 2% da vantagem pretendida).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Autor falta = processo extinto. Réu falta = multa.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto VI</div>
+  <div class="julgado-tema">Resposta do Réu</div>
+  <div class="julgado-ref">Arts. 335-349 CPC</div>
+  <div class="julgado-tese"><strong>Contestação:</strong> prazo de 15 dias úteis (art. 335).<br><strong>Princípio da eventualidade:</strong> toda defesa deve ser alegada de uma vez (art. 336).<br><strong>Preliminares:</strong> art. 337 — inépcia, incompetência, litispendência, coisa julgada, etc.<br><strong>Revelia:</strong> presunção <strong>relativa</strong> de veracidade (art. 344). Exceções: citação edital/hora certa e direitos indisponíveis.<br><strong>Reconvenção:</strong> art. 343 — conexão com ação principal.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Tudo na contestação de uma vez. Revelia = presunção relativa.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto VII</div>
+  <div class="julgado-tema">Providências Preliminares e Julgamento conforme Estado do Processo</div>
+  <div class="julgado-ref">Arts. 347-357 CPC</div>
+  <div class="julgado-tese"><strong>Providências:</strong> saneamento, especificação de provas (arts. 347-352).<br><strong>Extinção do processo:</strong> art. 354.<br><strong>Julgamento antecipado:</strong> se não há necessidade de provas (art. 355).<br><strong>Julgamento parcial:</strong> pedidos incontroversos ou maduros (art. 356).<br><strong>Saneamento e organização:</strong> art. 357.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Julgamento antecipado possível quando já há condições — total ou parcial.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto VIII</div>
+  <div class="julgado-tema">Teoria da Prova</div>
+  <div class="julgado-ref">Arts. 369-484 CPC</div>
+  <div class="julgado-tese"><strong>Princípios:</strong> contraditório, comunhão, imediação, livre convencimento motivado (art. 371).<br><strong>Ônus da prova:</strong> autor = fato constitutivo, réu = extintivo/modificativo/impeditivo (art. 373).<br><strong>Distribuição dinâmica:</strong> inversão do ônus (art. 373, §1º).<br><strong>Meios:</strong> depoimento pessoal, confissão, documento, testemunha, perícia, inspeção judicial. Prova emprestada é válida.</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Ônus padrão (art. 373). Juiz pode inverter (distribuição dinâmica). Livre convencimento motivado.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto IX</div>
+  <div class="julgado-tema">Audiência de Instrução e Julgamento</div>
+  <div class="julgado-ref">Arts. 358-368 CPC</div>
+  <div class="julgado-tese"><strong>Ato uno e contínuo:</strong> uma sessão, sem interrupção.<br><strong>Ordem:</strong> depoimento pessoal do autor → depoimento do réu → testemunhas do autor → testemunhas do réu → perito → debates orais (20 min cada parte).<br><strong>Gravação audiovisual</strong> obrigatória (art. 367, §5º).<br><strong>Sentença:</strong> em audiência ou no prazo de 30 dias (art. 366).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Tudo na mesma audiência. Gravação obrigatória. Sentença pode ser adiada até 30 dias.</div>
+</div>
+
+<div class="julgado-card">
+  <div class="julgado-num">Ponto X</div>
+  <div class="julgado-tema">Sentença e Coisa Julgada</div>
+  <div class="julgado-ref">Arts. 485-508, 502-508 CPC</div>
+  <div class="julgado-tese"><strong>Elementos:</strong> relatório, fundamentação, dispositivo (art. 489).<br><strong>Sentença sem mérito:</strong> art. 485 (extinção).<br><strong>Sentença com mérito:</strong> art. 487.<br><strong>Coisa julgada material:</strong> fora do processo (art. 502).<br><strong>Coisa julgada formal:</strong> dentro do processo (preclusão).<br><strong>Limites:</strong> dispositivo da sentença (art. 504).<br><strong>Remédios:</strong> embargos declaração (art. 1.022), apelação (art. 1.009), ação rescisória (art. 966).</div>
+  <div class="julgado-chave">🔑 <strong>Chave:</strong> Coisa julgada material = não pode mais ser discutida. Formal = preclusão interna. Ação rescisória para desconstituir.</div>
+</div>
+
+</div>
+
+<!-- DICAS -->
+<div class="tips-card">
+  <h2>⚠️ Dicas para a Prova</h2>
+  <ul>
+    <li><strong>V/F dos Julgados:</strong> Leia cada afirmativa com atenção — elas podem inverter a tese (ex: "cabe apelação" → escrevem "cabe agravo"). Detalhes específicos dos casos também podem cair.</li>
+    <li><strong>Parte Teórica:</strong> Foco nos temas que a profª mais enfatizou: petição inicial, tutelas provisórias, contestação/revelia.</li>
+    <li><strong>Horário:</strong> Prova hoje às <strong>18h</strong> (até 21:40) — aula 5N1234.</li>
+    <li><strong>Consulta:</strong> A profª libera consulta a materiais de apoio e legislação. Leve o CPC anotado!</li>
+  </ul>
+</div>
+
+<div class="footer">
+  Feito por <strong>Dafinis</strong> 🌊 para Jair — Boa prova! 🚀
+</div>
+
+</div>
+
+</body>
+</html>

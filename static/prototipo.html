@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Imóveis Pro — Protótipo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --laranja: #f39233;
+      --laranja-claro: #ffb366;
+      --azul: #1a1a2e;
+      --azul-claro: #16213e;
+      --branco: #ffffff;
+      --cinza: #f0f0f5;
+      --texto: #1a1a2e;
+      --glass: rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.12);
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--azul);
+      color: var(--branco);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* ===== CURSOR FOLLOWER ===== */
+    .cursor-follower {
+      position: fixed;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--laranja);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s, opacity 0.3s;
+      mix-blend-mode: screen;
+    }
+    .cursor-follower.hover {
+      width: 80px; height: 80px;
+      opacity: 0.25;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-bg-gradient {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(243,146,51,0.15) 0%, transparent 70%),
+                  radial-gradient(ellipse 60% 70% at 80% 60%, rgba(26,26,46,0.9) 0%, transparent 50%),
+                  linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+    }
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--laranja);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+      max-width: 900px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      padding: 0.4rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--laranja-claro);
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero h1 {
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--laranja), var(--laranja-claro));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+    .btn {
+      padding: 1rem 2.5rem;
+      border-radius: 60px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--laranja), #ff7a00);
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(243,146,51,0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(243,146,51,0.5);
+    }
+    .btn-outline {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      backdrop-filter: blur(10px);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-3px);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      justify-content: center;
+      margin-top: 4rem;
+      transform: translateY(30px);
+      opacity: 0;
+      animation: fadeUp 0.8s 1s forwards;
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--laranja), var(--branco));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 400;
+      margin-top: 0.2rem;
+    }
+
+    @keyframes fadeUp {
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ===== SCROLL INDICATOR ===== */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.75rem;
+      animation: fadeUp 0.8s 1.2s forwards;
+      opacity: 0;
+    }
+    .scroll-indicator .mouse {
+      width: 24px; height: 38px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      position: relative;
+    }
+    .scroll-indicator .mouse::after {
+      content: '';
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 3px; height: 8px;
+      background: var(--laranja);
+      border-radius: 2px;
+      animation: scrollWheel 1.5s infinite;
+    }
+    @keyframes scrollWheel {
+      0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(12px); opacity: 0; }
+    }
+
+    /* ===== SEÇÃO GERAL ===== */
+    section {
+      padding: 6rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .section-header h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .section-header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ===== IMÓVEIS CARD 3D ===== */
+    .imoveis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+    .imovel-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      perspective: 1000px;
+    }
+    .imovel-card-inner {
+      transition: transform 0.2s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .imovel-card:hover {
+      box-shadow: 0 20px 60px rgba(243,146,51,0.15);
+    }
+    .imovel-card-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s;
+    }
+    .imovel-card:hover .imovel-card-image {
+      transform: scale(1.05);
+    }
+    .imovel-card-body {
+      padding: 1.5rem;
+    }
+    .imovel-card-body h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .imovel-card-body .price {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--laranja);
+    }
+    .imovel-card-body .details {
+      display: flex;
+      gap: 1rem;
+      margin: 0.8rem 0;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+    }
+    .imovel-card-body .details i {
+      margin-right: 0.3rem;
+      color: var(--laranja);
+    }
+    .imovel-card-body .location {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ===== COMO FUNCIONA ===== */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      counter-reset: step;
+    }
+    .step-card {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .step-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(243,146,51,0.1);
+    }
+    .step-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .step-card h4 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .step-card p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.5;
+    }
+    .step-card::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      top: -0.8rem;
+      right: 1.5rem;
+      font-size: 4rem;
+      font-weight: 900;
+      color: rgba(243,146,51,0.1);
+      line-height: 1;
+    }
+
+    /* ===== REELS GALLERY ===== */
+    .reels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .reel-card {
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 9/16;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .reel-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 15px 40px rgba(243,146,51,0.15);
+    }
+    .reel-card video, .reel-card .placeholder {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .reel-card .play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .reel-card:hover .play-overlay {
+      opacity: 1;
+    }
+    .reel-card .play-overlay i {
+      font-size: 3rem;
+      color: #fff;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    /* ===== CTA ===== */
+    .cta-section {
+      text-align: center;
+      background: linear-gradient(135deg, rgba(243,146,51,0.1), transparent);
+      border-radius: 30px;
+      padding: 5rem 2rem;
+      max-width: 900px;
+      margin: 4rem auto;
+      border: 1px solid rgba(243,146,51,0.15);
+    }
+    .cta-section h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .cta-section p {
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+
+    /* ===== REVEAL ON SCROLL ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1),
+                  transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--glass-border);
+      color: rgba(255,255,255,0.3);
+      font-size: 0.85rem;
+    }
+    footer a {
+      color: var(--laranja);
+      text-decoration: none;
+    }
+
+    /* ===== FLOATING BLOBS ===== */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: -1;
+      animation: blobFloat 20s ease-in-out infinite alternate;
+    }
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: rgba(243,146,51,0.08);
+      top: -10%; left: -10%;
+    }
+    .blob-2 {
+      width: 400px; height: 400px;
+      background: rgba(255,183,102,0.06);
+      bottom: -5%; right: -5%;
+      animation-delay: -10s;
+    }
+    @keyframes blobFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(20px, -10px) scale(1.05); }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .hero-stats { flex-direction: column; gap: 1.5rem; }
+      .imoveis-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- Cursor Follower -->
+  <div class="cursor-follower" id="cursor"></div>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-bg-gradient"></div>
+      <div class="particles" id="particles"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-bolt" style="margin-right: 0.4rem;"></i>
+        O radar mais inteligente do Oeste da Bahia
+      </div>
+      <h1>
+        Encontre seu<br>
+        <span class="highlight">lar perfeito</span>
+      </h1>
+      <p>
+        Descubra imóveis em Barreiras e região com busca inteligente,
+        tour virtual e contato direto com o corretor.
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn btn-primary">
+          <i class="fas fa-search"></i>
+          Explorar Imóveis
+        </a>
+        <a href="#" class="btn btn-outline">
+          <i class="fas fa-play"></i>
+          Ver Reels
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number" data-count="17">0</div>
+          <div class="stat-label">Imóveis</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-count="12">0</div>
+          <div class="stat-label">Bairros</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-count="100">0</div>
+          <div class="stat-label">Visualizações</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      <span>role para ver mais</span>
+    </div>
+  </section>
+
+  <!-- ===== IMÓVEIS EM DESTAQUE ===== -->
+  <section>
+    <div class="section-header reveal">
+      <h2>🏠 Imóveis em Destaque</h2>
+      <p>Os melhores imóveis de Barreiras com preços imperdíveis</p>
+    </div>
+    <div class="imoveis-grid" id="imoveis-grid">
+      <!-- Cards serão inseridos via JS -->
+    </div>
+  </section>
+
+  <!-- ===== COMO FUNCIONA ===== -->
+  <section>
+    <div class="section-header reveal">
+      <h2>⚡ Como Funciona</h2>
+      <p>Encontrar seu imóvel nunca foi tão fácil</p>
+    </div>
+    <div class="steps">
+      <div class="step-card reveal">
+        <div class="icon">🔍</div>
+        <h4>Explore</h4>
+        <p>Navegue pelos imóveis com filtros inteligentes e veja fotos reais.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="icon">❤️</div>
+        <h4>Salve</h4>
+        <p>Favorite os imóveis que mais gostou e compare lado a lado.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="icon">💬</div>
+        <h4>Conecte</h4>
+        <p>Chame o corretor direto pelo WhatsApp e agende uma visita.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REELS ===== -->
+  <section>
+    <div class="section-header reveal">
+      <h2>🎬 Reels</h2>
+      <p>Tour rápido pelos imóveis em vídeo</p>
+    </div>
+    <div class="reels-grid" id="reels-grid">
+      <!-- Reels serão inseridos via JS -->
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta-section reveal">
+    <h2>Tem um imóvel para anunciar?</h2>
+    <p>Coloque seu imóvel no radar mais inteligente da região e receba propostas qualificadas.</p>
+    <a href="#" class="btn btn-primary">
+      <i class="fas fa-bullhorn"></i>
+      Anunciar Agora
+    </a>
+  </section>
+
+  <footer>
+    © 2026 <a href="#">Radar Imóveis Pro</a> — Feito com 💙 em Barreiras, BA<br>
+    <span style="font-size:0.8rem; opacity:0.5;">Jair Ricardo de Oliveira Gramacho | CRECI-BA 36.748</span>
+  </footer>
+
+  <script>
+    // ===== CURSOR FOLLOWER =====
+    const cursor = document.getElementById('cursor');
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      cursor.style.left = mouseX + 'px';
+      cursor.style.top = mouseY + 'px';
+    });
+
+    // ===== PARTICLES =====
+    const particlesEl = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (15 + Math.random() * 20) + 's';
+      p.style.animationDelay = (Math.random() * 20) + 's';
+      p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+      particlesEl.appendChild(p);
+    }
+
+    // ===== ANIMATED COUNTERS =====
+    function animateCounters() {
+      document.querySelectorAll('.stat-number[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const duration = 2000;
+        const start = performance.now();
+        function update(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.floor(eased * target);
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      });
+    }
+
+    // ===== REVEAL ON SCROLL =====
+    function observeReveal() {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            if (entry.target.classList.contains('section-header') || entry.target.closest('#imoveis-grid')) {
+              animateCounters();
+            }
+          }
+        });
+      }, { threshold: 0.15 });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+
+    // ===== 3D TILT CARDS =====
+    function initTilt() {
+      document.querySelectorAll('.imovel-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = (y - centerY) / centerY * -8;
+          const rotateY = (x - centerX) / centerX * 8;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+        });
+      });
+    }
+
+    // ===== LOAD IMÓVEIS =====
+    async function loadImoveis() {
+      try {
+        const resp = await fetch('/api/imoveis?limite=6');
+        const data = await resp.json();
+        const grid = document.getElementById('imoveis-grid');
+
+        if (data.imoveis && data.imoveis.length) {
+          data.imoveis.forEach(imovel => {
+            const foto = imovel.foto || 'https://placehold.co/600x400/1a1a2e/f39233?text=Radar';
+            const card = document.createElement('div');
+            card.className = 'imovel-card reveal';
+            card.innerHTML = `
+              <div class="imovel-card-inner">
+                <img class="imovel-card-image" src="${foto}" alt="${imovel.tipo}" loading="lazy" onerror="this.src='https://placehold.co/600x400/1a1a2e/f39233?text=Radar'">
+                <div class="imovel-card-body">
+                  <h3>${imovel.tipo} — ${imovel.bairro}</h3>
+                  <div class="price">R$ ${Number(imovel.preco).toLocaleString('pt-BR')}</div>
+                  <div class="details">
+                    <span><i class="fas fa-ruler-combined"></i> ${imovel.area}m²</span>
+                    <span><i class="fas fa-bed"></i> ${imovel.quartos} quartos</span>
+                    <span><i class="fas fa-car"></i> ${imovel.vagas} vaga${imovel.vagas !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div class="location"><i class="fas fa-map-pin"></i> ${imovel.cidade}</div>
+                </div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+          initTilt();
+          observeReveal();
+        }
+      } catch (e) {
+        console.log('API não disponível, usando dados mock');
+        loadMockData();
+      }
+    }
+
+    function loadMockData() {
+      const mock = [
+        { tipo: 'Apartamento', bairro: 'Bandeirantes', preco: 320000, area: 90, quartos: 2, vagas: 1, cidade: 'Barreiras - BA', foto: '' },
+        { tipo: 'Casa', bairro: 'Cidade Nova', preco: 450000, area: 150, quartos: 3, vagas: 2, cidade: 'Barreiras - BA', foto: '' },
+        { tipo: 'Terreno', bairro: 'Jardim Vitória', preco: 180000, area: 360, quartos: 0, vagas: 0, cidade: 'Barreiras - BA', foto: '' },
+      ];
+      const grid = document.getElementById('imoveis-grid');
+      mock.forEach(imovel => {
+        const card = document.createElement('div');
+        card.className = 'imovel-card reveal';
+        card.innerHTML = `
+          <div class="imovel-card-inner">
+            <div style="width:100%;height:220px;background:linear-gradient(135deg,#1a1a2e,#2a2a4e);display:flex;align-items:center;justify-content:center;font-size:3rem;">🏠</div>
+            <div class="imovel-card-body">
+              <h3>${imovel.tipo} — ${imovel.bairro}</h3>
+              <div class="price">R$ ${imovel.preco.toLocaleString('pt-BR')}</div>
+              <div class="details">
+                <span><i class="fas fa-ruler-combined"></i> ${imovel.area}m²</span>
+                ${imovel.quartos ? `<span><i class="fas fa-bed"></i> ${imovel.quartos} quartos</span>` : ''}
+                ${imovel.vagas ? `<span><i class="fas fa-car"></i> ${imovel.vagas} vaga${imovel.vagas !== 1 ? 's' : ''}</span>` : ''}
+              </div>
+              <div class="location"><i class="fas fa-map-pin"></i> ${imovel.cidade}</div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      initTilt();
+      observeReveal();
+    }
+
+    // ===== REELS MOCK =====
+    function loadReels() {
+      const grid = document.getElementById('reels-grid');
+      const reels = [
+        { title: 'Apartamento Bandeirantes', video: '/radar-media/reel_imovel44.mp4' },
+      ];
+      reels.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'reel-card reveal';
+        card.innerHTML = `
+          <video src="${r.video}" muted loop preload="metadata"></video>
+          <div class="play-overlay"><i class="fas fa-play"></i></div>
+        `;
+        card.addEventListener('click', () => {
+          const video = card.querySelector('video');
+          if (video.paused) {
+            video.play();
+            card.querySelector('.play-overlay').style.opacity = '0';
+          } else {
+            video.pause();
+            card.querySelector('.play-overlay').style.opacity = '1';
+          }
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    // Init
+    loadImoveis();
+    loadReels();
+  </script>
+</body>
+</html>

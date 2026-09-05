@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Loteamentos de Barreiras – 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  color: #1a1a2e;
+  background: #f5f5f8;
+  line-height: 1.5;
+}
+
+/* ===== COVER ===== */
+.cover {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  padding: 40px 20px;
+  overflow: hidden;
+}
+
+.cover::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -30%;
+  width: 900px;
+  height: 900px;
+  background: radial-gradient(circle, rgba(243,146,51,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.cover-top {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  right: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+
+.cover-top .brand { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.35); letter-spacing: 2px; text-transform: uppercase; }
+.cover-top .brand span { color: #f39233; }
+.cover-top .year { background: rgba(243,146,51,0.12); border: 1px solid rgba(243,146,51,0.2); border-radius: 6px; padding: 4px 16px; font-size: 13px; font-weight: 700; color: #f39233; letter-spacing: 1px; }
+
+.cover-content { position: relative; z-index: 2; max-width: 620px; }
+
+.cover .label { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 14px; border-bottom: 1px solid rgba(243,146,51,0.2); padding-bottom: 6px; }
+
+.cover h1 { font-size: clamp(32px, 6vw, 52px); font-weight: 800; line-height: 1.05; margin-bottom: 2px; }
+.cover h1 .hl { background: linear-gradient(135deg, #f39233, #f5a623); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.cover h2 { font-size: clamp(28px, 5vw, 48px); font-weight: 200; color: rgba(255,255,255,0.45); margin-bottom: 14px; }
+
+.cover .divider { width: 40px; height: 3px; background: linear-gradient(90deg, #f39233, #1f3a7d); margin: 0 auto 14px; border-radius: 3px; }
+
+.cover .sub { font-size: clamp(13px, 1.8vw, 15px); font-weight: 300; color: rgba(255,255,255,0.45); max-width: 440px; margin: 0 auto; line-height: 1.6; }
+
+.cover-bottom { position: absolute; bottom: 24px; left: 28px; right: 28px; display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.2); z-index: 2; }
+
+.scroll-down { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 2; animation: bounce 2s infinite; color: rgba(243,146,51,0.3); font-size: 18px; }
+@keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+
+/* ===== INTRO ===== */
+.intro-section { padding: 40px 24px; max-width: 800px; margin: 0 auto; }
+
+.intro-section h2 { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+.intro-section .line { width: 40px; height: 3px; background: linear-gradient(90deg, #f39233, #1f3a7d); border-radius: 3px; margin-bottom: 12px; }
+
+.intro-section p { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 6px; }
+.intro-section p strong { color: #1a1a2e; }
+
+.toc-title { font-size: 17px; font-weight: 700; color: #1a1a2e; margin: 20px 0 10px; }
+
+.toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 6px; }
+
+.toc-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff; border-radius: 10px; border: 1px solid #eee; text-decoration: none; transition: all 0.15s; }
+.toc-item:hover { border-color: #f39233; box-shadow: 0 2px 10px rgba(243,146,51,0.06); }
+
+.toc-num { width: 26px; height: 26px; background: #1a1a2e; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+.toc-info .toc-name { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.2; }
+.toc-info .toc-type { font-size: 10px; color: #f39233; font-weight: 500; }
+
+/* ===== CARD SIMPLIFICADO ===== */
+.card {
+  max-width: 800px;
+  margin: 12px auto;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.03);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  background: linear-gradient(135deg, #1a1a2e, #2d2d50);
+}
+
+.card-top .ico {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px;
+}
+
+.card-top .ci h3 { font-size: 18px; font-weight: 700; color: #fff; }
+.card-top .ci .sub { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 400; }
+
+.card-body { padding: 16px 22px 14px; }
+
+/* Photo row compact */
+.photo-row { display: flex; gap: 12px; margin-bottom: 10px; }
+
+.photo-row .photo { flex: 1.5; border-radius: 8px; overflow: hidden; }
+.photo-row .photo img { width: 100%; height: 140px; object-fit: cover; display: block; }
+
+.photo-row .info-col { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+.info-col .ib {
+  flex: 1; background: #f5f5fa; border-radius: 6px;
+  padding: 7px 10px; border-left: 3px solid #f39233;
+  font-size: 11.5px; line-height: 1.3;
+}
+
+.info-col .ib.blue { border-left-color: #1f3a7d; }
+
+.info-col .ib .il { font-size: 8px; text-transform: uppercase; letter-spacing: 0.8px; color: #999; margin-bottom: 1px; }
+.info-col .ib .iv { font-weight: 600; color: #1a1a2e; }
+
+/* Quick description - short */
+.short-desc { font-size: 12.5px; color: #444; line-height: 1.6; margin-bottom: 8px; text-align: justify; }
+.short-desc strong { color: #1f3a7d; }
+
+/* Diferenciais tags compact */
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+
+.tags .t {
+  background: #f0f0f8; border-radius: 20px;
+  padding: 2px 9px; font-size: 9.5px; font-weight: 500; color: #1a1a2e;
+}
+
+.tags .t.o { background: linear-gradient(135deg, #f39233, #f5a623); color: #fff; }
+.tags .t.d { background: #1f3a7d; color: #fff; }
+
+/* Infra chips */
+.chips { display: flex; flex-wrap: wrap; gap: 3px 8px; margin-bottom: 6px; }
+.chips .c { font-size: 10.5px; color: #555; padding-left: 10px; position: relative; }
+.chips .c::before { content: '▸'; position: absolute; left: 0; color: #f39233; font-weight: 700; }
+
+/* Footer area */
+.card-foot { margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f5; display: flex; justify-content: space-between; align-items: center; }
+
+.card-foot .perfil { font-size: 11px; color: #666; flex: 1; }
+.card-foot .perfil strong { color: #1a1a2e; }
+
+.card-foot .analise { font-size: 10.5px; color: #444; padding: 5px 10px; background: linear-gradient(135deg, #f8f8fc, #f0f0fa); border-radius: 6px; border: 1px solid #e8e8f0; max-width: 260px; }
+.card-foot .analise strong { color: #1a1a2e; }
+
+/* ===== COMPARATIVA ===== */
+.compare-box {
+  max-width: 800px;
+  margin: 16px auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.03);
+}
+
+.compare-box h2 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+.compare-box .line { width: 40px; height: 3px; background: linear-gradient(90deg, #f39233, #1f3a7d); border-radius: 3px; margin-bottom: 10px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 11px; border-radius: 8px; overflow: hidden; }
+thead th { background: #1a1a2e; color: #fff; padding: 8px 6px; font-weight: 600; text-align: center; font-size: 10px; }
+thead th:first-child { text-align: left; padding-left: 12px; }
+tbody td { padding: 7px 6px; border-bottom: 1px solid #eee; text-align: center; vertical-align: middle; }
+tbody td:first-child { text-align: left; padding-left: 12px; font-weight: 600; color: #1a1a2e; }
+tbody tr:nth-child(even) { background: #f9f9fd; }
+
+.resumo { background: linear-gradient(135deg, #f8f8fc, #f0f0fa); border-radius: 8px; padding: 12px 16px; margin-top: 12px; border: 1px solid #e8e8f0; }
+.resumo h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+.resumo .r { font-size: 11.5px; color: #444; line-height: 1.6; margin-bottom: 3px; padding-left: 14px; position: relative; }
+.resumo .r::before { content: '—'; position: absolute; left: 0; color: #f39233; font-weight: 700; }
+
+footer { text-align: center; padding: 20px; font-size: 11px; color: #aaa; max-width: 800px; margin: 0 auto; }
+footer a { color: #f39233; text-decoration: none; }
+
+.disc { font-size: 10px; color: #aaa; margin-top: 10px; padding: 6px 10px; background: #fafafa; border-radius: 6px; line-height: 1.4; }
+
+@media (max-width: 600px) {
+  .photo-row { flex-direction: column; }
+  .photo-row .photo img { height: 180px; }
+  .card-foot { flex-direction: column; gap: 8px; }
+  .card-foot .analise { max-width: 100%; }
+  table { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<div class="cover" id="topo">
+  <div class="cover-top">
+    <div class="brand"><span>Radar</span> Imóveis Pro</div>
+    <div class="year">2026</div>
+  </div>
+  <div class="cover-content">
+    <div class="label">Guia Exclusivo</div>
+    <h1>Guia de <span class="hl">Loteamentos</span></h1>
+    <h2>de Barreiras</h2>
+    <div class="divider"></div>
+    <div class="sub">Os melhores loteamentos e condomínios da capital do Oeste da Bahia — com fotos, características e comparações</div>
+  </div>
+  <div class="scroll-down">↓</div>
+  <div class="cover-bottom">
+    <span>OESTE DA BAHIA</span>
+    <span>Jair R. O. Gramacho · CRECI-BA 36.748</span>
+  </div>
+</div>
+
+<div class="intro-section" id="intro">
+  <h2>Apresentação</h2>
+  <div class="line"></div>
+  <p>Barreiras vive seu melhor momento urbano. Novos loteamentos e condomínios elevam o padrão de moradia na capital do Oeste baiano. Este guia reúne os <strong>8 principais empreendimentos</strong> de 2026 com o essencial: localização, infraestrutura, perfil e potencial.</p>
+
+  <div class="toc-title">Neste guia</div>
+
+  <div class="toc-grid">
+    <a href="#c1" class="toc-item"><div class="toc-num">1</div><div class="toc-info"><div class="toc-name">Cerrado Village</div><div class="toc-type">Condomínio Fechado de Alto Padrão</div></div></a>
+    <a href="#c5" class="toc-item"><div class="toc-num">5</div><div class="toc-info"><div class="toc-name">Parque da Cidade</div><div class="toc-type">Loteamento Residencial Estratégico</div></div></a>
+    <a href="#c2" class="toc-item"><div class="toc-num">2</div><div class="toc-info"><div class="toc-name">Ravena</div><div class="toc-type">Loteamento Residencial Consolidado</div></div></a>
+    <a href="#c6" class="toc-item"><div class="toc-num">6</div><div class="toc-info"><div class="toc-name">Green Park</div><div class="toc-type">Condomínio Fechado Natureza</div></div></a>
+    <a href="#c3" class="toc-item"><div class="toc-num">3</div><div class="toc-info"><div class="toc-name">Firenzi</div><div class="toc-type">Loteamento Residencial Expansão</div></div></a>
+    <a href="#c7" class="toc-item"><div class="toc-num">7</div><div class="toc-info"><div class="toc-name">Jardim Ipiranga</div><div class="toc-type">Loteamento Econômico</div></div></a>
+    <a href="#c4" class="toc-item"><div class="toc-num">4</div><div class="toc-info"><div class="toc-name">Parque das Águas</div><div class="toc-type">Bairro Planejado Premium</div></div></a>
+    <a href="#c8" class="toc-item"><div class="toc-num">8</div><div class="toc-info"><div class="toc-name">Park Verde</div><div class="toc-type">Loteamento Expansão</div></div></a>
+  </div>
+</div>
+
+<!-- 1 - CERRADO VILLAGE -->
+<div class="card" id="c1">
+  <div class="card-top"><div class="ico">🏡</div><div class="ci"><h3>1. Cerrado Village</h3><div class="sub">Condomínio Fechado de Alto Padrão — Setor das Águas</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/cerrado-village.jpg" alt="Cerrado Village"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Setor das Águas — vetor que mais cresce em Barreiras. Próximo à UFOB.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">200 a 435 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Condomínio fechado com portaria 24h, mais de 20 áreas de lazer e uma faixa de cerrado preservado que atravessa todo o condomínio. Segurança, conforto e natureza no principal vetor de crescimento da cidade.</div>
+    <div class="tags"><span class="t o">Condomínio fechado</span><span class="t o">Portaria 24h</span><span class="t">20+ áreas lazer</span><span class="t">Cerrado preservado</span><span class="t d">★ TOP</span></div>
+    <div class="chips"><span class="c">Piscina adulto/infantil</span><span class="c">Quadra poliesportiva</span><span class="c">Academia ao ar livre</span><span class="c">Salão de festas</span><span class="c">Playground</span><span class="c">Ruas pavimentadas</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Famílias que priorizam segurança e lazer. Profissionais liberais e servidores públicos.</div>
+      <div class="analise"><strong>⭐⭐⭐⭐</strong> Alto potencial de valorização. Referência em condomínio fechado em Barreiras.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 - RAVENA -->
+<div class="card" id="c2">
+  <div class="card-top"><div class="ico">🏘️</div><div class="ci"><h3>2. Ravena</h3><div class="sub">Loteamento Residencial Consolidado — Cidade Nova</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/ravena.jpg" alt="Ravena"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Cidade Nova — bairro tradicional, próximo ao centro. Comércio e serviços a poucos passos.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">144 a 200 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Loteamento em bairro 100% consolidado. Tudo pronto — ruas pavimentadas, água, esgoto, energia, comércio, escolas, saúde. Sem depender de obra futura.</div>
+    <div class="tags"><span class="t">Bairro consolidado</span><span class="t">Infraestrutura completa</span><span class="t">Comércio abundante</span><span class="t">Pronto para construir</span></div>
+    <div class="chips"><span class="c">Ruas pavimentadas</span><span class="c">Água e esgoto</span><span class="c">Energia e iluminação</span><span class="c">Transporte público</span><span class="c">Posto de saúde</span><span class="c">Escolas próximas</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Primeira moradia em região consolidada. Investidor conservador que busca liquidez.</div>
+      <div class="analise"><strong>⭐⭐⭐</strong> Segurança de área pronta. Valorização moderada, liquidez alta.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 - FIRENZI -->
+<div class="card" id="c3">
+  <div class="card-top"><div class="ico">🏠</div><div class="ci"><h3>3. Firenzi</h3><div class="sub">Loteamento Residencial em Expansão — Cidade Nova</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/firenzi.jpg" alt="Firenzi"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Adjacente ao Ravena, compondo a expansão do Cidade Nova.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">200 m² (padrão)</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Loteamento novo vizinho ao Ravena, com lotes de 200 m² — tamanho ideal para casa padrão. Região em franca ocupação, recebendo novos moradores e investimentos.</div>
+    <div class="tags"><span class="t">Lotes regulares</span><span class="t">200 m² funcionais</span><span class="t">Área em crescimento</span><span class="t">Boa localização</span></div>
+    <div class="chips"><span class="c">Ruas pavimentadas</span><span class="c">Água e esgoto</span><span class="c">Energia e iluminação</span><span class="c">Comércio próximo</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Jovens casais e famílias iniciando a construção da casa própria.</div>
+      <div class="analise"><strong>⭐⭐⭐</strong> Alternativa de entrada com potencial moderado de valorização.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 - PARQUE DAS ÁGUAS -->
+<div class="card" id="c4">
+  <div class="card-top"><div class="ico">🌳</div><div class="ci"><h3>4. Parque das Águas</h3><div class="sub">Bairro Planejado Premium — Setor das Águas</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/parque-das-aguas.jpg" alt="Parque das Águas"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Setor das Águas, 5 min do centro. Ao lado da UFOB.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">250 a 360 m² (residencial, comercial, uso misto)</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> O primeiro e único bairro planejado do Oeste da Bahia. Ruas, ciclovias, 6 praças, lago, pista de skate — tudo projetado e 100% concluído. Energia solar gratuita, fibra óptica pré-instalada e patinetes elétricos para moradores.</div>
+    <div class="tags"><span class="t o">Único bairro planejado</span><span class="t o">Sustentável</span><span class="t">Ciclovia</span><span class="t">Energia solar grátis</span><span class="t">6 praças</span><span class="t">Lago</span><span class="t d">★ PREMIUM</span></div>
+    <div class="chips"><span class="c">Ruas asfaltadas</span><span class="c">Ciclovia</span><span class="c">Fibra óptica</span><span class="c">Carregamento elétrico</span><span class="c">Patinetes grátis</span><span class="c">Área comercial</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Famílias de renda média-alta. Investidores com visão de longo prazo.</div>
+      <div class="analise"><strong>⭐⭐⭐⭐⭐</strong> Maior potencial da cidade. Infraestrutura concluída. Última etapa de vendas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5 - PARQUE DA CIDADE -->
+<div class="card" id="c5">
+  <div class="card-top"><div class="ico">🌆</div><div class="ci"><h3>5. Parque da Cidade</h3><div class="sub">Loteamento Residencial Estratégico — Bela Vista</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/parque-da-cidade.jpg" alt="Parque da Cidade"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Bela Vista — próximo ao Hospital do Oeste, SESI, SENAI, cinema e praça Novo Tempo.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">250 a 360 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Loteamento em um dos bairros que mais crescem. Lotes planos e amplos. Localização privilegiada perto do Hospital do Oeste — referência regional que gera empregos e demanda habitacional.</div>
+    <div class="tags"><span class="t o">Localização estratégica</span><span class="t">Lotes planos</span><span class="t">250-360 m²</span><span class="t">Próx. Hospital Oeste</span></div>
+    <div class="chips"><span class="c">Ruas pavimentadas</span><span class="c">Água e esgoto</span><span class="c">Energia e iluminação</span><span class="c">Terrenos planos</span><span class="c">SENAI e SESI próximos</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Famílias que buscam lotes amplos. Profissionais da saúde. Investidores.</div>
+      <div class="analise"><strong>⭐⭐⭐½</strong> Melhor custo-benefício. Localização excelente. Potencial médio-alto.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6 - GREEN PARK -->
+<div class="card" id="c6">
+  <div class="card-top"><div class="ico">🌿</div><div class="ci"><h3>6. Green Park</h3><div class="sub">Condomínio Fechado com Natureza — Zona de Expansão</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/green-park.jpg" alt="Green Park"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Zona de expansão, fácil acesso ao centro e à BR-242.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">Aproximadamente 250 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Condomínio fechado com perfil mais acessível. Ruas arborizadas, áreas verdes preservadas e portaria com controle de acesso. Equilíbrio entre segurança, natureza e custo.</div>
+    <div class="tags"><span class="t o">Condomínio fechado</span><span class="t">Áreas verdes</span><span class="t">Ruas arborizadas</span><span class="t">Acesso BR-242</span></div>
+    <div class="chips"><span class="c">Portaria com câmeras</span><span class="c">Ruas pavimentadas</span><span class="c">Água e esgoto</span><span class="c">Quadras esportivas</span><span class="c">Playground</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Famílias que buscam condomínio fechado com investimento mais enxuto.</div>
+      <div class="analise"><strong>⭐⭐⭐½</strong> Alternativa acessível de condomínio. Potencial moderado-alto.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7 - JARDIM IPIRANGA -->
+<div class="card" id="c7">
+  <div class="card-top"><div class="ico">🌸</div><div class="ci"><h3>7. Jardim Ipiranga</h3><div class="sub">Loteamento Econômico — Zona de Expansão</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/jardim-ipiranga.jpg" alt="Jardim Ipiranga"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Região de expansão popular, com acesso a vias principais e transporte público.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">Aproximadamente 200 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> A porta de entrada mais acessível do mercado de lotes de Barreiras. Região com investimentos públicos em infraestrutura. Para quem quer conquistar o primeiro terreno com o menor investimento.</div>
+    <div class="tags"><span class="t o">Menor investimento</span><span class="t">Acessível</span><span class="t">Programas habitacionais</span></div>
+    <div class="chips"><span class="c">Ruas pavimentadas</span><span class="c">Água (implantação)</span><span class="c">Energia e iluminação</span><span class="c">Transporte público</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Primeira moradia. Quem quer o menor custo de entrada e pode construir aos poucos.</div>
+      <div class="analise"><strong>⭐⭐⭐</strong> Porta de entrada. Risco moderado. Valorização atrelada a investimentos públicos.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8 - PARK VERDE -->
+<div class="card" id="c8">
+  <div class="card-top"><div class="ico">🌲</div><div class="ci"><h3>8. Park Verde</h3><div class="sub">Loteamento Residencial — Zona de Expansão</div></div></div>
+  <div class="card-body">
+    <div class="photo-row">
+      <div class="photo"><img src="/static/guia-fotos/park-verde.jpg" alt="Park Verde"></div>
+      <div class="info-col">
+        <div class="ib blue"><div class="il">Localização</div><div class="iv">Zona de expansão residencial, com acesso direto à BR-242.</div></div>
+        <div class="ib"><div class="il">Metragens</div><div class="iv">200 a 300 m²</div></div>
+      </div>
+    </div>
+    <div class="short-desc"><strong>O que é:</strong> Loteamento aberto — sem taxa de condomínio. Lotes de 200 a 300 m². Ideal para quem quer mais terreno por menos, sem custos mensais de condomínio.</div>
+    <div class="tags"><span class="t">Custo-benefício</span><span class="t">Lotes 200-300 m²</span><span class="t">Sem condomínio</span><span class="t">Acesso BR-242</span></div>
+    <div class="chips"><span class="c">Ruas pavimentadas</span><span class="c">Água e esgoto</span><span class="c">Energia e iluminação</span><span class="c">Áreas verdes</span></div>
+    <div class="card-foot">
+      <div class="perfil"><strong>Perfil:</strong> Famílias que buscam bom tamanho de lote sem taxa de condomínio mensal.</div>
+      <div class="analise"><strong>⭐⭐⭐</strong> Equilíbrio custo-benefício. Sem condomínio. Potencial moderado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARATIVA -->
+<div class="compare-box" id="comparativa">
+  <h2>Tabela Comparativa</h2>
+  <div class="line"></div>
+
+  <table>
+    <thead>
+      <tr><th>Empreendimento</th><th>Tipo</th><th>Metragens</th><th>Diferencial</th><th>Nota</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Cerrado Village</td><td>Condomínio Fechado</td><td>200–435 m²</td><td>Segurança 24h + 20 áreas lazer</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td>Ravena</td><td>Loteamento</td><td>144–200 m²</td><td>Bairro 100% consolidado</td><td>⭐⭐⭐</td></tr>
+      <tr><td>Firenzi</td><td>Loteamento</td><td>200 m²</td><td>Lotes regulares, boa localização</td><td>⭐⭐⭐</td></tr>
+      <tr><td>Parque das Águas</td><td>Bairro Planejado</td><td>250–360 m²</td><td>Único bairro planejado do Oeste</td><td>⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>Parque da Cidade</td><td>Loteamento</td><td>250–360 m²</td><td>Localização estratégica</td><td>⭐⭐⭐½</td></tr>
+      <tr><td>Green Park</td><td>Condomínio Fechado</td><td>~250 m²</td><td>Natureza + segurança acessível</td><td>⭐⭐⭐½</td></tr>
+      <tr><td>Jardim Ipiranga</td><td>Loteamento</td><td>~200 m²</td><td>Mais acessível da cidade</td><td>⭐⭐⭐</td></tr>
+      <tr><td>Park Verde</td><td>Loteamento</td><td>200–300 m²</td><td>Custo-benefício s/ condomínio</td><td>⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+
+  <div class="resumo">
+    <h3>Resumo</h3>
+    <div class="r"><strong>🏆 Investimento:</strong> Parque das Águas — único bairro planejado, infraestrutura concluída.</div>
+    <div class="r"><strong>🏆 Condomínio:</strong> Cerrado Village — segurança 24h, lazer completo, cerrado preservado.</div>
+    <div class="r"><strong>🏆 Custo-benefício:</strong> Parque da Cidade — localização, lotes amplos, bom potencial.</div>
+    <div class="r"><strong>🏆 Entrada:</strong> Jardim Ipiranga — menor investimento da cidade.</div>
+    <div class="r"><strong>🏆 Primeira moradia:</strong> Ravena / Firenzi — bairro consolidado, infraestrutura pronta.</div>
+  </div>
+
+  <div class="disc">
+    <strong>Disclaimer:</strong> Informações de fontes públicas. Características e disponibilidade devem ser confirmadas com os loteadores. Organizado por <strong>Radar Imóveis Pro</strong> — Jair R. O. Gramacho — CRECI-BA 36.748.
+  </div>
+</div>
+
+<footer>
+  Guia de Loteamentos de Barreiras — 2026 — <strong>Radar Imóveis Pro</strong><br>
+  <a href="#topo">↑ Voltar ao topo</a>
+</footer>
+
+</body>
+</html>

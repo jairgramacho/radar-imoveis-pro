@@ -97,6 +97,78 @@
             text-align: center;
             padding: 1rem;
         }
+
+        /* ===== MODAL DE CAPTURA DE WHATSAPP (dark, legível) ===== */
+        .wa-capture-modal .modal-content {
+            background: rgba(22, 33, 62, 0.98);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            color: #fff;
+        }
+        .wa-capture-modal .wa-capture-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 1.25rem;
+        }
+        .wa-capture-modal .wa-capture-header h5 {
+            color: #fff;
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.05rem;
+        }
+        .wa-capture-modal .wa-capture-header i {
+            color: #25d366;
+        }
+        .wa-capture-modal .wa-capture-body {
+            padding: 1.25rem;
+        }
+        .wa-capture-modal .wa-capture-hint {
+            color: rgba(255,255,255,0.72);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .wa-capture-modal .wa-capture-body .form-label {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.88rem;
+            margin-bottom: 0.3rem;
+        }
+        .wa-capture-modal .form-control {
+            background: rgba(255,255,255,0.10) !important;
+            border: 1px solid rgba(255,255,255,0.22) !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+            padding: 0.7rem 1rem !important;
+        }
+        .wa-capture-modal .form-control:focus {
+            background: rgba(255,255,255,0.16) !important;
+            border-color: #25d366 !important;
+            box-shadow: 0 0 0 3px rgba(37,211,102,0.2) !important;
+        }
+        .wa-capture-modal .form-control::placeholder {
+            color: rgba(255,255,255,0.62) !important;
+        }
+        .wa-capture-modal .form-control {
+            color: #fff !important;
+            font-size: 0.95rem !important;
+        }
+        .wa-capture-modal .wa-capture-header h5 {
+            font-size: 1.02rem;
+        }
+        .wa-capture-modal .btn-wa-submit {
+            background: linear-gradient(135deg, #25d366, #1da851);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 0.7rem;
+        }
+        .wa-capture-modal .btn-wa-submit:hover {
+            filter: brightness(1.1);
+            color: #fff;
+        }
+        .wa-capture-modal .btn-close {
+            filter: invert(1);
+        }
     </style>
 </head>
 <body>
@@ -238,7 +310,7 @@
                         <h5 class="mb-3">
                             <i class="fas fa-file-alt me-2"></i>Descrição
                         </h5>
-                        <p class="text-muted">{{ imovel.descricao }}</p>
+                        <div class="descricao-formatada">{{ imovel.descricao|format_descricao|safe }}</div>
                     </div>
                 </div>
                 {% endif %}
@@ -297,9 +369,9 @@
                         </a>
                         {% endif %}
                         
-                        <a href="{{ url_for('crm.rastrear_whatsapp', imovel_id=imovel.id) }}" target="_blank" class="btn btn-success w-100 mt-2">
+                        <button type="button" class="btn btn-success w-100 mt-2" data-bs-toggle="modal" data-bs-target="#whatsappCaptureModal">
                             <i class="fab fa-whatsapp me-2"></i>Contatar via WhatsApp
-                        </a>
+                        </button>
                         
                         <!-- BOTÃO DE COMPARTILHAMENTO COM DROPDOWN -->
                         <div class="btn-group w-100 mt-2" role="group">
@@ -375,6 +447,41 @@
                         <input id="miniChatInput" type="text" name="mensagem" class="form-control mini-chat-input" placeholder="Digite sua mensagem" maxlength="1000" autocomplete="off" required>
                         <button type="submit" class="btn btn-primary mini-chat-send">
                             <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- MODAL DE CAPTURA DE CONTATO ANTES DE IR PRO WHATSAPP -->
+    {% if imovel.anunciante and imovel.anunciante.whatsapp %}
+    <div class="modal fade wa-capture-modal" id="whatsappCaptureModal" tabindex="-1" aria-labelledby="whatsappCaptureLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="wa-capture-header d-flex justify-content-between align-items-center">
+                    <h5 id="whatsappCaptureLabel">
+                        <i class="fab fa-whatsapp me-2"></i>Falar com {{ imovel.anunciante.nome.split(' ')[0] }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="wa-capture-body">
+                    <div class="wa-capture-hint">
+                        Preencha rapidinho pra gente te direcionar no WhatsApp:
+                    </div>
+                    <form id="whatsappCaptureForm" method="POST" action="{{ url_for('crm.rastrear_whatsapp', imovel_id=imovel.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">Seu nome</label>
+                            <input type="text" name="nome" class="form-control" placeholder="Ex.: Maria Silva" maxlength="120" autocomplete="name" style="background: rgba(255,255,255,0.10) !important; color: #fff !important;" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Seu WhatsApp</label>
+                            <input type="tel" name="whatsapp" class="form-control" placeholder="Ex.: (77) 99999-0000" inputmode="tel" autocomplete="tel" style="background: rgba(255,255,255,0.10) !important; color: #fff !important;" required>
+                        </div>
+                        <button type="submit" class="btn btn-wa-submit w-100">
+                            <i class="fab fa-whatsapp me-2"></i>Abrir WhatsApp
                         </button>
                     </form>
                 </div>

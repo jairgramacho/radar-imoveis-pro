@@ -1,8 +1,7 @@
-<nav class="navbar navbar-expand-lg navbar-radar">
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
     <div class="container-lg">
-        <a class="navbar-brand" href="{{ url_for('index', aba='buscar') }}">
-            <i class="fas fa-broadcast-tower brand-icon"></i>
-            <span><span class="radar">Radar</span> Imóveis Pro</span>
+        <a class="navbar-brand fw-bold" href="{{ url_for('index', aba='buscar') }}">
+            <i class="fas fa-broadcast-tower me-2" style="color: #f39233; font-size: 1.5rem;"></i><span style="color: #f39233;">Radar</span> Imóveis Pro
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -15,7 +14,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.args.get('aba') == 'anunciar' %}active fw-bold{% endif %}" href="{{ url_for('index', aba='anunciar') }}">
+                    <a class="nav-link nav-link-anunciar {% if request.args.get('aba') == 'anunciar' %}active fw-bold{% endif %}" href="{{ url_for('index', aba='anunciar') }}">
                         <i class="fas fa-plus-circle me-2"></i>Anunciar
                     </a>
                 </li>
@@ -40,7 +39,7 @@
                 {% if usuario %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle me-2"></i>{{ usuario.nome.split(' ')[0] }}
+                        <i class="fas fa-user-circle me-2"></i>Olá, {{ usuario.nome.split(' ')[0] }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{{ url_for('configuracoes_conta') }}">
@@ -68,8 +67,8 @@
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link nav-link-anunciar" href="{{ url_for('login') }}">
-                        <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                    <a class="nav-link" href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
                     </a>
                 </li>
                 {% endif %}

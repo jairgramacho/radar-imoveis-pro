@@ -31,11 +31,39 @@ def _legacy():
 
 @imoveis_bp.route('/')
 def index():
-    """Pagina principal com abas de busca e anuncio."""
+    """Pagina principal — landing page por padrao, abas busca/oportunidades/anunciar."""
     legacy = _legacy()
     usuario = legacy.get_usuario_logado()
+    aba = request.args.get('aba', 'inicio')
+
+    # Landing page padrao
+    if aba == 'inicio':
+        from radar_app.legacy_app import moeda_brl
+        ativos = _repo().listar_ativos()
+        imoveis_recentes = ativos[:6]
+        for im in imoveis_recentes:
+            im.preco_formatado = moeda_brl(im.preco) if im.preco else ''
+        # Total de visualizacoes acumuladas (campo existente no modelo)
+        total_visualizacoes = sum((im.visualizacoes or 0) for im in ativos)
+        # Bairros distintos considerando os imoveis ativos (normaliza caixa/acentos p/ nao contar duplicidade por digitacao)
+        def _norm(s):
+            import unicodedata
+            s = (s or '').strip().lower()
+            return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+        total_bairros = len({_norm(im.bairro) for im in ativos if im.bairro and _norm(im.bairro)})
+        return render_template(
+            'landing.html',
+            usuario=usuario,
+            imoveis_destaque=imoveis_recentes,
+            total_imoveis=len(ativos),
+            total_bairros=total_bairros,
+            total_visualizacoes=total_visualizacoes,
+            foto_url=legacy._foto_url,
+            seo_title='Radar Imoveis Pro | Imoveis em Barreiras e Oeste da Bahia',
+            seo_description='Encontre imoveis para compra e aluguel em Barreiras e regiao com busca inteligente e contato direto com o corretor.',
+        )
+
     limite_anuncios = legacy._resumo_limite_anuncios(usuario) if usuario else None
-    aba = request.args.get('aba', 'buscar')
     filtros = request.args.to_dict()
     pagina = request.args.get('pagina', 1, type=int)
 

@@ -7,57 +7,237 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        /* ===== CRM — dark theme legível ===== */
+        .crm-header h2 { color: var(--branco); }
+        .crm-header .sub { color: var(--texto-suave); font-size: 0.95rem; }
+
+        /* Cards de resumo */
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-card);
+        }
+        .stat-card .label { color: var(--texto-suave); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card .value { color: var(--branco); font-size: 1.75rem; font-weight: 700; }
+        .stat-card .icon { opacity: 0.5; font-size: 1.2rem; }
+
+        /* Coloração por status */
+        .stat-card.total { border-top: 3px solid var(--laranja); }
+        .stat-card.novo { border-top: 3px solid #8ab4f8; }
+        .stat-card.andamento { border-top: 3px solid #ffb366; }
+        .stat-card.fechado { border-top: 3px solid #2ecc71; }
+        .stat-card.perdido { border-top: 3px solid #e74c3c; }
+        .stat-card.pendencias { border-top: 3px solid #e67e22; }
+
+        /* Tabela */
+        .crm-table { color: var(--texto); }
+        .crm-table thead th {
+            color: var(--texto-suave);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--glass-border);
+            background: rgba(255,255,255,0.03);
+        }
+        .crm-table td { color: var(--texto); border-color: var(--glass-border); vertical-align: middle; }
+        .crm-table .lead-titulo { color: var(--branco); font-weight: 600; }
+        .crm-table .lead-sub { color: var(--texto-suave); font-size: 0.8rem; }
+        .crm-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+
+        /* Badges legíveis (fundo escuro + texto claro + cor de status) */
+        .badge-status { padding: 0.45em 0.9em; font-weight: 600; border-radius: 999px; font-size: 0.75rem; }
+        .badge-novo { background: rgba(138,180,248,0.18); color: #a8c8fa; border: 1px solid rgba(138,180,248,0.4); }
+        .badge-contato { background: rgba(255,179,102,0.18); color: #ffd9a8; border: 1px solid rgba(255,179,102,0.4); }
+        .badge-visita { background: rgba(255,179,102,0.18); color: #ffd9a8; border: 1px solid rgba(255,179,102,0.4); }
+        .badge-proposta { background: rgba(242,138,31,0.2); color: #ffc98a; border: 1px solid rgba(242,138,31,0.45); }
+        .badge-fechado { background: rgba(46,204,113,0.18); color: #5ce095; border: 1px solid rgba(46,204,113,0.45); }
+        .badge-perdido { background: rgba(231,76,60,0.18); color: #ff8a80; border: 1px solid rgba(231,76,60,0.45); }
+
+        /* Contato */
+        .contato-whats { color: var(--branco); font-weight: 600; }
+        .contato-whats i { color: #25D366; }
+
+        /* Select/inputs no dark */
+        .crm-table .form-select, .crm-table .form-control {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            color: var(--texto);
+        }
+        .crm-table .form-select option { background: var(--azul-claro); color: var(--texto); }
+        .crm-table .form-control::placeholder { color: var(--texto-muito-suave); }
+
+        /* Botão salvar */
+        .btn-salvar { background: var(--laranja-grad); border: none; color: #fff; font-weight: 600; }
+        .btn-salvar:hover { filter: brightness(1.08); color: #fff; }
+
+        /* Link voltar */
+        .btn-voltar { color: var(--texto); border-color: var(--glass-border); }
+        .btn-voltar:hover { background: var(--glass); color: var(--branco); }
+
+        /* ===== MODAL NOVO LEAD (dark legível) ===== */
+        .modal-dashboard .modal-content {
+            background: rgba(22, 33, 62, 0.98);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            color: #fff;
+        }
+        .modal-dashboard .modal-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-dashboard .modal-title { color: #fff; font-weight: 600; }
+        .modal-dashboard .modal-title i { color: var(--laranja); }
+        .modal-dashboard .btn-close { filter: invert(1); }
+        .modal-dashboard .form-label { color: #fff; font-weight: 600; font-size: 0.85rem; }
+        .modal-dashboard .form-control, .modal-dashboard .form-select {
+            background: rgba(255,255,255,0.10) !important;
+            border: 1px solid rgba(255,255,255,0.22) !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+        }
+        .modal-dashboard .form-control::placeholder { color: rgba(255,255,255,0.5) !important; }
+        .modal-dashboard .form-select option { background: var(--azul-claro); color: #fff; }
+        .modal-dashboard .btn-confirmar { background: var(--laranja-grad); border: none; color: #fff; font-weight: 700; }
+        .modal-dashboard .btn-confirmar:hover { filter: brightness(1.08); color: #fff; }
+    </style>
 </head>
 <body>
     {% include '_navbar.html' %}
 
     <div class="container-lg py-4">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 crm-header">
             <div>
-                <h2 class="mb-1"><i class="fas fa-filter me-2"></i>CRM Radar</h2>
-                <p class="text-muted mb-0">Leads rastreados a partir de WhatsApp e chat interno.</p>
+                <h2 class="mb-1"><i class="fas fa-filter" style="color:var(--laranja);"></i> CRM Radar</h2>
+                <p class="mb-0 sub">Leads rastreados a partir de WhatsApp e chat interno.</p>
             </div>
-            <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Voltar ao site
-            </a>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-salvar" data-bs-toggle="modal" data-bs-target="#novoLeadModal">
+                    <i class="fas fa-plus me-2"></i>Novo Lead
+                </button>
+                <a href="{{ url_for('index', aba='buscar') }}" class="btn btn-outline btn-voltar">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar ao site
+                </a>
+            </div>
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Total</div><div class="fs-3 fw-bold">{{ resumo.total }}</div></div></div></div>
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Novos</div><div class="fs-3 fw-bold">{{ resumo.novo }}</div></div></div></div>
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Em andamento</div><div class="fs-3 fw-bold">{{ resumo.em_andamento }}</div></div></div></div>
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Fechados</div><div class="fs-3 fw-bold">{{ resumo.fechado }}</div></div></div></div>
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Perdidos</div><div class="fs-3 fw-bold">{{ resumo.perdido }}</div></div></div></div>
-            <div class="col-md-2 col-6"><div class="card shadow-sm border-0 h-100"><div class="card-body text-center"><div class="text-muted small">Pendências</div><div class="fs-3 fw-bold">{{ resumo.pendencias }}</div></div></div></div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card total h-100 p-3 text-center">
+                    <div class="label">Total</div>
+                    <div class="value">{{ resumo.total }}</div>
+                </div>
+            </div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card novo h-100 p-3 text-center">
+                    <div class="label">Novos</div>
+                    <div class="value" style="color:#a8c8fa;">{{ resumo.novo }}</div>
+                </div>
+            </div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card andamento h-100 p-3 text-center">
+                    <div class="label">Em andamento</div>
+                    <div class="value" style="color:#ffd9a8;">{{ resumo.em_andamento }}</div>
+                </div>
+            </div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card fechado h-100 p-3 text-center">
+                    <div class="label">Fechados</div>
+                    <div class="value" style="color:#5ce095;">{{ resumo.fechado }}</div>
+                </div>
+            </div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card perdido h-100 p-3 text-center">
+                    <div class="label">Perdidos</div>
+                    <div class="value" style="color:#ff8a80;">{{ resumo.perdido }}</div>
+                </div>
+            </div>
+            <div class="col-md-2 col-6">
+                <div class="card stat-card pendencias h-100 p-3 text-center">
+                    <div class="label">Pendências</div>
+                    <div class="value" style="color:#ffb366;">{{ resumo.pendencias }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL NOVO LEAD (cadastro manual) -->
+        <div class="modal fade modal-dashboard" id="novoLeadModal" tabindex="-1" aria-labelledby="novoLeadLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="novoLeadLabel"><i class="fas fa-user-plus me-2"></i>Novo Lead</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: var(--texto-suave); font-size: 0.9rem; margin-bottom: 1rem;">
+                            Registre um contato que chegou por fora (Instagram, WhatsApp direto, OLX, indicação etc.).
+                        </p>
+                        <form method="POST" action="{{ url_for('crm.criar_lead_manual') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-3">
+                                <label class="form-label">Nome do contato</label>
+                                <input type="text" name="nome" class="form-control" placeholder="Ex.: Maria Silva" maxlength="120" autocomplete="off">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">WhatsApp</label>
+                                <input type="tel" name="whatsapp" class="form-control" placeholder="Ex.: (77) 99999-0000" inputmode="tel" autocomplete="off">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Imóvel de interesse (opcional)</label>
+                                <select name="imovel_id" class="form-select">
+                                    <option value="">Sem imóvel específico</option>
+                                    {% for im in imoveis_do_usuario %}
+                                    <option value="{{ im.id }}">{{ im.tipo }} — {{ im.bairro }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Origem da captação</label>
+                                <select name="origem" class="form-select">
+                                    {% for o in origens_dev %}
+                                    <option value="{{ o }}" {% if o == 'instagram' %}selected{% endif %}>{{ o|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Observações</label>
+                                <textarea name="observacoes" class="form-control" rows="2" placeholder="Anotações sobre o contato..." autocomplete="off"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-confirmar w-100">
+                                <i class="fas fa-check me-2"></i>Salvar Lead
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {% if leads %}
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white"><strong>Leads e etapas</strong></div>
+        <div class="card shadow-none">
+            <div class="card-header bg-transparent"><strong style="color:var(--branco);">Leads e etapas</strong></div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light"><tr><th>Lead</th><th>Status</th><th>Contato</th><th>Próxima ação</th><th>Ação</th></tr></thead>
+                    <table class="table crm-table align-middle mb-0">
+                        <thead><tr><th>Lead</th><th>Status</th><th>Contato</th><th>Próxima ação</th><th>Ação</th></tr></thead>
                         <tbody>
                         {% for lead in leads %}
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">{{ lead.imovel.tipo }} em {{ lead.imovel.cidade }}</div>
-                                    <div class="text-muted small">{{ lead.imovel.bairro }} · origem {{ lead.origem }}</div>
-                                    <div class="text-muted small">Código {{ lead.codigo }}</div>
+                                    <div class="lead-titulo">{{ lead.imovel.tipo }} em {{ lead.imovel.cidade }}</div>
+                                    <div class="lead-sub">{{ lead.imovel.bairro }} · origem {{ lead.origem }}</div>
+                                    <div class="lead-sub">Código {{ lead.codigo }}</div>
                                 </td>
                                 <td>
-                                    <span class="badge {% if lead.status == 'fechado' %}bg-success{% elif lead.status == 'perdido' %}bg-danger{% elif lead.status == 'novo' %}bg-secondary{% else %}bg-primary{% endif %}">{{ lead.status|capitalize }}</span>
-                                    {% if lead.primeiro_contato_em %}<div class="small text-muted mt-1">1º contato: {{ lead.primeiro_contato_em.strftime('%d/%m/%Y %H:%M') }}</div>{% endif %}
+                                    <span class="badge badge-status badge-{{ lead.status }}">{{ lead.status|capitalize }}</span>
+                                    {% if lead.primeiro_contato_em %}<div class="lead-sub mt-1">1º contato:<br>{{ lead.primeiro_contato_em.strftime('%d/%m/%Y %H:%M') }}</div>{% endif %}
                                 </td>
                                 <td>
-                                    <div class="small"><strong>WhatsApp:</strong> {{ lead.whatsapp or '-' }}</div>
-                                    <div class="small text-muted">{{ lead.email or '' }}</div>
+                                    <div class="contato-whats"><i class="fab fa-whatsapp me-1"></i>{{ lead.whatsapp or '-' }}</div>
+                                    <div class="lead-sub">{{ lead.email or '' }}</div>
                                 </td>
                                 <td>
                                     <div class="small">{{ lead.observacoes or 'Sem observação' }}</div>
                                     {% if lead.proxima_acao_em %}
-                                    <div class="small text-muted">{{ lead.proxima_acao_em.strftime('%d/%m/%Y %H:%M') }}</div>
+                                    <div class="lead-sub">{{ lead.proxima_acao_em.strftime('%d/%m/%Y %H:%M') }}</div>
                                     {% endif %}
                                 </td>
                                 <td style="min-width: 320px;">
@@ -84,7 +264,7 @@
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        <div class="col-12"><button class="btn btn-primary btn-sm w-100" type="submit">Salvar</button></div>
+                                        <div class="col-12"><button class="btn btn-salvar btn-sm w-100" type="submit">Salvar</button></div>
                                     </form>
                                 </td>
                             </tr>
@@ -95,7 +275,9 @@
             </div>
         </div>
         {% else %}
-        <div class="alert alert-info">Nenhum lead encontrado ainda. Os cliques em WhatsApp e mensagens do chat aparecerão aqui.</div>
+        <div class="alert" style="background:var(--glass); border:1px solid var(--glass-border); color:var(--texto); border-radius:var(--radius-card);">
+            <i class="fas fa-info-circle me-2" style="color:var(--laranja);"></i>Nenhum lead encontrado ainda. Os cliques em WhatsApp e mensagens do chat aparecerão aqui.
+        </div>
         {% endif %}
     </div>
 

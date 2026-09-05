@@ -51,7 +51,7 @@ class UsuarioLoginSchema(BaseModel):
 
 class ImovelDescricaoSchema(BaseModel):
     """Schema para validação de descrição de imóvel."""
-    descricao: str = Field(..., max_length=1000)
+    descricao: str = Field(..., max_length=3000)
     
     @field_validator('descricao')
     @classmethod

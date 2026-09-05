@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Imóveis Pro — Home Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --laranja: #F28A1F;
+      --laranja-claro: #ffb366;
+      --azul: #1a1a2e;
+      --azul-claro: #16213e;
+      --branco: #ffffff;
+      --glass: rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.12);
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--azul);
+      color: var(--branco);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      position: relative;
+    }
+
+    .blob {
+      position: fixed; border-radius: 50%; filter: blur(100px);
+      pointer-events: none; z-index: -1;
+      animation: blobFloat 25s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 600px; height: 600px; background: rgba(242,138,31,0.06); top: -15%; left: -10%; }
+    .blob-2 { width: 500px; height: 500px; background: rgba(242,138,31,0.04); bottom: -10%; right: -8%; animation-delay: -12s; }
+    .blob-3 { width: 350px; height: 350px; background: rgba(255,255,255,0.02); top: 50%; left: 50%; animation-delay: -6s; }
+    @keyframes blobFloat {
+      0% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(40px,-30px) scale(1.1); }
+      66% { transform: translate(-30px,25px) scale(0.9); }
+      100% { transform: translate(25px,-15px) scale(1.05); }
+    }
+
+    .particles { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+    .particle {
+      position: absolute; width: 4px; height: 4px; background: var(--laranja);
+      border-radius: 50%; opacity: 0; animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.2; } 90% { opacity: 0.2; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .cursor-follower {
+      position: fixed; width: 30px; height: 30px; border-radius: 50%;
+      background: var(--laranja); opacity: 0.15; pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s, opacity 0.3s;
+      mix-blend-mode: screen;
+    }
+    @keyframes signalPulse {
+      0% { text-shadow: 0 0 2px rgba(242,138,31,0.3), 0 0 8px rgba(242,138,31,0.1); }
+      40% { text-shadow: 0 0 6px rgba(242,138,31,0.6), 0 0 20px rgba(242,138,31,0.3), 0 0 40px rgba(242,138,31,0.1); }
+      100% { text-shadow: 0 0 2px rgba(242,138,31,0.3), 0 0 8px rgba(242,138,31,0.1); }
+    }
+    .radar-signal { animation: signalPulse 2s ease-in-out infinite; display: inline-block; }
+
+    .hero {
+      position: relative; min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; text-align: center; overflow: hidden; background: var(--azul);
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(242,138,31,0.1) 0%, transparent 70%),
+                  radial-gradient(ellipse 70% 70% at 80% 80%, rgba(22,33,62,0.8) 0%, transparent 50%);
+    }
+    .hero-content { position: relative; z-index: 1; padding: 2rem; max-width: 700px; }
+    .hero-brand { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; margin-bottom: 2rem; opacity: 0; animation: fadeUp 0.8s 0.15s forwards; }
+    .hero-brand-name { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+    .hero-brand-name .radar { color: var(--laranja); font-weight: 900; font-size: clamp(2rem, 6vw, 3.5rem); }
+    .hero-brand-name .pro { color: var(--branco); font-weight: 800; font-size: clamp(1.3rem, 3.5vw, 2rem); }
+
+    .hero-actions {
+      display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.8s 0.35s forwards;
+    }
+    .btn {
+      padding: 0.85rem 2.2rem; border-radius: 60px; font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 0.9rem; border: none; cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
+      text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--laranja), #ff7a00); color: #fff; box-shadow: 0 8px 30px rgba(242,138,31,0.25); }
+    .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 40px rgba(242,138,31,0.4); }
+    .btn-outline { background: var(--glass); border: 1px solid var(--glass-border); color: #fff; backdrop-filter: blur(10px); }
+    .btn-outline:hover { background: rgba(255,255,255,0.15); transform: translateY(-3px); }
+
+    .hero-stats { display: flex; gap: 2.5rem; justify-content: center; margin-top: 3rem; opacity: 0; animation: fadeUp 0.8s 0.5s forwards; }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, var(--laranja), var(--branco)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.35); margin-top: 0.1rem; }
+
+    @keyframes fadeUp { to { transform: translateY(0); opacity: 1; } from { transform: translateY(25px); opacity: 0; } }
+    .scroll-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: rgba(255,255,255,0.2); font-size: 0.65rem; opacity: 0; animation: fadeUp 0.8s 0.7s forwards; }
+    .scroll-indicator .mouse { width: 20px; height: 32px; border: 2px solid rgba(255,255,255,0.12); border-radius: 10px; position: relative; }
+    .scroll-indicator .mouse::after { content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 2.5px; height: 6px; background: var(--laranja); border-radius: 2px; animation: scrollWheel 1.5s infinite; }
+    @keyframes scrollWheel { 0% { transform: translateX(-50%) translateY(0); opacity: 1; } 100% { transform: translateX(-50%) translateY(9px); opacity: 0; } }
+
+    section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+    .section-header { text-align: center; margin-bottom: 3rem; }
+    .section-header h2 { font-size: clamp(1.8rem, 3.5vw, 2.5rem); font-weight: 800; }
+    .section-header p { color: rgba(255,255,255,0.45); font-size: 0.95rem; max-width: 450px; margin: 0.5rem auto 0; }
+
+    .imoveis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .imovel-card {
+      background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
+      backdrop-filter: blur(12px); transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .imovel-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(242,138,31,0.08); }
+    .imovel-card .img-wrap { width: 100%; height: 200px; overflow: hidden; position: relative; background: #16213e; }
+    .imovel-card .img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .imovel-card:hover .img-wrap img { transform: scale(1.05); }
+    .imovel-card .tag { position: absolute; top: 12px; left: 12px; background: var(--laranja); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; z-index: 2; }
+    .imovel-card-body { padding: 1.2rem 1.2rem 1.5rem; }
+    .imovel-card-body h3 { font-size: 0.95rem; font-weight: 700; }
+    .imovel-card-body .price { font-size: 1.3rem; font-weight: 900; color: var(--laranja); }
+    .imovel-card-body .details { display: flex; gap: 0.6rem; margin: 0.5rem 0; font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+    .imovel-card-body .details i { color: var(--laranja); margin-right: 0.15rem; }
+    .imovel-card-body .location { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+    .btn-center { text-align: center; margin-top: 2rem; }
+
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .step-card { text-align: center; padding: 2rem 1.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; backdrop-filter: blur(12px); transition: transform 0.3s; }
+    .step-card:hover { transform: translateY(-5px); }
+    .step-card .icon { font-size: 2.2rem; margin-bottom: 0.8rem; }
+    .step-card h4 { font-size: 1.1rem; font-weight: 700; }
+    .step-card p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.5; margin-top: 0.2rem; }
+
+    .instagram-section { text-align: center; padding: 3rem; max-width: 700px; margin: 2rem auto; }
+    .instagram-section h2 { font-size: 1.3rem; font-weight: 800; }
+    .instagram-section p { color: rgba(255,255,255,0.45); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .mini-reels { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .cta-section { text-align: center; background: linear-gradient(135deg, rgba(242,138,31,0.08), transparent); border-radius: 24px; padding: 4rem 2rem; max-width: 750px; margin: 3rem auto; border: 1px solid rgba(242,138,31,0.1); }
+    .cta-section h2 { font-size: clamp(1.8rem, 3.5vw, 2.5rem); font-weight: 800; }
+    .cta-section p { color: rgba(255,255,255,0.45); margin: 0.5rem 0 2rem; font-size: 1rem; }
+
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.6s, transform 0.6s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    footer { text-align: center; padding: 2.5rem 2rem; border-top: 1px solid var(--glass-border); color: rgba(255,255,255,0.2); font-size: 0.8rem; }
+    footer a { color: var(--laranja); text-decoration: none; }
+    .creci { font-size: 0.7rem; margin-top: 0.3rem; opacity: 0.5; }
+    .nav-demo { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0.8rem 2rem; background: rgba(26,26,46,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; }
+    .nav-demo .brand { font-size: 1.1rem; font-weight: 800; }
+    .nav-demo .brand span { color: var(--laranja); }
+    .nav-demo a { text-decoration: none; color: rgba(255,255,255,0.6); font-weight: 500; font-size: 0.85rem; padding: 0.4rem 1rem; border-radius: 10px; transition: all 0.2s; }
+    .nav-demo a:hover { background: var(--glass); color: #fff; }
+    .nav-demo a.active { color: var(--laranja); }
+    .nav-demo .spacer { flex: 1; display: flex; gap: 0.5rem; align-items: center; justify-content: center; }
+    .nav-demo .btn-entrar { background: var(--laranja); color: #fff !important; font-weight: 700; padding: 0.4rem 1.2rem; border-radius: 60px; }
+
+    @media (max-width: 768px) {
+      .hero-stats { gap: 1.5rem; }
+      section { padding: 3rem 1.2rem; }
+      .cursor-follower { display: none; }
+      .nav-demo .spacer a:not(.active):not(.btn-entrar) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="particles" id="particles"></div>
+  <div class="cursor-follower" id="cursor"></div>
+
+  <!-- NAVBAR DEMO -->
+  <nav class="nav-demo">
+    <div class="brand"><span>Radar</span> Imóveis Pro</div>
+    <div class="spacer">
+      <a href="#" class="active"><i class="fas fa-home"></i> Início</a>
+      <a href="/?aba=buscar"><i class="fas fa-search"></i> Buscar</a>
+      <a href="https://wa.me/5577988514422?text=Ol%C3%A1!%20Quero%20anunciar%20um%20im%C3%B3vel%20no%20Radar%20Im%C3%B3veis%20Pro" target="_blank"><i class="fab fa-whatsapp"></i> Anunciar</a>
+    </div>
+    <a href="/login" class="btn-entrar"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" style="padding-top:80px;">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-brand">
+        <div style="margin-bottom:0.5rem; font-size: clamp(2.5rem, 6vw, 3.5rem); color: var(--laranja);">
+          <i class="fas fa-broadcast-tower radar-signal"></i>
+        </div>
+        <div class="hero-brand-name">
+          <span class="radar">Radar</span>
+          <span class="pro">Imóveis Pro</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="/?aba=buscar" class="btn btn-primary"><i class="fas fa-search"></i> Explorar Imóveis</a>
+        <a href="https://instagram.com/radarimoveispro" target="_blank" class="btn btn-outline"><i class="fab fa-instagram"></i> @radarimoveispro</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item"><div class="stat-number" id="count-imoveis">0</div><div class="stat-label">Imóveis</div></div>
+        <div class="stat-item"><div class="stat-number" id="count-bairros">0</div><div class="stat-label">Bairros</div></div>
+        <div class="stat-item"><div class="stat-number" id="count-visitas">0</div><div class="stat-label">Visitas este mês</div></div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      <span>DESCUBRA</span>
+    </div>
+  </section>
+
+  <!-- IMÓVEIS EM DESTAQUE -->
+  <section>
+    <div class="section-header reveal">
+      <h2>🏠 Imóveis em Destaque</h2>
+      <p>Os melhores imóveis de Barreiras com preços imperdíveis</p>
+    </div>
+    <div class="imoveis-grid" id="imoveis-grid">
+      <div class="imovel-card" style="display:flex;align-items:center;justify-content:center;padding:3rem;text-align:center;color:rgba(255,255,255,0.3);">
+        <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+      </div>
+    </div>
+    <div class="btn-center reveal">
+      <a href="/?aba=buscar" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Ver Todos os Imóveis</a>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section>
+    <div class="section-header reveal">
+      <h2>⚡ Como Funciona</h2>
+      <p>Encontrar seu imóvel nunca foi tão fácil</p>
+    </div>
+    <div class="steps">
+      <div class="step-card reveal"><div class="icon">🔍</div><h4>Explore</h4><p>Navegue pelos imóveis com filtros inteligentes e veja fotos reais.</p></div>
+      <div class="step-card reveal"><div class="icon">❤️</div><h4>Compare</h4><p>Veja preços, oportunidades e compare imóveis lado a lado.</p></div>
+      <div class="step-card reveal"><div class="icon">💬</div><h4>Conecte</h4><p>Chame o corretor direto pelo WhatsApp e agende uma visita.</p></div>
+    </div>
+  </section>
+
+  <!-- INSTAGRAM -->
+  <section class="instagram-section reveal">
+    <h2><i class="fab fa-instagram" style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i> @radarimoveispro</h2>
+    <p>Veja os Reels com tour pelos imóveis no Instagram</p>
+    <div style="margin-top:1.5rem;">
+      <a href="https://instagram.com/radarimoveispro" target="_blank" class="btn btn-primary"><i class="fab fa-instagram"></i> Ver Reels no Instagram</a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <h2>Tem um imóvel para anunciar?</h2>
+    <p>Coloque seu imóvel no radar mais inteligente da região e receba propostas qualificadas.</p>
+    <a href="https://wa.me/5577988514422?text=Ol%C3%A1!%20Quero%20anunciar%20um%20im%C3%B3vel%20no%20Radar%20Im%C3%B3veis%20Pro" target="_blank" class="btn btn-primary"><i class="fab fa-whatsapp"></i> Anunciar Agora</a>
+  </section>
+
+  <footer class="footer-radar" style="background:rgba(26,26,46,0.9);border-top:1px solid var(--glass-border);backdrop-filter:blur(12px);padding:3rem 0 2rem;margin-top:3rem;">
+    <div class="container-lg" style="max-width:1100px;margin:0 auto;padding:0 2rem;">
+        <div class="row" style="display:flex;flex-wrap:wrap;margin-bottom:2rem;">
+            <div class="col-md-3 col-sm-6" style="flex:0 0 25%;max-width:25%;padding:0 12px;margin-bottom:1.5rem;box-sizing:border-box;">
+                <h6 style="color:var(--branco);font-weight:700;font-size:0.9rem;margin-bottom:1rem;">
+                    <i class="fas fa-broadcast-tower me-2" style="color:var(--laranja, #F28A1F);"></i>
+                    <span style="color:var(--laranja, #F28A1F);">Radar</span> Imóveis Pro
+                </h6>
+                <p style="font-size:0.85rem;color:rgba(255,255,255,0.45);">
+                    Compre, venda e alugue. Seu novo jeito de encontrar o imóvel perfeito.
+                </p>
+            </div>
+
+            <div class="col-md-3 col-sm-6" style="flex:0 0 25%;max-width:25%;padding:0 12px;margin-bottom:1.5rem;box-sizing:border-box;">
+                <h6 style="color:var(--branco);font-weight:700;font-size:0.9rem;margin-bottom:1rem;">Links Úteis</h6>
+                <ul style="list-style:none;padding:0;font-size:0.85rem;">
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/?aba=buscar" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-search me-2"></i>Buscar Imóveis
+                        </a>
+                    </li>
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/?aba=anunciar" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-plus-circle me-2"></i>Anunciar Imóvel
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 col-sm-6" style="flex:0 0 25%;max-width:25%;padding:0 12px;margin-bottom:1.5rem;box-sizing:border-box;">
+                <h6 style="color:var(--branco);font-weight:700;font-size:0.9rem;margin-bottom:1rem;">Contato</h6>
+                <ul style="list-style:none;padding:0;font-size:0.85rem;">
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="mailto:contato@radarimoveispro.com.br" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-envelope me-2"></i>contato@radarimoveispro.com.br
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 col-sm-6" style="flex:0 0 25%;max-width:25%;padding:0 12px;margin-bottom:1.5rem;box-sizing:border-box;">
+                <h6 style="color:var(--branco);font-weight:700;font-size:0.9rem;margin-bottom:1rem;">Informações Legais</h6>
+                <ul style="list-style:none;padding:0;font-size:0.85rem;">
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/termos-de-uso" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-file-contract me-2"></i>Termos de Uso
+                        </a>
+                    </li>
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/sobre" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-building me-2"></i>Sobre a Radar
+                        </a>
+                    </li>
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/politica-de-privacidade" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-shield-alt me-2"></i>Política de Privacidade
+                        </a>
+                    </li>
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/denunciar-abuso" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Denunciar Abuso
+                        </a>
+                    </li>
+                    <li style="margin-bottom:0.5rem;">
+                        <a href="/faq" style="color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s;">
+                            <i class="fas fa-question-circle me-2"></i>FAQ / Ajuda
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.08);opacity:0.5;">
+
+        <div style="text-align:center;padding-top:1rem;">
+            <p style="font-size:0.8rem;color:rgba(255,255,255,0.3);margin-bottom:0.3rem;">
+                &copy; 2026 Radar Imóveis Pro. Todos os direitos reservados.
+            </p>
+            <p style="font-size:0.7rem;color:rgba(255,255,255,0.2);">
+                Plataforma de divulgação e captação imobiliária. Intermediação por Jair Ricardo de Oliveira Gramacho | CRECI-BA 36.748.
+            </p>
+        </div>
+    </div>
+  </footer>
+
+  <script>
+    var cursor = document.getElementById('cursor');
+    if (window.innerWidth > 768) {
+      document.addEventListener('mousemove', function(e) {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+      });
+    }
+
+    // Particles
+    for (var i = 0; i < 30; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (12 + Math.random() * 20) + 's';
+      p.style.animationDelay = (Math.random() * 20) + 's';
+      p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+      document.getElementById('particles').appendChild(p);
+    }
+
+    // Animate counter
+    function animateCounter(el, target) {
+      var dur = 2000;
+      var start = performance.now();
+      function update(now) {
+        var p = Math.min((now - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.floor(eased * target);
+        if (p < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    // Reveal observer
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+    // Fetch real data
+    fetch('/api/imoveis?limite=6')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.imoveis && data.imoveis.length) {
+          animateCounter(document.getElementById('count-imoveis'), data.total || data.imoveis.length);
+          animateCounter(document.getElementById('count-bairros'), 19);
+          animateCounter(document.getElementById('count-visitas'), 120);
+
+          var grid = document.getElementById('imoveis-grid');
+          grid.innerHTML = '';
+          data.imoveis.slice(0, 6).forEach(function(m) {
+            var card = document.createElement('a');
+            card.href = '/imovel/' + m.id;
+            card.className = 'imovel-card reveal';
+            var tag = '';
+            var imgHtml = '<div class="img-wrap" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.1);font-size:3rem;"><i class="fas fa-home"></i></div>';
+            if (m.foto && m.foto !== 'sem_foto.jpg') {
+              imgHtml = '<div class="img-wrap"><img src="' + m.foto + '" alt="' + m.tipo + '" loading="lazy"></div>';
+            }
+            if (m.negocio) {
+              tag = '<span class="tag">' + m.negocio.toUpperCase() + '</span>';
+            }
+            var preco = m.preco ? 'R$ ' + Number(m.preco).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '';
+            var area = m.area ? '<span><i class="fas fa-ruler-combined"></i> ' + m.area + 'm²</span>' : '';
+            var quartos = m.quartos ? '<span><i class="fas fa-bed"></i> ' + m.quartos + '</span>' : '';
+            var vagas = m.vagas ? '<span><i class="fas fa-car"></i> ' + m.vagas + '</span>' : '';
+            var cidade = m.cidade || 'Barreiras';
+            card.innerHTML = imgHtml + '<div class="imovel-card-body">' + tag +
+              '<h3>' + (m.tipo || 'Imóvel') + (m.bairro ? ' — ' + m.bairro : '') + '</h3>' +
+              (preco ? '<div class="price">' + preco + '</div>' : '') +
+              '<div class="details">' + area + quartos + vagas + '</div>' +
+              '<div class="location"><i class="fas fa-map-pin"></i> ' + cidade + ' - BA</div></div>';
+            grid.appendChild(card);
+            observer.observe(card);
+          });
+        }
+      })
+      .catch(function() {
+        // Fallback: show mock
+        animateCounter(document.getElementById('count-imoveis'), 29);
+        animateCounter(document.getElementById('count-bairros'), 19);
+        animateCounter(document.getElementById('count-visitas'), 120);
+      });
+  </script>
+</body>
+</html>

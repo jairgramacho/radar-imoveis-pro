@@ -78,6 +78,7 @@ app = Flask(
     __name__,
     template_folder=str(PROJECT_ROOT / 'templates'),
     static_folder=str(PROJECT_ROOT / 'static'),
+    static_url_path='/radar-static',
 )
 app.register_blueprint(public_bp)
 app.register_blueprint(billing_bp)
@@ -161,6 +162,28 @@ def moeda_brl(valor):
 
     formatado = f"{numero:,.2f}"
     return formatado.replace(',', '_').replace('.', ',').replace('_', '.')
+
+
+@app.template_filter('format_descricao')
+def format_descricao(texto):
+    """Converte texto com \n\n em parágrafos <p> e \n simples em <br>."""
+    if not texto:
+        return ''
+    import re
+    # Primeiro escapa HTML básico pra evitar XSS
+    texto = str(texto)
+    texto = texto.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    # Divide em parágrafos por \n\n (ou \r\n\r\n)
+    paragrafos = re.split(r'\n\s*\n', texto)
+    partes = []
+    for p in paragrafos:
+        p = p.strip()
+        if not p:
+            continue
+        # Converte quebras simples em <br>
+        with_br = p.replace('\n', '<br>')
+        partes.append(f'<p>{with_br}</p>')
+    return '\n'.join(partes)
 
 # Carregar configuração baseada em FLASK_ENV
 flask_env = os.getenv('FLASK_ENV', 'development')
