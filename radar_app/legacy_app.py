@@ -400,8 +400,9 @@ def _seo_defaults():
     )
     seo_robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
     seo_keywords = (
-        'imoveis em barreiras, imobiliaria barreiras, casas em barreiras, apartamentos barreiras, '
-        'imoveis oeste da bahia, aluguel barreiras, compra de imoveis bahia'
+        'imoveis em barreiras, casas em barreiras, apartamentos barreiras, '
+        'imoveis oeste da bahia, aluguel barreiras, compra de imoveis bahia, '
+        'corretor de imoveis barreiras'
     )
 
     if endpoint in {'imoveis.index', 'index'}:
