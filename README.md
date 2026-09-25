@@ -255,5 +255,12 @@ PYTHONPATH=. pytest -q
 
 ## Licença
 
-A definir. O projeto nasceu sob MIT License (v1 do README, 15/03/2026), mas a
-licença oficial nunca foi fixada em arquivo `LICENSE`. Decidir e adicionar.
+**Proprietária — todos os direitos reservados.** Titular: Jair Ricardo de
+Oliveira Gramacho. O texto completo está em [`LICENSE`](LICENSE).
+
+O uso, a cópia, a modificação e a distribuição do software dependem de
+autorização prévia e por escrito do titular.
+
+> A v1 deste README (15/03/2026) afirmava licença MIT e apontava para um arquivo
+> `LICENSE` que nunca existiu em nenhum commit. A licença oficial nunca havia
+> sido fixada até 25/09/2026.
