@@ -190,6 +190,20 @@
     @media (max-width: 480px) {
       .footer-col { flex: 0 0 100% !important; max-width: 100% !important; }
     }
+    .hero-tagline {
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      color: var(--branco);
+      font-weight: 600;
+      margin: 0.75rem 0 0.25rem;
+      text-align: center;
+    }
+    .hero-sub {
+      font-size: clamp(0.85rem, 1.8vw, 1rem);
+      color: rgba(255,255,255,0.65);
+      margin: 0 0 1.5rem;
+      text-align: center;
+      max-width: 46ch;
+    }
   </style>
 </head>
 <body>
@@ -226,6 +240,8 @@
           <span class="radar">Radar</span>
           <span class="pro">Imóveis Pro</span>
         </div>
+        <p class="hero-tagline">Seu próximo imóvel, do jeito certo.</p>
+        <p class="hero-sub">Tecnologia para quem busca e para quem oferece imóveis em Barreiras e no Oeste da Bahia.</p>
       </div>
       <div class="hero-actions">
         <a href="/?aba=buscar" class="btn btn-primary"><i class="fas fa-search"></i> Explorar Imóveis</a>
