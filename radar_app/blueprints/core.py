@@ -162,12 +162,6 @@ def sitemap_xml():
             'priority': '1.0',
         },
         {
-            'loc': url_for('index', aba='oportunidades', _external=True),
-            'lastmod': hoje,
-            'changefreq': 'daily',
-            'priority': '0.9',
-        },
-        {
             'loc': url_for('billing.planos', _external=True),
             'lastmod': hoje,
             'changefreq': 'weekly',

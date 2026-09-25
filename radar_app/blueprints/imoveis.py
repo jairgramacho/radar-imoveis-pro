@@ -57,10 +57,16 @@ def _ler_plataforma(chave):
 
 @imoveis_bp.route('/')
 def index():
-    """Pagina principal — landing page por padrao, abas busca/oportunidades/anunciar."""
+    """Pagina principal — landing page por padrao, abas busca/anunciar."""
     legacy = _legacy()
     usuario = legacy.get_usuario_logado()
     aba = request.args.get('aba', 'inicio')
+
+    # Aba Radar/Oportunidades foi removida: redireciona para a busca preservando filtros
+    if aba == 'oportunidades':
+        filtros_legado = {k: v for k, v in request.args.items() if k not in {'aba', 'somente_oportunidades'}}
+        filtros_legado['aba'] = 'buscar'
+        return redirect(url_for('index', **filtros_legado), code=301)
 
     # Landing page padrao
     if aba == 'inicio':
@@ -98,29 +104,17 @@ def index():
     pagina = request.args.get('pagina', 1, type=int)
 
     imoveis = _repo().buscar(filtros)
-    legacy.aplicar_radar_oportunidades(imoveis)
-
-    oportunidades = [imovel for imovel in imoveis if getattr(imovel, 'eh_oportunidade', False)]
-    oportunidades.sort(key=lambda item: item.desconto_oportunidade or 0, reverse=True)
-
-    if filtros.get('somente_oportunidades') == '1':
-        imoveis = [imovel for imovel in imoveis if getattr(imovel, 'eh_oportunidade', False)]
 
     imoveis_pagina, imoveis_total, imoveis_total_paginas, pagina_ajustada = legacy._paginar_lista(
         imoveis,
         pagina,
         legacy.ITENS_POR_PAGINA,
     )
-    oportunidades_pagina, oportunidades_total, oportunidades_total_paginas, pagina_oportunidades = legacy._paginar_lista(
-        oportunidades,
-        pagina,
-        legacy.ITENS_POR_PAGINA,
-    )
 
     argumentos_base = {k: v for k, v in filtros.items() if k != 'pagina'}
     argumentos_base['aba'] = aba
-    total_paginas = imoveis_total_paginas if aba == 'buscar' else oportunidades_total_paginas
-    pagina_corrente = pagina_ajustada if aba == 'buscar' else pagina_oportunidades
+    total_paginas = imoveis_total_paginas
+    pagina_corrente = pagina_ajustada
     links_paginacao = {
         p: url_for('index', **{**argumentos_base, 'pagina': p})
         for p in range(1, total_paginas + 1)
@@ -137,13 +131,7 @@ def index():
     estado_seo = (filtros.get('estado') or '').strip()
     local_seo = cidade_seo if not estado_seo else f'{cidade_seo}/{estado_seo}' if cidade_seo else estado_seo
 
-    if aba == 'oportunidades':
-        seo_title = 'Oportunidades de Imoveis em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
-        seo_description = (
-            'Encontre oportunidades de compra e aluguel com comparativo de preco local '
-            'em Barreiras e no Oeste da Bahia.'
-        )
-    elif aba == 'anunciar':
+    if aba == 'anunciar':
         seo_title = 'Anunciar Imovel em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
         seo_description = (
             'Publique seu imovel e alcance compradores e locatarios em Barreiras e em toda '
@@ -164,7 +152,7 @@ def index():
         )
 
     seo_json_ld_list = []
-    if aba in {'buscar', 'oportunidades'}:
+    if aba == 'buscar':
         seo_json_ld_list = [
             {
                 '@context': 'https://schema.org',
@@ -191,8 +179,6 @@ def index():
         'index.html',
         imoveis=imoveis_pagina,
         imoveis_total=imoveis_total,
-        oportunidades=oportunidades_pagina,
-        oportunidades_total=oportunidades_total,
         aba=aba,
         busca=filtros,
         pagina_atual=pagina_corrente,

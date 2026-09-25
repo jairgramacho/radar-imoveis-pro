@@ -109,15 +109,6 @@
                                 <i class="fas fa-filter me-2"></i>Filtrar
                             </button>
                         </div>
-
-                        <div class="col-12">
-                            <div class="form-check mt-1">
-                                <input class="form-check-input" type="checkbox" value="1" id="somente_oportunidades" name="somente_oportunidades" {% if busca.get('somente_oportunidades') == '1' %}checked{% endif %}>
-                                <label class="form-check-label" for="somente_oportunidades">
-                                    Mostrar apenas oportunidades (10% abaixo da média local)
-                                </label>
-                            </div>
-                        </div>
                     </form>
                 </div>
             </div>
@@ -153,21 +144,10 @@
                                     </div>
                                 {% endif %}
                                 <span class="badge-negocio">{{ imovel.negocio }}</span>
-                                {% if imovel.eh_oportunidade %}
-                                <span class="badge-oportunidade">Oportunidade</span>
-                                {% endif %}
                             </div>
 
                             <div class="card-body">
                                 <h6 class="card-title">R$ {{ imovel.preco|moeda_brl }}</h6>
-                                {% if imovel.eh_oportunidade and imovel.preco_medio_regiao %}
-                                <p class="card-imovel-note mb-2" style="color:#79c99e;">
-                                    {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
-                                </p>
-                                <p class="card-imovel-note mb-2">
-                                    Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
-                                </p>
-                                {% endif %}
                                 <p class="card-imovel-type mb-2">
                                     <i class="fas fa-home me-1" style="color:var(--laranja, #F28A1F);"></i>{{ imovel.tipo }}
                                 </p>
@@ -202,104 +182,6 @@
 
             {% if total_paginas > 1 %}
             <nav class="mt-4" aria-label="Paginação de imóveis">
-                <ul class="pagination justify-content-center">
-                    {% for pagina in range(1, total_paginas + 1) %}
-                    <li class="page-item {% if pagina == pagina_atual %}active{% endif %}">
-                        <a class="page-link" href="{{ links_paginacao[pagina] }}">{{ pagina }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-            {% endif %}
-        </div>
-
-        <!-- ABA OPORTUNIDADES -->
-        {% elif aba == 'oportunidades' %}
-        <div class="buscar-section">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h1 class="h2 mb-0"><i class="fas fa-bullseye me-2" style="color:var(--laranja, #F28A1F);"></i>Radar de Oportunidades</h1>
-                <a href="/?aba=buscar&somente_oportunidades=1" class="btn btn-outline-primary btn-sm" style="white-space: nowrap;">
-                    <i class="fas fa-filter me-1"></i>Ver com filtros
-                </a>
-            </div>
-
-            <p class="mb-4" style="color:var(--texto-suave, rgba(255,255,255,0.45));">Imóveis ordenados do maior para o menor desconto em relação à média de imóveis semelhantes da mesma região.</p>
-
-            <h5 class="mb-3">
-                <i class="fas fa-tags me-2" style="color:var(--laranja, #F28A1F);"></i>
-                {% if oportunidades_total > 0 %}
-                    {{ oportunidades_total }} oportunidade(s) encontrada(s)
-                {% else %}
-                    Nenhuma oportunidade encontrada no momento
-                {% endif %}
-            </h5>
-
-            {% if oportunidades_total == 0 %}
-            <div class="alert alert-info mb-4">
-                <i class="fas fa-lightbulb me-2"></i>
-                Ainda não encontramos oportunidades com desconto relevante. Volte mais tarde ou use novos filtros.
-            </div>
-            {% endif %}
-
-            <div class="row g-4">
-                {% for imovel in oportunidades %}
-                <div class="col-md-6 col-lg-4">
-                    <a href="{{ url_for('detalhe_imovel', id=imovel.id) }}" class="text-decoration-none">
-                        <div class="card-imovel h-100">
-                            <div class="card-imovel-media">
-                                {% if imovel.foto and imovel.foto != 'sem_foto.jpg' %}
-                                    <img src="{{ foto_url(imovel.foto) }}" loading="lazy" decoding="async">
-                                {% else %}
-                                    <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3;"></i>
-                                    </div>
-                                {% endif %}
-                                <span class="badge-negocio">{{ imovel.negocio }}</span>
-                                <span class="badge-oportunidade">Oportunidade</span>
-                            </div>
-
-                            <div class="card-body">
-                                <h6 class="card-title">R$ {{ imovel.preco|moeda_brl }}</h6>
-                                <p class="card-imovel-note mb-2" style="color:#79c99e;">
-                                    {{ "%.0f"|format(imovel.desconto_oportunidade * 100) }}% abaixo da média de R$ {{ imovel.preco_medio_regiao|moeda_brl }}
-                                </p>
-                                <p class="card-imovel-note mb-2">
-                                    Base comparável: {{ imovel.total_comparaveis }} imóvel(is) semelhantes
-                                </p>
-                                <p class="card-imovel-type mb-2">
-                                    <i class="fas fa-home me-1" style="color:var(--laranja, #F28A1F);"></i>{{ imovel.tipo }}
-                                </p>
-                                <p class="card-imovel-location mb-0">
-                                    <i class="fas fa-map-marker-alt me-1" style="color:var(--laranja, #F28A1F);"></i>
-                                    {{ imovel.bairro }}, {{ imovel.cidade }} - {{ imovel.estado }}
-                                </p>
-
-                                <div class="row g-2 mt-2 card-imovel-features">
-                                    <div class="col-4">
-                                        <span class="badge badge-soft w-100">
-                                            <i class="fas fa-bed"></i> {{ imovel.quartos if imovel.quartos else '-' }}
-                                        </span>
-                                    </div>
-                                    <div class="col-4">
-                                        <span class="badge badge-soft w-100">
-                                            <i class="fas fa-car"></i> {{ imovel.vagas if imovel.vagas else '-' }}
-                                        </span>
-                                    </div>
-                                    <div class="col-4">
-                                        <span class="badge badge-soft w-100">
-                                            <i class="fas fa-ruler"></i> {% if imovel.area %}{{ imovel.area }} m²{% else %}-{% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if total_paginas > 1 %}
-            <nav class="mt-4" aria-label="Paginação de oportunidades">
                 <ul class="pagination justify-content-center">
                     {% for pagina in range(1, total_paginas + 1) %}
                     <li class="page-item {% if pagina == pagina_atual %}active{% endif %}">

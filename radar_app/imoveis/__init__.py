@@ -5,7 +5,6 @@ from radar_app.imoveis.service import (
     negocio_canonico,
     padronizar_negocio_imovel,
     padronizar_negocio_imoveis,
-    aplicar_radar_oportunidades,
 )
 
 __all__ = [
@@ -15,5 +14,4 @@ __all__ = [
     "negocio_canonico",
     "padronizar_negocio_imovel",
     "padronizar_negocio_imoveis",
-    "aplicar_radar_oportunidades",
 ]

@@ -55,7 +55,6 @@ from radar_app.assinatura import (
     usuario_eh_admin,
 )
 from radar_app.imoveis import (
-    aplicar_radar_oportunidades as aplicar_radar_oportunidades_imoveis,
     negocio_canonico as negocio_canonico_imovel,
     normalizar_negocio as normalizar_negocio_imovel,
     normalizar_texto as normalizar_texto_imovel,
@@ -406,13 +405,7 @@ def _seo_defaults():
     )
 
     if endpoint in {'imoveis.index', 'index'}:
-        if aba_atual == 'oportunidades':
-            seo_title = 'Oportunidades de Imoveis em Barreiras e Regiao | Radar Imoveis Pro'
-            seo_description = (
-                'Descubra imoveis com preco competitivo em Barreiras e no Oeste da Bahia. '
-                'Radar de oportunidades com comparativo local de valores.'
-            )
-        elif aba_atual == 'anunciar':
+        if aba_atual == 'anunciar':
             seo_title = 'Anunciar Imovel em Barreiras e Oeste da Bahia | Radar Imoveis Pro'
             seo_description = (
                 'Publique seu imovel em Barreiras e alcance compradores e locatarios de toda a regiao. '
@@ -532,8 +525,6 @@ if flask_env == 'production':
         except Exception as e:
             app.logger.warning('Falha ao garantir colunas em produção: %s', str(e), exc_info=True)
 
-OPORTUNIDADE_DESCONTO_MINIMO = 0.10
-OPORTUNIDADE_AMOSTRA_MINIMA = 5
 ITENS_POR_PAGINA = 12
 LIMITES_ANUNCIOS_POR_PLANO = ASSINATURA_LIMITES_ANUNCIOS_POR_PLANO
 
@@ -688,14 +679,6 @@ def _padronizar_negocio_imovel(imovel):
 
 def _padronizar_negocio_imoveis(imoveis):
     return padronizar_negocio_imoveis(imoveis)
-
-
-def aplicar_radar_oportunidades(imoveis):
-    return aplicar_radar_oportunidades_imoveis(
-        imoveis,
-        OPORTUNIDADE_AMOSTRA_MINIMA,
-        OPORTUNIDADE_DESCONTO_MINIMO,
-    )
 
 # ============================================
 # TRATAMENTO DE ERROS
