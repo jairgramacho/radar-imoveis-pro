@@ -1,5 +1,5 @@
 """Repositório de imóveis — centraliza todas as queries SQLAlchemy de Imovel."""
-from sqlalchemy import case, func
+from sqlalchemy import case, func, text as _text
 
 
 class ImovelRepository:
@@ -138,7 +138,26 @@ class ImovelRepository:
         self.db.session.rollback()
 
     def deletar(self, imovel):
-        """Remove um imóvel da base e faz commit."""
+        """Remove um imóvel da base e faz commit.
+
+        As visualizacoes do anuncio sao PRESERVADAS no contador do site:
+        a visualizacao pertence a plataforma, nao ao imovel. Apagar um
+        anuncio nunca reduz o total exibido na home.
+        """
+        viz = int(imovel.visualizacoes or 0)
+        if viz > 0:
+            try:
+                self.db.session.execute(
+                    _text(
+                        "INSERT INTO plataforma_contadores (chave, valor, atualizado_em) "
+                        "VALUES ('visualizacoes_site', :n, now()) "
+                        "ON CONFLICT (chave) DO UPDATE SET valor = plataforma_contadores.valor + :n, atualizado_em = now()"
+                    ),
+                    {'n': viz},
+                )
+                self.db.session.commit()
+            except Exception:
+                self.db.session.rollback()
         self.db.session.delete(imovel)
         self.db.session.commit()
 

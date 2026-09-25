@@ -28,6 +28,32 @@ def _legacy():
 
     return legacy_app
 
+# --- Contadores de plataforma (visualizacao vinculada ao SITE, nao ao imovel) ---
+# A visualizacao acumula no site: apagar um anuncio NAO reduz o total.
+def _incrementar_plataforma(chave, n=1):
+    """Incrementa um contador global da plataforma de forma atomica via SQL cru."""
+    from models import db
+    db.session.execute(
+        db.text(
+            "INSERT INTO plataforma_contadores (chave, valor, atualizado_em) "
+            "VALUES (:k, :n, now()) "
+            "ON CONFLICT (chave) DO UPDATE SET valor = plataforma_contadores.valor + :n, atualizado_em = now()"
+        ),
+        {'k': chave, 'n': n},
+    )
+    db.session.commit()
+
+
+def _ler_plataforma(chave):
+    """Le o valor de um contador global da plataforma."""
+    from models import db
+    row = db.session.execute(
+        db.text("SELECT valor FROM plataforma_contadores WHERE chave = :k"), {'k': chave}
+    ).fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
+
+
+
 
 @imoveis_bp.route('/')
 def index():
@@ -38,13 +64,17 @@ def index():
 
     # Landing page padrao
     if aba == 'inicio':
+        try:
+            _incrementar_plataforma('visualizacoes_site')
+        except Exception:
+            pass  # nunca derruba a home por falha de contador
         from radar_app.legacy_app import moeda_brl
         ativos = _repo().listar_ativos()
         imoveis_recentes = ativos[:6]
         for im in imoveis_recentes:
             im.preco_formatado = moeda_brl(im.preco) if im.preco else ''
-        # Total de visualizacoes acumuladas (campo existente no modelo)
-        total_visualizacoes = sum((im.visualizacoes or 0) for im in ativos)
+        # Total de visualizacoes do SITE (acumula; apagar anuncio nao reduz)
+        total_visualizacoes = _ler_plataforma('visualizacoes_site')
         # Bairros distintos considerando os imoveis ativos (normaliza caixa/acentos p/ nao contar duplicidade por digitacao)
         def _norm(s):
             import unicodedata
@@ -319,6 +349,10 @@ def detalhe_imovel(id):
 
     imovel.visualizacoes = (imovel.visualizacoes or 0) + 1
     _repo().commit()
+    try:
+        _incrementar_plataforma('visualizacoes_site')
+    except Exception:
+        pass  # o total do site nunca impede a pagina de abrir
 
     descricao_base = (imovel.descricao or '').strip()
     if not descricao_base:
