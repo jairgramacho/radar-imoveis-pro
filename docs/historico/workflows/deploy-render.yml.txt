@@ -1,0 +1,42 @@
+name: Deploy Render
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+on:
+  workflow_run:
+    workflows:
+      - Testes
+    types:
+      - completed
+
+concurrency:
+  group: deploy-render-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+    steps:
+      - name: Aviso quando hook nao estiver configurado
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: |
+          echo "RENDER_DEPLOY_HOOK_URL nao configurado."
+          echo "Deploy via GitHub Actions ignorado; Render Auto Deploy deve cuidar da publicacao."
+
+      - name: Disparar deploy no Render via hook
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 3 \
+            --retry-delay 2 \
+            --max-time 20 \
+            --request POST \
+            "${{ env.RENDER_DEPLOY_HOOK_URL }}"

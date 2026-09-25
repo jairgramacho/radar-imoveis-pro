@@ -1,39 +1,119 @@
-# Radar Imoveis Pro
+# Radar Imóveis Pro
 
-Plataforma web para anuncios imobiliarios com foco em publicacao, descoberta de oportunidades e relacionamento entre anunciante e interessado.
+<!--
+PENDENTE (Jair): frase de propósito do projeto.
+A versão anterior dizia "publicacao, descoberta de oportunidades e relacionamento
+entre anunciante e interessado" — termo removido com o filtro de oportunidades.
+Aguardando a redação aprovada para substituir o trecho abaixo.
+-->
 
-O projeto foi construido para operacao real em producao, com dominio proprio, envio de emails transacionais e assinaturas recorrentes.
+Plataforma web de anúncios de imóveis em Barreiras e no Oeste da Bahia.
+**<< FRASE DE PROPÓSITO — PENDENTE >>**
 
-## Visao Geral
+Construído para operação real em produção: domínio próprio, email transacional,
+assinaturas recorrentes e CRM de atendimento.
 
-Principais capacidades da plataforma:
+> **Origem.** O projeto nasceu de uma inquietação prototipada em **Streamlit**:
+> quem procura imóvel na região não tinha onde comparar preços de forma
+> informada, e quem anunciava dependia de canais onde o anúncio desaparecia em
+> dias. O Streamlit provou que a ideia funcionava; não podia entregar produto —
+> sem SEO, sem domínio, sem autenticação adequada. A migração para Flask é a
+> razão de o repositório ter começado com um `app.py` e um banco em arquivo de
+> texto. O histórico completo está em [`docs/historico/`](docs/historico/LEIA-ME.md).
 
-- Busca e filtros de imoveis (compre, venda e alugue)
-- Publicacao e gestao de anuncios com multiplas fotos
-- Processamento de imagens (incluindo HEIC/HEIF)
-- Chat entre usuarios com contexto por imovel
-- Indicador de mensagens nao lidas na navegacao
-- Sistema de avaliacoes
-- Confirmacao de email e redefinicao de senha por token
-- Configuracoes de conta e exclusao de conta
-- Planos com limite de anuncios (Free, Pro e Empresa)
-- Fluxo de assinatura Stripe com webhook e automacoes de status
+---
+
+## Capacidades
+
+**Busca e descoberta**
+- Busca de imóveis com filtros por tipo de negócio, tipo de imóvel, localização, preço e bairro
+- Página de detalhe do imóvel com galeria, atributos e contato direto
+- SEO técnico: sitemap dinâmico, `robots.txt`, canonical, Open Graph e JSON-LD (`WebSite`, `RealEstateAgent`)
+
+**Anúncios**
+- Publicação e gestão de anúncios com múltiplas fotos
+- Processamento de imagens (incluindo HEIC/HEIF) e upload persistente via Cloudinary
+- Planos com limite de anúncios (Free, Pro e Empresa)
+
+**Relacionamento e atendimento**
+- Chat entre usuários com contexto por imóvel e indicador de mensagens não lidas
+- **CRM nativo**: captura de lead por WhatsApp, funil e dashboard de acompanhamento
+- Sistema de avaliações de anunciante
+
+**Conta e segurança**
+- Cadastro, login, confirmação de email e redefinição de senha por token
+- Autenticação de dois fatores (2FA/TOTP)
+- Configurações de conta e exclusão de conta
+- Hardening: LGPD, CSRF, rate limiting em endpoints críticos, validação de entrada com Pydantic, sanitização de HTML e audit log
+
+**Assinaturas**
+- Fluxo Stripe com webhook, status de assinatura e limites por plano
+
+**Integrações**
+- Exportação de imóveis em JSON com token para automações (n8n)
+
+---
 
 ## Stack
 
-- Backend: Flask
-- ORM: SQLAlchemy
-- Banco de dados: PostgreSQL (producao) e SQLite (desenvolvimento)
-- Frontend: Jinja2 + Bootstrap 5 + CSS
-- Email transacional: Resend (com fallback SMTP)
-- Upload persistente: Cloudinary
-- Pagamentos: Stripe
+| Camada | Tecnologia |
+|---|---|
+| Backend | Flask 3.1 |
+| ORM | SQLAlchemy 3.1 + Flask-Migrate (Alembic) |
+| Banco | PostgreSQL (produção) · SQLite (desenvolvimento) |
+| Frontend | Jinja2 + Bootstrap 5 + CSS |
+| Email | Resend (com fallback SMTP) |
+| Upload | Cloudinary |
+| Pagamentos | Stripe |
+| Servidor | Gunicorn (2 workers) atrás de nginx |
+| Python | 3.11+ (CI roda em 3.12) |
 
-## Ambiente Local
+---
+
+## Arquitetura
+
+O código de aplicação vive em `radar_app/`, organizado em camadas:
+
+```text
+radar_app/
+├── blueprints/          Rotas HTTP (core, imoveis, auth, chat, crm, billing, admin, public)
+├── imoveis/             Domínio de imóveis — repository, service, avaliacao_repository
+├── auth/                Domínio de autenticação — repository, service
+├── assinatura/          Domínio de assinaturas
+├── services/            Serviços de aplicação (email, media, tokens, bootstrap)
+├── infra/               Infraestrutura (bootstrap, email, media)
+├── security/            Rate limiting, sanitização, schemas de validação
+└── legacy_app.py        Fábrica da aplicação e compatibilidade
+```
+
+**Modelos** (`models.py`): `Usuario`, `Imovel`, `FotoImovel`, `Avaliacao`,
+`Mensagem`, `CRMLead`, `CRMLeadHistorico`, `Notificacao`,
+`StripeEventoWebhook`, `ConsentimentoUsuario`, `AuditLog`, `TokenDoisFatores`.
+
+**Rotas principais:**
+
+| Rota | O que serve |
+|---|---|
+| `/` | Home — landing page |
+| `/?aba=buscar` | Busca de imóveis |
+| `/?aba=anunciar` | Publicação de anúncio |
+| `/imovel/<id>` | Detalhe do imóvel |
+| `/crm` | Dashboard do CRM e funil de leads |
+| `/chat` | Chat entre usuários |
+| `/dashboard` | Painel do anunciante |
+| `/planos` | Planos e checkout |
+| `/healthz` · `/healthz/ready` | Healthcheck e readiness |
+| `/sitemap.xml` · `/robots.txt` | SEO |
+| `/api/public/imoveis` | Exportação JSON (autenticada por token) |
+| `/webhooks/stripe` | Webhook de assinaturas |
+
+---
+
+## Ambiente local
 
 ### Requisitos
 
-- Python 3.10+
+- Python 3.11+
 - pip
 
 ### Instalar e executar
@@ -46,86 +126,115 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+cp .env.example .env
 python app.py
 ```
 
-Aplicacao local:
+Aplicação local:
 
 ```text
 http://localhost:5000
 ```
 
-## Variaveis de Ambiente
+---
 
-Use o arquivo .env.example como base.
+## Variáveis de ambiente
 
-Blocos mais importantes:
+Use `.env.example` como base. As obrigatórias em produção são validadas na
+inicialização (`config.py`) — a aplicação recusa subir sem elas.
 
-- Aplicacao e seguranca: SECRET_KEY, APP_URL, FLASK_ENV
-- Integracao n8n (exportacao de imoveis): IMOVEIS_EXPORT_API_TOKEN
-- Banco: DATABASE_URL
-- Email (Resend): RESEND_API_KEY, RESEND_FROM
-- Email (fallback): MAIL_DEFAULT_SENDER, MAIL_USERNAME, MAIL_PASSWORD
-- Cloudinary: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-- Confirmacao de email: REQUIRE_EMAIL_CONFIRMATION
-- Stripe:
-    - STRIPE_SECRET_KEY
-    - STRIPE_WEBHOOK_SECRET
-    - STRIPE_PRICE_PRO
-    - STRIPE_PRICE_EMPRESA
+**Obrigatórias em produção:**
 
-## Stripe (Assinaturas)
+- `SECRET_KEY` — mínimo 32 caracteres, aleatória
+- `DATABASE_URL` — PostgreSQL
+- `APP_URL` — precisa começar com `https://`
+- `MAIL_DEFAULT_SENDER`
+
+**Email** (uma das duas vias é obrigatória):
+
+- Resend: `RESEND_API_KEY`, `RESEND_FROM`, `RESEND_TIMEOUT`
+- SMTP: `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SERVER`, `MAIL_PORT`
+
+**Demais blocos:**
+
+- Upload: `UPLOAD_FOLDER`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- Aplicação: `FLASK_ENV`, `ALLOWED_HOSTS`, `ADMIN_EMAILS`, `REQUIRE_EMAIL_CONFIRMATION`
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_EMPRESA`
+- Integração n8n: `IMOVEIS_EXPORT_API_TOKEN`
+- Desenvolvimento: `ALLOW_DEV_PASSWORD_RESET_FALLBACK`
+
+---
+
+## Stripe (assinaturas)
 
 Fluxo implementado no backend:
 
-1. Usuario inicia checkout para Pro ou Empresa
-2. Stripe confirma pagamento e envia eventos para webhook
-3. Sistema atualiza status de assinatura e limites de anuncios
-4. Em inadimplencia/cancelamento, anuncios podem ser pausados conforme regra de negocio
+1. Usuário inicia checkout para Pro ou Empresa
+2. Stripe confirma o pagamento e envia eventos para o webhook
+3. Sistema atualiza status de assinatura e limites de anúncios
+4. Em inadimplência ou cancelamento, anúncios podem ser pausados conforme regra de negócio
 
-Eventos utilizados:
+Eventos tratados:
 
-- checkout.session.completed
-- customer.subscription.created
-- customer.subscription.updated
-- customer.subscription.deleted
-- invoice.payment_failed
-- invoice.payment_succeeded
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_failed`
+- `invoice.payment_succeeded`
 
-Endpoint webhook:
+Endpoint do webhook:
 
 ```text
 /webhooks/stripe
 ```
 
-## Deploy
+---
 
-Projeto preparado para deploy no Render.
+## Deploy (Hetzner)
 
-Checklist rapido:
+Produção roda em VPS Hetzner sob systemd + nginx + gunicorn.
 
-1. Configurar variaveis de ambiente
-2. Garantir dominio e DNS ativos
-3. Validar dominio no Resend
-4. Configurar webhook Stripe
-5. Executar smoke test (login, cadastro, email, checkout)
+| Componente | Papel |
+|---|---|
+| `radar.service` | Aplicação — gunicorn com 2 workers em `127.0.0.1:8000` |
+| `radar-whatsapp-api.service` | Webhook Cloud API (WhatsApp oficial) |
+| `radar-whatsapp-watcher.service` | Watcher de atendimento |
+| nginx | TLS e proxy reverso |
+| `deploy.sh` | Pull, instala dependências, ajusta permissões e reinicia |
 
-Arquivos de apoio:
+**Caminhos:**
 
-- DEPLOYMENT.md
-- QUICKSTART.md
+- Código: `/var/www/radarimoveispro`
+- Logs: `/var/log/radar/`
+- Ambiente: `/var/www/radarimoveispro/.env`
 
-## Qualidade e Revisao
+**Push para o GitHub:** o remote é SSH e a chave não é a default. Use:
 
-Guardrails adotados para reduzir risco de mudancas sem entendimento completo:
+```bash
+export GIT_SSH_COMMAND="ssh -i /root/.ssh/jair_key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20"
+git push origin main
+```
 
-- CI com lint critico e testes automatizados em .github/workflows/tests.yml
-- CI com typecheck gradual (mypy) para modulos priorizados
-- CI com auditoria de vulnerabilidades de dependencias (pip-audit)
-- Template obrigatorio de PR em .github/pull_request_template.md
-- Checklist de revisao tecnica em docs/revisao-tecnica.md
+> O deploy no **Render** foi aposentado em 25/09/2026. Guias e artefatos
+> originais preservados em [`docs/historico/`](docs/historico/LEIA-ME.md).
 
-Comando local recomendado antes de abrir PR:
+---
+
+## Qualidade
+
+Guardrails adotados para reduzir risco de mudança sem entendimento completo:
+
+- CI com lint crítico (ruff, regras E9/F63/F7/F82) em `.github/workflows/tests.yml`
+- CI com typecheck gradual (mypy) para módulos priorizados
+- CI com auditoria de vulnerabilidades de dependências (pip-audit)
+- Template obrigatório de PR em `.github/pull_request_template.md`
+- Checklist de revisão técnica em `docs/revisao-tecnica.md`
+
+**Testes** (`tests/`, 33 testes): smoke, CSRF regression, CRM, Stripe webhook,
+dashboard, conta e permissões.
+
+Comandos recomendados antes de abrir PR:
 
 ```bash
 pip-audit -r requirements.txt
@@ -133,27 +242,18 @@ mypy --config-file mypy.ini config.py email_utils.py
 PYTHONPATH=. pytest -q
 ```
 
-## Estrutura Principal
-
-```text
-radar-imoveis-pro/
-├── app.py
-├── config.py
-├── models.py
-├── email_utils.py
-├── requirements.txt
-├── templates/
-├── static/
-└── .env.example
-```
+---
 
 ## Roadmap
 
-- Melhorias de onboarding e ativacao de usuario
-- Observabilidade (logs e monitoramento mais detalhados)
-- SEO tecnico (sitemap, Search Console e metadata expandida)
-- Evolucao de planos e relatorios para anunciantes
+- Melhorias de onboarding e ativação de usuário
+- Observabilidade: logs e monitoramento mais detalhados
+- Metadata de SEO expandida e acompanhamento no Search Console
+- Evolução de planos e relatórios para anunciantes
 
-## Licenca
+---
 
-Definir licenca oficial do projeto (ex.: MIT) e adicionar arquivo LICENSE.
+## Licença
+
+A definir. O projeto nasceu sob MIT License (v1 do README, 15/03/2026), mas a
+licença oficial nunca foi fixada em arquivo `LICENSE`. Decidir e adicionar.
