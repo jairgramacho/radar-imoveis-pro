@@ -81,15 +81,15 @@
                                     {% endif %}
                                 </form>
                             {% else %}
-                                <a href="{{ url_for('cadastro') }}" class="btn btn-warning w-100 fw-bold">
-                                    <i class="fas fa-user-plus me-1"></i>Começar Agora
-                                </a>
+                                <span class="btn btn-warning w-100 fw-bold disabled">
+                                    <i class="fas fa-user-plus me-1"></i>Cadastro desativado
+                                </span>
                             {% endif %}
                         {% else %}
                             {% if not usuario %}
-                            <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-user-plus me-1"></i>Criar Conta
-                            </a>
+                            <span class="btn btn-outline-secondary w-100 disabled">
+                                <i class="fas fa-user-plus me-1"></i>Cadastro desativado
+                            </span>
                             {% else %}
                             <button class="btn btn-outline-secondary w-100" disabled>
                                 Seu Plano Atual
@@ -168,9 +168,9 @@
                     <h5 class="mb-2">Começe a anunciar agora mesmo!</h5>
                     <p class="text-muted mb-3">Todos os planos incluem suporte por chat e acesso às principais funcionalidades.</p>
                     {% if not usuario %}
-                    <a href="{{ url_for('cadastro') }}" class="btn btn-warning btn-lg">
-                        <i class="fas fa-user-plus me-2"></i>Criar Conta Grátis
-                    </a>
+                    <span class="btn btn-warning btn-lg disabled">
+                        <i class="fas fa-user-plus me-2"></i>Cadastro temporariamente desativado
+                    </span>
                     {% else %}
                     <a href="{{ url_for('dashboard') }}" class="btn btn-warning btn-lg">
                         <i class="fas fa-arrow-right me-2"></i>Ir para o Dashboard

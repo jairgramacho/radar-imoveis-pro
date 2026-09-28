@@ -92,7 +92,18 @@ def _codigo_totp_valido(secret, codigo):
 
 @auth_bp.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
-    """Pagina de cadastro de novo usuario."""
+    """Pagina de cadastro de novo usuario.
+
+    DESATIVADO: o cadastro publico esta fechado. Nenhuma conta nova pode ser
+    criada por esta rota. O bloqueio ocorre antes de qualquer leitura de
+    formulario, tanto em GET quanto em POST.
+    """
+    flash('O cadastro de novas contas esta temporariamente desativado.', 'error')
+    return redirect(url_for('login'))
+
+
+def _cadastro_desativado_codigo_morto():
+    """Corpo original preservado para eventual reativacao futura."""
     legacy = _legacy()
 
     if request.method == 'POST':
