@@ -1063,3 +1063,35 @@ body:not(.radar-premium) .footer-radar .text-muted { color: var(--rp-muted) !imp
   body:not(.radar-premium) .footer-radar ul { margin-bottom: 0; }
   body:not(.radar-premium) .footer-radar .row > [class*="col-"] { text-align: center; }
 }
+
+/* Busca v2 — superfície clara, dados legíveis e foco no imóvel */
+body:not(.radar-premium) .buscar-section,
+body:not(.radar-premium) .anunciar-section { max-width: 1240px; margin: 0 auto; }
+body:not(.radar-premium) .buscar-section > .d-flex h1 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -.05em; }
+body:not(.radar-premium) .buscar-section > .d-flex h1 i { color: var(--rp-orange) !important; }
+body:not(.radar-premium) .buscar-section .glass-card { border-radius: 8px !important; padding: 4px; }
+body:not(.radar-premium) .buscar-section .glass-card .card-body { padding: 1.25rem; }
+body:not(.radar-premium) .buscar-section .form-label { color: var(--rp-navy) !important; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+body:not(.radar-premium) .buscar-section .row.g-4 { row-gap: 1.25rem !important; }
+body:not(.radar-premium) .card-imovel { background: #fff !important; border: 1px solid var(--rp-line) !important; border-radius: 8px !important; box-shadow: 0 8px 24px rgba(14,37,48,.06); backdrop-filter: none; }
+body:not(.radar-premium) .card-imovel:hover { box-shadow: 0 16px 32px rgba(14,37,48,.12); }
+body:not(.radar-premium) .card-imovel .card-body { background: #fff !important; }
+body:not(.radar-premium) .card-imovel .card-title { color: var(--rp-navy) !important; font-family: Manrope, sans-serif; font-size: 1.35rem; }
+body:not(.radar-premium) .card-imovel .card-imovel-type,
+body:not(.radar-premium) .card-imovel .card-imovel-location { color: var(--rp-muted) !important; }
+body:not(.radar-premium) .card-imovel .card-imovel-type i,
+body:not(.radar-premium) .card-imovel .card-imovel-location i { color: var(--rp-orange) !important; }
+body:not(.radar-premium) .card-imovel .card-imovel-features .badge-soft { background: var(--rp-orange-soft, #fff1e9) !important; color: var(--rp-navy) !important; border: 1px solid #ffd9c7; }
+body:not(.radar-premium) .card-imovel .card-imovel-features .badge-soft i { color: var(--rp-orange); }
+body:not(.radar-premium) .pagination .page-link { color: var(--rp-navy); border-color: var(--rp-line); }
+body:not(.radar-premium) .pagination .page-item.active .page-link { background: var(--rp-orange); border-color: var(--rp-orange); color: #fff; }
+
+/* Search v2: linguagem editorial da landing, sem perder os dados do catálogo */
+.search-v2-shell { padding-top: 2.4rem !important; }
+.search-v2-kicker { color: var(--rp-orange); font-size: .68rem; font-weight: 900; letter-spacing: .18em; margin-bottom: .55rem; }
+.search-v2-shell h1 { font-weight: 800; letter-spacing: -.055em; font-size: clamp(2rem, 4vw, 3rem); }
+.search-v2-icon { color: var(--rp-orange); display: inline-flex; margin-right: .55rem; font-size: .8em; }
+.search-v2-results { color: var(--rp-navy) !important; font-weight: 800; letter-spacing: -.02em; }
+.search-v2-results i { color: var(--rp-orange); }
+body:not(.radar-premium) .search-v2-shell .alert-info { background: #fff; color: var(--rp-navy); border: 1px solid var(--rp-line); }
+body:not(.radar-premium) .navbar-radar .brand-mark { width: 28px; height: 28px; object-fit: contain; }
