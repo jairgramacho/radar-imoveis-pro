@@ -5,22 +5,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --laranja: #F28A1F;
-  --laranja-claro: #ffb366;
-  --laranja-grad: linear-gradient(135deg, #F28A1F, #ff7a00);
-  --azul: #1a1a2e;
-  --azul-claro: #16213e;
+  --laranja: #F15A00;
+  --laranja-claro: #ff8a3d;
+  --laranja-grad: linear-gradient(135deg, #F15A00, #ff7a00);
+  --azul: #0E2530;
+  --azul-claro: #123240;
   --branco: #ffffff;
-  --glass: rgba(255,255,255,0.08);
-  --glass-hover: rgba(255,255,255,0.14);
-  --glass-border: rgba(255,255,255,0.12);
-  --glass-border-hover: rgba(255,255,255,0.2);
-  --texto: rgba(255,255,255,0.8);
-  --texto-suave: rgba(255,255,255,0.45);
-  --texto-muito-suave: rgba(255,255,255,0.25);
-  --radius-card: 18px;
-  --radius-btn: 60px;
-  --sombra-laranja: 0 8px 30px rgba(242,138,31,0.25);
+  --glass: #ffffff;
+  --glass-hover: #fafaf9;
+  --glass-border: #e3e9e8;
+  --glass-border-hover: #cfdad9;
+  --texto: #14252b;
+  --texto-suave: #66757a;
+  --texto-muito-suave: #8a979b;
+  --radius-card: 6px;
+  --radius-btn: 4px;
+  --sombra-laranja: 0 8px 24px rgba(241,90,0,0.22);
 }
 
 * { box-sizing: border-box; }
@@ -41,8 +41,8 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  color: var(--branco);
+  font-family: 'Manrope', 'DM Sans', sans-serif;
+  color: var(--texto);
   letter-spacing: 0.01em;
 }
 
@@ -153,7 +153,7 @@ p, li, label, .form-text {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
   font-size: 1.4rem;
-  color: var(--branco) !important;
+  color: var(--texto) !important;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -181,8 +181,8 @@ p, li, label, .form-text {
 
 .navbar-radar .nav-link:hover,
 .navbar-radar .nav-link.active {
-  background: var(--glass);
-  color: var(--branco) !important;
+  background: #fff1e9;
+  color: var(--texto) !important;
 }
 
 .navbar-radar .nav-link-anunciar {
@@ -201,7 +201,7 @@ p, li, label, .form-text {
 
 .navbar-radar .navbar-toggler {
   border: 1px solid var(--glass-border);
-  color: var(--branco);
+  color: var(--texto);
 }
 
 .navbar-radar .navbar-toggler-icon {
@@ -226,8 +226,8 @@ p, li, label, .form-text {
 }
 
 .navbar-radar .dropdown-item:hover {
-  background: var(--glass);
-  color: var(--branco);
+  background: #fff1e9;
+  color: var(--texto);
 }
 
 .navbar-radar .dropdown-divider {
@@ -450,7 +450,7 @@ p, li, label, .form-text {
 }
 
 .card-imovel .card-imovel-features .badge-soft {
-  background: rgba(255,255,255,0.06);
+  background: #f2f5f4;
   color: var(--texto);
   font-weight: 600;
   font-size: 0.75rem;
@@ -466,21 +466,21 @@ p, li, label, .form-text {
    FORM ELEMENTS
    ============================================ */
 .form-control, .form-select {
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--branco) !important;
-  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #cfdad9 !important;
+  color: var(--texto) !important;
+  border-radius: 4px !important;
   padding: 0.7rem 1rem !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Manrope', 'DM Sans', sans-serif !important;
   font-size: 0.9rem !important;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-control:focus, .form-select:focus {
-  background: rgba(255,255,255,0.1) !important;
+  background: #ffffff !important;
   border-color: var(--laranja) !important;
-  box-shadow: 0 0 0 3px rgba(242,138,31,0.15) !important;
-  color: var(--branco) !important;
+  box-shadow: 0 0 0 3px rgba(241,90,0,0.15) !important;
+  color: var(--texto) !important;
 }
 
 .form-control::placeholder {
@@ -488,8 +488,8 @@ p, li, label, .form-text {
 }
 
 .form-select option {
-  background: var(--azul-claro);
-  color: var(--branco);
+  background: #ffffff;
+  color: var(--texto);
 }
 
 .form-label {
@@ -568,8 +568,8 @@ p, li, label, .form-text {
 }
 
 .page-item .page-link:hover {
-  background: var(--glass-hover);
-  color: var(--branco);
+  background: #fff1e9;
+  color: var(--texto);
   transform: translateY(-1px);
 }
 
@@ -615,12 +615,12 @@ p, li, label, .form-text {
 }
 
 .card-header {
-  background: rgba(255,255,255,0.04) !important;
+  background: #ffffff !important;
   border-bottom: 1px solid var(--glass-border) !important;
 }
 
 .card-footer {
-  background: rgba(255,255,255,0.04) !important;
+  background: #ffffff !important;
   border-top: 1px solid var(--glass-border) !important;
 }
 
@@ -645,7 +645,7 @@ p, li, label, .form-text {
 }
 
 .table-hover tbody tr:hover {
-  background: rgba(255,255,255,0.04) !important;
+  background: #f2f5f4 !important;
 }
 
 .table thead th {
@@ -672,8 +672,8 @@ p, li, label, .form-text {
 }
 
 .dropdown-item:hover {
-  background: var(--glass);
-  color: var(--branco);
+  background: #fff1e9;
+  color: var(--texto);
 }
 
 .dropdown-divider {
@@ -722,7 +722,7 @@ p, li, label, .form-text {
    PROGRESS
    ============================================ */
 .progress {
-  background: rgba(255,255,255,0.06);
+  background: #e8eeed;
   border-radius: 60px;
 }
 
@@ -760,7 +760,7 @@ p, li, label, .form-text {
 }
 
 .footer-radar h6 {
-  color: var(--branco);
+  color: var(--texto);
   font-weight: 700;
   font-size: 0.9rem;
   display: flex;
