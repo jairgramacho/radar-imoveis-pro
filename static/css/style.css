@@ -164,10 +164,11 @@ p, li, label, .form-text {
 }
 
 .navbar-radar .navbar-brand .brand-mark {
-  color: var(--laranja);
   width: 1.7rem;
-  height: auto;
+  height: 1.7rem;
+  object-fit: contain;
   flex: 0 0 auto;
+  display: block;
 }
 
 .navbar-radar .nav-link {
@@ -751,12 +752,12 @@ p, li, label, .form-text {
 
 /* Marca no footer: simbolo da antena + assinatura */
 .footer-radar .brand-mark {
-  color: var(--laranja, #F28A1F);
   width: 1.35rem;
-  height: auto;
+  height: 1.35rem;
+  object-fit: contain;
   flex: 0 0 auto;
+  display: block;
   margin-right: 0.5rem;
-  vertical-align: -0.26em;
 }
 
 .footer-radar h6 {
@@ -972,8 +973,7 @@ body:not(.radar-premium) .navbar-radar .nav-link {
   color: var(--rp-navy) !important;
 }
 
-body:not(.radar-premium) .navbar-radar .navbar-brand .radar,
-body:not(.radar-premium) .navbar-radar .navbar-brand .brand-mark {
+body:not(.radar-premium) .navbar-radar .navbar-brand .radar {
   color: var(--rp-orange) !important;
 }
 
