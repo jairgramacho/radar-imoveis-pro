@@ -163,16 +163,11 @@ p, li, label, .form-text {
   color: var(--laranja);
 }
 
-.navbar-radar .navbar-brand .brand-icon {
+.navbar-radar .navbar-brand .brand-mark {
   color: var(--laranja);
-  font-size: 1.5rem;
-  animation: signalPulse 2s ease-in-out infinite;
-}
-
-@keyframes signalPulse {
-  0% { text-shadow: 0 0 2px rgba(242,138,31,0.3), 0 0 8px rgba(242,138,31,0.1); }
-  40% { text-shadow: 0 0 6px rgba(242,138,31,0.6), 0 0 20px rgba(242,138,31,0.3), 0 0 40px rgba(242,138,31,0.1); }
-  100% { text-shadow: 0 0 2px rgba(242,138,31,0.3), 0 0 8px rgba(242,138,31,0.1); }
+  width: 1.7rem;
+  height: auto;
+  flex: 0 0 auto;
 }
 
 .navbar-radar .nav-link {
@@ -754,10 +749,77 @@ p, li, label, .form-text {
   margin-top: 3rem;
 }
 
+/* Marca no footer: simbolo da antena + assinatura */
+.footer-radar .brand-mark {
+  color: var(--laranja, #F28A1F);
+  width: 1.35rem;
+  height: auto;
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  vertical-align: -0.26em;
+}
+
 .footer-radar h6 {
   color: var(--branco);
   font-weight: 700;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Bloco da marca: titulo e subtitulo no mesmo eixo a esquerda */
+.footer-radar .brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.footer-radar .brand-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.footer-radar .brand-tagline {
+  margin: 0;
+  padding-left: 0;
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* Colunas alinhadas ao topo, com o mesmo gutter */
+.footer-radar .row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.footer-radar ul.list-unstyled {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* Icones em largura fixa: os textos ficam alinhados entre si */
+.footer-radar ul.list-unstyled li a {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.footer-radar ul.list-unstyled li a i {
+  width: 1.1em;
+  flex: 0 0 1.1em;
+  text-align: center;
+  margin-top: 0.15em;
+}
+
+@media (max-width: 767.98px) {
+  .footer-radar .row > [class*="col-"] {
+    margin-bottom: 1.5rem;
+  }
 }
 
 .footer-radar a {
@@ -854,4 +916,150 @@ p, li, label, .form-text {
 
 .descricao-formatada p:last-child {
   margin-bottom: 0;
+}
+
+/* ============================================
+   RADAR LIGHT SYSTEM — páginas internas
+   Mantém as classes existentes e altera apenas a
+   apresentação para acompanhar a landing aprovada.
+   ============================================ */
+:root {
+  --rp-orange: #f15a00;
+  --rp-navy: #0e2530;
+  --rp-bg: #f7f8f7;
+  --rp-muted: #66757a;
+  --rp-line: #e3e9e8;
+}
+
+body:not(.radar-premium) {
+  background: var(--rp-bg) !important;
+  color: var(--rp-navy) !important;
+  font-family: 'Manrope', 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+body:not(.radar-premium) h1,
+body:not(.radar-premium) h2,
+body:not(.radar-premium) h3,
+body:not(.radar-premium) h4,
+body:not(.radar-premium) h5,
+body:not(.radar-premium) h6 {
+  color: var(--rp-navy) !important;
+  font-family: 'Manrope', 'DM Sans', sans-serif;
+  letter-spacing: -.025em;
+}
+
+body:not(.radar-premium) p,
+body:not(.radar-premium) li,
+body:not(.radar-premium) label,
+body:not(.radar-premium) .form-text {
+  color: var(--rp-muted);
+}
+
+body:not(.radar-premium) .radar-bg,
+body:not(.radar-premium) .cursor-follower {
+  display: none;
+}
+
+body:not(.radar-premium) .navbar-radar {
+  background: rgba(255,255,255,.97) !important;
+  border-bottom: 1px solid var(--rp-line);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+body:not(.radar-premium) .navbar-radar .navbar-brand,
+body:not(.radar-premium) .navbar-radar .nav-link {
+  color: var(--rp-navy) !important;
+}
+
+body:not(.radar-premium) .navbar-radar .navbar-brand .radar,
+body:not(.radar-premium) .navbar-radar .navbar-brand .brand-mark {
+  color: var(--rp-orange) !important;
+}
+
+body:not(.radar-premium) .navbar-radar .nav-link:hover,
+body:not(.radar-premium) .navbar-radar .nav-link.active {
+  background: var(--rp-orange-soft, #fff1e9);
+  color: var(--rp-navy) !important;
+}
+
+body:not(.radar-premium) .glass-card,
+body:not(.radar-premium) .card,
+body:not(.radar-premium) .table-responsive,
+body:not(.radar-premium) .accordion-item {
+  background: #fff !important;
+  border: 1px solid var(--rp-line) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 28px rgba(14,37,48,.06) !important;
+  backdrop-filter: none;
+}
+
+body:not(.radar-premium) .card-header,
+body:not(.radar-premium) .card-footer {
+  background: #fff !important;
+  border-color: var(--rp-line) !important;
+}
+
+body:not(.radar-premium) .form-control,
+body:not(.radar-premium) .form-select {
+  background: #fff !important;
+  color: var(--rp-navy) !important;
+  border: 1px solid #cfdad9 !important;
+  border-radius: 4px !important;
+}
+
+body:not(.radar-premium) .form-control:focus,
+body:not(.radar-premium) .form-select:focus {
+  border-color: var(--rp-orange) !important;
+  box-shadow: 0 0 0 3px rgba(241,90,0,.12) !important;
+}
+
+body:not(.radar-premium) .btn-primary,
+body:not(.radar-premium) .btn-warning,
+body:not(.radar-premium) .btn-success {
+  background: var(--rp-orange) !important;
+  border-color: var(--rp-orange) !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+body:not(.radar-premium) .btn-outline-primary {
+  color: var(--rp-navy) !important;
+  border-color: var(--rp-navy) !important;
+  border-radius: 4px !important;
+}
+
+body:not(.radar-premium) .btn-outline-primary:hover {
+  background: var(--rp-navy) !important;
+  color: #fff !important;
+}
+
+body:not(.radar-premium) .footer-radar {
+  background: #fff;
+  border-top: 1px solid var(--rp-line);
+  color: var(--rp-muted);
+  text-align: center;
+}
+
+body:not(.radar-premium) .footer-radar .brand-block,
+body:not(.radar-premium) .footer-radar .brand-title,
+body:not(.radar-premium) .footer-radar .brand-tagline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+body:not(.radar-premium) .footer-radar .brand-title { flex-direction: row; gap: 8px; }
+body:not(.radar-premium) .footer-radar .brand-mark { color: var(--rp-orange) !important; }
+body:not(.radar-premium) .footer-radar a { color: var(--rp-muted); }
+body:not(.radar-premium) .footer-radar a:hover { color: var(--rp-orange); }
+body:not(.radar-premium) .footer-radar hr { border-color: var(--rp-line); opacity: 1; }
+body:not(.radar-premium) .footer-radar .text-muted { color: var(--rp-muted) !important; }
+
+@media (max-width: 767.98px) {
+  body:not(.radar-premium) .footer-radar ul { margin-bottom: 0; }
+  body:not(.radar-premium) .footer-radar .row > [class*="col-"] { text-align: center; }
 }
