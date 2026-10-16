@@ -5,6 +5,7 @@ __pycache__/
 
 # Variáveis de Ambiente (CRÍTICO)
 .env
+.env.production
 .env.local
 .env.*.local
 
