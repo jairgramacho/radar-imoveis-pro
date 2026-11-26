@@ -209,7 +209,20 @@ Produção roda em VPS Hetzner sob systemd + nginx + gunicorn.
 - Logs: `/var/log/radar/`
 - Ambiente: `/var/www/radarimoveispro/.env`
 
-**Push para o GitHub:** o remote é SSH e a chave não é a default. Use:
+**Deploy:** enviar para `main` inicia CI, mas não atualiza a VPS. Após o
+workflow **Testes** passar, acesse a Hetzner e execute:
+
+```bash
+sudo /var/www/radarimoveispro/deploy.sh
+```
+
+O script atualiza o checkout, instala dependências e reinicia `radar`. Confirme
+a versão publicada comparando o SHA esperado com
+`git -C /var/www/radarimoveispro rev-parse HEAD`; consulte
+[`DEPLOYMENT.md`](DEPLOYMENT.md) para o procedimento completo.
+
+**Push para o GitHub:** o remote é SSH e a chave não é a default. No ambiente
+que possui essa chave, use:
 
 ```bash
 export GIT_SSH_COMMAND="ssh -i /root/.ssh/jair_key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20"

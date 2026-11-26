@@ -1,6 +1,7 @@
 # QUICKSTART - Radar Imoveis Pro
 
-Guia de inicio rapido para subir o projeto localmente e preparar deploy no Render.
+Guia rapido para desenvolvimento local e deploy da aplicacao em producao na
+VPS Hetzner. O Render foi aposentado.
 
 ## 1) Rodar local
 
@@ -16,54 +17,22 @@ cp .env.example .env
 python app.py
 ```
 
-Acesse:
+Acesse `http://localhost:5000`.
 
-```text
-http://localhost:5000
-```
+## 2) Deploy na Hetzner
 
-## 2) Variaveis minimas de producao
+O deploy de producao e feito manualmente na VPS:
 
-No Render, configure pelo menos:
+1. Envie o commit para `main` e aguarde o workflow **Testes** passar.
+2. Acesse a VPS Hetzner por SSH.
+3. Execute `sudo /var/www/radarimoveispro/deploy.sh`.
+4. Confira `sudo systemctl is-active radar` e os logs com
+   `sudo journalctl -u radar -n 100 --no-pager`.
+5. Valide `https://www.radarimoveispro.com.br/healthz`.
 
-- FLASK_ENV=production
-- SECRET_KEY=(chave aleatoria forte)
-- DATABASE_URL=(PostgreSQL do Render)
-- APP_URL=https://seu-dominio
-- RESEND_API_KEY
-- RESEND_FROM=Radar Imoveis Pro <noreply@seu-dominio>
-- MAIL_DEFAULT_SENDER=Radar Imoveis Pro <noreply@seu-dominio>
-- REQUIRE_EMAIL_CONFIRMATION=1
+O push ao GitHub e o CI nao fazem deploy automatico para a Hetzner. Para
+confirmar que uma revisao especifica chegou a VPS, compare o SHA esperado com
+`git -C /var/www/radarimoveispro rev-parse HEAD`.
 
-Se Stripe estiver ativo:
-
-- STRIPE_SECRET_KEY
-- STRIPE_WEBHOOK_SECRET
-- STRIPE_PRICE_PRO
-- STRIPE_PRICE_EMPRESA
-
-## 3) Deploy no Render
-
-1. Conecte o repositorio no Render (Web Service).
-2. Build command: `pip install -r requirements.txt`
-3. Start command: `gunicorn app:app`
-4. Salve variaveis de ambiente.
-5. Deploy.
-
-## 4) Smoke test (producao)
-
-Valide estes fluxos:
-
-1. Home abre sem erro
-2. Cadastro + confirmacao de email
-3. Login
-4. Esqueci senha
-5. Publicar anuncio
-6. Abrir checkout Stripe (se habilitado)
-
-## 5) Se algo falhar
-
-1. Abra logs no Render e verifique traceback.
-2. Confirme variaveis obrigatorias.
-3. Verifique DNS e APP_URL.
-4. Verifique dominio no Resend (status verified).
+Consulte [DEPLOYMENT.md](DEPLOYMENT.md) para detalhes, verificacoes e
+troubleshooting.

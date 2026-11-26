@@ -1,129 +1,104 @@
-# DEPLOYMENT - Radar Imoveis Pro (Render)
+# Deploy em producao (Hetzner)
 
-Guia oficial de deploy em producao, alinhado com a arquitetura atual do projeto.
+A aplicacao de producao roda em uma VPS Hetzner, com systemd, nginx e Gunicorn.
+Este guia descreve o deploy da aplicacao existente; o provisionamento inicial
+da VPS, DNS, certificados TLS e credenciais deve ser feito separadamente.
 
-## 1) Requisitos
+## Arquitetura e caminhos
 
-- Repositorio atualizado no GitHub
-- Conta no Render
-- Banco PostgreSQL no Render
-- Dominio configurado e verificado no Render
-- Dominio de envio verificado no Resend
-- Conta Stripe em modo producao (quando assinaturas estiverem ativas)
+| Componente | Papel |
+|---|---|
+| `radar.service` | Aplicacao Flask servida por Gunicorn em `127.0.0.1:8000` |
+| `radar-whatsapp-api.service` | Webhook da Cloud API do WhatsApp |
+| `radar-whatsapp-watcher.service` | Watcher de atendimento |
+| nginx | TLS e proxy reverso |
+| `/var/www/radarimoveispro/deploy.sh` | Atualiza o checkout, dependencias e reinicia `radar` |
 
-## 2) Criar Web Service no Render
+- Codigo: `/var/www/radarimoveispro`
+- Ambiente: `/var/www/radarimoveispro/.env`
+- Logs: `/var/log/radar/`
 
-1. New + > Web Service
-2. Conectar repositorio `radar-imoveis-pro`
-3. Runtime: Python
-4. Build command:
+O arquivo `.env` e as credenciais de acesso nao devem ser versionados nem
+copiados para logs ou mensagens.
+
+## Fluxo de deploy
+
+1. Envie o commit desejado para `main` no GitHub.
+2. Aguarde o workflow **Testes** concluir com sucesso.
+3. Acesse a VPS Hetzner por SSH.
+4. Execute o script de deploy:
+
+   ```bash
+   sudo /var/www/radarimoveispro/deploy.sh
+   ```
+
+O script faz `git pull origin main`, instala as dependencias de
+`requirements.txt`, ajusta as permissoes e reinicia `radar`. O deploy e manual:
+um push e um CI verde, por si so, nao atualizam a VPS.
+
+O script nao interrompe a execucao automaticamente quando um comando
+intermediario falha. Portanto, a mensagem final "Deploy concluido" nao basta
+para confirmar o resultado; confira o SHA, o estado do servico e os logs abaixo.
+
+## Verificar o deploy
+
+Na VPS, compare o commit do checkout com o SHA que deseja publicar:
 
 ```bash
-pip install -r requirements.txt
+git -C /var/www/radarimoveispro rev-parse HEAD
 ```
 
-5. Start command:
+Verifique tambem o servico e os logs:
 
 ```bash
-gunicorn app:app
+sudo systemctl is-active radar
+sudo journalctl -u radar -n 100 --no-pager
 ```
 
-## 3) Variaveis de ambiente (Render)
+Por fim, verifique a disponibilidade publica:
 
-Minimas para producao:
-
-- FLASK_ENV=production
-- SECRET_KEY=(chave forte)
-- DATABASE_URL=(PostgreSQL do Render)
-- APP_URL=https://www.radarimoveispro.com.br
-- ALLOWED_HOSTS=www.radarimoveispro.com.br,radarimoveispro.com.br
-
-Email/Resend:
-
-- RESEND_API_KEY
-- RESEND_FROM=Radar Imoveis Pro <noreply@radarimoveispro.com.br>
-- MAIL_DEFAULT_SENDER=Radar Imoveis Pro <noreply@radarimoveispro.com.br>
-- REQUIRE_EMAIL_CONFIRMATION=1
-
-Cloudinary:
-
-- CLOUDINARY_CLOUD_NAME
-- CLOUDINARY_API_KEY
-- CLOUDINARY_API_SECRET
-
-Stripe (quando habilitado):
-
-- STRIPE_SECRET_KEY
-- STRIPE_WEBHOOK_SECRET
-- STRIPE_PRICE_PRO
-- STRIPE_PRICE_EMPRESA
-
-## 4) Dominio e DNS
-
-Registros esperados:
-
-- A `radarimoveispro.com.br` -> `216.24.57.1`
-- CNAME `www.radarimoveispro.com.br` -> `radar-imoveis-pro.onrender.com`
-
-No Render, os dois devem aparecer como `Verified`.
-
-## 5) Resend
-
-1. Adicionar dominio no Resend
-2. Publicar registros DNS solicitados (SPF/DKIM)
-3. Aguardar status `Verified`
-4. Validar envio real de:
-
-- confirmacao de conta
-- redefinicao de senha
-
-## 6) Stripe
-
-1. Criar produtos/price IDs (Pro e Empresa)
-2. Criar webhook endpoint:
-
-```text
-https://www.radarimoveispro.com.br/webhooks/stripe
+```bash
+curl -fsS https://www.radarimoveispro.com.br/healthz
 ```
 
-3. Eventos:
+A resposta de `/healthz` confirma que a aplicacao e o banco respondem, mas nao
+identifica a versao do codigo. Para comprovar que um commit especifico esta em
+producao, compare seu SHA com o resultado de `git rev-parse HEAD` na VPS.
 
-- checkout.session.completed
-- customer.subscription.created
-- customer.subscription.updated
-- customer.subscription.deleted
-- invoice.payment_failed
-- invoice.payment_succeeded
+## CI e automacao
 
-4. Copiar signing secret (`whsec_...`) para `STRIPE_WEBHOOK_SECRET`
+O workflow **Testes** executa lint, typecheck, auditoria de dependencias e
+pytest. O workflow [Deploy Render](.github/workflows/deploy-render.yml) e
+legado: ele tenta acionar um hook do Render, nao a VPS Hetzner. Sem
+`RENDER_DEPLOY_HOOK_URL`, sua etapa de deploy e ignorada. O sucesso desse
+workflow nao comprova um deploy em producao.
 
-## 7) Smoke test de producao
+## Configuracao de producao
 
-Testar obrigatoriamente:
+As variaveis obrigatorias sao validadas na inicializacao da aplicacao; consulte
+`.env.example` e a secao de variaveis de ambiente do [README](README.md).
+Mantenha os valores reais apenas no `.env` da VPS ou no gerenciador de segredos
+apropriado.
 
-1. Home abre sem erro
-2. Cadastro + confirmacao de email
-3. Login
-4. Esqueci senha
-5. Publicar anuncio
-6. Chat
-7. Abertura do checkout Stripe
+Integrações externas que estejam habilitadas podem exigir configuracao propria:
 
-## 8) Troubleshooting rapido
+- Email: Resend ou SMTP, com dominio de envio verificado
+- Upload: credenciais do Cloudinary
+- Pagamentos: chaves, precos e webhook do Stripe
 
-### Erro de coluna inexistente no login
+## Smoke test
 
-Se ocorrer apos deploy, confirme que o app iniciou com `FLASK_ENV=production` e finalize novo deploy.
-O projeto possui migracao leve de colunas no boot.
+Depois de reiniciar o servico, valide:
 
-### Redirect loop no dominio
+1. `/healthz` retorna `status: ok` e `database: ok`.
+2. A home e a busca de imoveis abrem.
+3. Login, publicacao de anuncio e chat funcionam.
+4. Email transacional e checkout Stripe funcionam, se habilitados.
 
-1. Verifique DNS de raiz e `www`
-2. Verifique se ambos estao `Verified` no Render
-3. Limpe cache/cookies/HSTS local do navegador
+## Troubleshooting
 
-### Email nao chega
-
-1. Validar dominio no Resend
-2. Conferir `RESEND_FROM` e `MAIL_DEFAULT_SENDER`
-3. Conferir logs do Render
+- **Servico inativo:** consulte `sudo journalctl -u radar -n 100 --no-pager`.
+- **Erro de banco:** confirme `DATABASE_URL` no `.env` e a conectividade com o banco.
+- **Erro de coluna apos deploy:** confirme as migracoes e a inicializacao da aplicacao.
+- **Problema de dominio/TLS:** confira DNS e configuracao do nginx na VPS.
+- **Email nao chega:** verifique as credenciais e o dominio no Resend ou SMTP.
